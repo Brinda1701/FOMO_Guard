@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FOMOGuard - 追涨护盾</title>
+    <!-- 内联SVG favicon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧠</text></svg>">
+    <!-- 引入外部样式 -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- 情绪粒子背景 -->
+    <div class="emotion-particles" id="emotionParticles"></div>
+    
+    <div class="container">
+        <header class="header">
+            <button class="theme-toggle" id="themeToggle" title="切换主题">🌙</button>
+            <h1>FOMOGuard</h1>
+            <p>追涨护盾 - 守护你的理性，抵御FOMO与恐慌的侵蚀</p>
+        </header>
+
+        <section class="search-section">
+            <div class="search-box">
+                <input type="text" class="search-input" id="companyInput" placeholder="输入公司名称或股票代码 (如: 茅台、AAPL、特斯拉)">
+                <button class="search-btn" id="analyzeBtn">开始分析</button>
+            </div>
+            <div class="quick-tags">
+                <span class="quick-tag" data-company="茅台">茅台</span>
+                <span class="quick-tag" data-company="比亚迪">比亚迪</span>
+                <span class="quick-tag" data-company="特斯拉">特斯拉</span>
+                <span class="quick-tag" data-company="英伟达">英伟达</span>
+                <span class="quick-tag" data-company="苹果">苹果</span>
+                <span class="quick-tag" data-company="阿里巴巴">阿里巴巴</span>
+            </div>
+        </section>
+
+        <div class="main-grid">
+            <!-- 第一行：核心数据展示 -->
+            <div class="card featured-card">
+                <h2 class="card-title"><span class="icon">📊</span>全网情绪晴雨表</h2>
+                <div class="gauge-container" id="gaugeContainer">
+                    <div class="placeholder">
+                        <div class="placeholder-icon">🔍</div>
+                        <p>请输入公司名称开始分析市场情绪</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2 class="card-title"><span class="icon">⚡</span>交易决策诊断</h2>
+                <div id="impulseSection">
+                    <p style="color: var(--text-secondary); margin-bottom: 15px;">您计划进行什么操作？</p>
+                    <div class="trade-input-section">
+                        <button class="trade-btn buy" data-action="buy">买入</button>
+                        <button class="trade-btn sell" data-action="sell">卖出</button>
+                        <button class="trade-btn hold" data-action="hold">观望</button>
+                    </div>
+                    <div class="alert-box" id="alertBox"></div>
+                </div>
+            </div>
+            
+            <!-- 第二行：AI分析与数据源 -->
+            <div class="card">
+                <h2 class="card-title"><span class="icon">🤖</span>AI 舆论去噪总结</h2>
+                <div class="summary-content" id="summaryContent">
+                    <div class="placeholder">
+                        <div class="placeholder-icon">💡</div>
+                        <p>AI 将为您过滤噪音，提炼核心观点</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2 class="card-title"><span class="icon">📡</span>多源数据监控</h2>
+                <div class="source-stats">
+                    <div class="source-item"><div class="source-icon">📱</div><div class="source-name">微博</div><div class="source-count" id="weiboCount">--</div></div>
+                    <div class="source-item"><div class="source-icon">📰</div><div class="source-name">雪球</div><div class="source-count" id="xueqiuCount">--</div></div>
+                    <div class="source-item"><div class="source-icon">💬</div><div class="source-name">东财</div><div class="source-count" id="eastmoneyCount">--</div></div>
+                </div>
+                <!-- 热搜词云 -->
+                <div id="hotTrendsSection" style="display:none;">
+                    <h4 style="margin: 20px 0 12px; font-size: 0.95rem; color: var(--text-secondary);">🔥 实时热搜词</h4>
+                    <div class="hot-trends" id="hotTrends"></div>
+                </div>
+                <div class="history-chart" id="historyChart">
+                    <div style="color: var(--text-secondary); width: 100%; text-align: center;">历史情绪趋势将在分析后显示</div>
+                </div>
+            </div>
+            
+            <!-- 第三行：历史验证（分析后显示） -->
+            <div class="card full-width" id="validationCard" style="display:none;">
+                <h2 class="card-title"><span class="icon">📈</span>历史情绪验证 - 数据回测分析</h2>
+                <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 15px;">当市场处于相似情绪水平时，后续30天的历史表现统计：</p>
+                <div class="history-validation">
+                    <div class="validation-chart" id="validationChart"></div>
+                    <div class="validation-summary" id="validationSummary"></div>
+                </div>
+            </div>
+
+            <!-- 第四行：心理建议 -->
+            <div class="card psychology-tips full-width">
+                <h2 class="card-title"><span class="icon">🧠</span>认知偏误防护指南</h2>
+                <div class="tips-grid">
+                    <div class="tip-card">
+                        <span class="tip-icon-large">💎</span>
+                        <h4>锚定效应</h4>
+                        <p>不要因为股价曾经达到某个高点就认为它"便宜"了，过去的价格不代表未来的价值。</p>
+                    </div>
+                    <div class="tip-card">
+                        <span class="tip-icon-large">🎯</span>
+                        <h4>确认偏误</h4>
+                        <p>主动寻找与您观点相反的信息，避免只看到支持自己决策的内容。</p>
+                    </div>
+                    <div class="tip-card">
+                        <span class="tip-icon-large">⏰</span>
+                        <h4>损失厌恶</h4>
+                        <p>亏损带来的痛苦往往是同等收益快乐的2倍，请理性评估实际损失。</p>
+                    </div>
+                    <div class="tip-card">
+                        <span class="tip-icon-large">🌊</span>
+                        <h4>羊群效应</h4>
+                        <p>当所有人都在买入时，可能正是风险最高的时刻；所有人恐慌时，可能暗藏机会。</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 第五行：交易决策日记 -->
+            <div class="card full-width">
+                <h2 class="card-title"><span class="icon">📔</span>交易决策日记</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 15px;">记录每次交易决策，复盘情绪对投资的影响，形成个人投资成长档案</p>
+                <div class="diary-section">
+                    <div class="diary-header">
+                        <span style="font-size: 0.9rem; color: var(--text-secondary);">共 <span id="diaryCount">0</span> 条记录</span>
+                        <button class="diary-btn" id="addDiaryBtn">+ 记录本次决策</button>
+                    </div>
+                    <div class="diary-list" id="diaryList">
+                        <div class="diary-empty">暂无记录，点击上方按钮开始记录您的交易决策</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer class="footer">
+            <p>FOMOGuard 追涨护盾 - 您的理性投资守护者 | 本工具仅供参考，不构成投资建议</p>
+        </footer>
+    </div>
+
+    <!-- 模态框：冷却舱 -->
+    <div class="modal-overlay" id="cooldownModal">
+        <div class="modal-content">
+            <div class="modal-emoji">🧊</div>
+            <h3 class="modal-title">认知隔离舱已启动</h3>
+            <p class="modal-text" id="modalText">Loading...</p>
+            
+            <div class="breathing-guide">
+                <span id="breatheText">深呼吸</span>
+            </div>
+            
+            <div class="modal-timer" id="modalTimer">300</div>
+            <p style="color: var(--text-secondary); margin-bottom: 15px; font-size: 0.85rem;">秒后可继续操作 | 跟随呼吸圆圈放松心情</p>
+            
+            <div class="quiz-section" id="quizSection">
+                <p class="quiz-question" id="quizQuestion"></p>
+                <div class="quiz-options" id="quizOptions"></div>
+                <div class="quiz-result" id="quizResult" style="display:none;"></div>
+            </div>
+            
+            <button class="modal-btn" id="showQuizBtn" style="margin-top: 15px;">🧠 回答问题提前解锁</button>
+            <p style="color: var(--text-secondary); font-size: 0.75rem; margin-top: 8px;">正确回答心理学问题可提前退出冷静期</p>
+        </div>
+    </div>
+    
+    <!-- 模态框：日记录入 -->
+    <div class="diary-modal" id="diaryModal">
+        <div class="diary-modal-content">
+            <h3>📝 记录交易决策</h3>
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; margin-bottom: 8px; color: var(--text-secondary); font-size: 0.9rem;">标的名称</label>
+                <input type="text" id="diaryCompany" class="search-input" style="width: 100%; min-width: auto;" placeholder="输入股票名称">
+            </div>
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; margin-bottom: 8px; color: var(--text-secondary); font-size: 0.9rem;">决策类型</label>
+                <div style="display: flex; gap: 10px;">
+                    <button class="trade-btn buy diary-type-btn" data-type="buy" style="flex:1;">买入</button>
+                    <button class="trade-btn sell diary-type-btn" data-type="sell" style="flex:1;">卖出</button>
+                    <button class="trade-btn hold diary-type-btn" data-type="hold" style="flex:1;">观望</button>
+                </div>
+            </div>
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; margin-bottom: 8px; color: var(--text-secondary); font-size: 0.9rem;">决策心理记录</label>
+                <textarea class="diary-textarea" id="diaryNote" placeholder="记录您此刻的想法、情绪和决策依据...&#10;&#10;例如：看到大V推荐后冲动买入，当时情绪比较激动..."></textarea>
+            </div>
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; margin-bottom: 8px; color: var(--text-secondary); font-size: 0.9rem;">当前情绪评分：<span id="diaryScoreDisplay">50</span></label>
+                <input type="range" id="diaryScore" min="0" max="100" value="50" style="width: 100%;">
+            </div>
+            <div class="diary-modal-btns">
+                <button class="diary-cancel-btn" id="cancelDiaryBtn">取消</button>
+                <button class="diary-save-btn" id="saveDiaryBtn">保存记录</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 模态框：沉浸式决策结果 -->
+    <div class="decision-overlay" id="decisionOverlay">
+        <button class="back-btn" id="backToMain">← 返回分析</button>
+        <div class="decision-container">
+            <div class="decision-header">
+                <span class="decision-icon" id="decisionIcon">🎯</span>
+                <h1 class="decision-title" id="decisionTitle">决策诊断结果</h1>
+                <p class="decision-subtitle" id="decisionSubtitle">基于行为金融学的智能分析</p>
+            </div>
+            
+            <div class="decision-cards" id="decisionCards"></div>
+            
+            <div class="decision-actions">
+                <button class="decision-btn decision-btn-primary" id="recordDecisionBtn">📝 记录本次决策</button>
+                <button class="decision-btn decision-btn-secondary" id="continueAnalyzeBtn">🔄 继续分析其他</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 模块化 JS 入口 -->
+    <script type="module" src="js/app.js"></script>
+</body>
+</html>
