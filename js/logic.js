@@ -1,4 +1,4 @@
-import { PROFILES, SECTOR_KW, AI_CONFIG } from './config.js';
+import { PROFILES, SECTOR_KW, AI_CONFIG, AGENT_CONFIG } from './config.js';
 import { hash, seededRandom } from './utils.js';
 
 // 应用状态
@@ -6,7 +6,20 @@ export const state = {
     currentCompany: '',
     currentScore: 50,
     useAIBackend: false,
-    diaryEntries: JSON.parse(localStorage.getItem('tradeDiary') || '[]')
+    useMultiAgent: AI_CONFIG.USE_MULTI_AGENT,
+    diaryEntries: JSON.parse(localStorage.getItem('tradeDiary') || '[]'),
+    // Multi-Agent状态
+    multiAgentState: {
+        isActive: false,
+        taskId: null,
+        agentProgress: {
+            sentiment: { status: 'pending', progress: 0, result: null },
+            technical: { status: 'pending', progress: 0, result: null },
+            psychology: { status: 'pending', progress: 0, result: null }
+        },
+        fusionResult: null,
+        eventSource: null
+    }
 };
 
 // 获取公司画像配置
@@ -161,4 +174,275 @@ export function addDiaryEntry(entry) {
 
 export function getDiaryEntries() {
     return state.diaryEntries;
+}
+
+// ==================== Multi-Agent 相关函数 ====================
+
+/**
+ * 重置Multi-Agent状态
+ */
+export function resetMultiAgentState() {
+    // 关闭现有的EventSource连接
+    if (state.multiAgentState.eventSource) {
+        state.multiAgentState.eventSource.close();
+    }
+    
+    state.multiAgentState = {
+        isActive: false,
+        taskId: null,
+        agentProgress: {
+            sentiment: { status: 'pending', progress: 0, result: null },
+            technical: { status: 'pending', progress: 0, result: null },
+            psychology: { status: 'pending', progress: 0, result: null }
+        },
+        fusionResult: null,
+        eventSource: null
+    };
+}
+
+/**
+ * 获取Agent显示名称
+ * @param {string} agentType - Agent类型标识
+ */
+export function getAgentDisplayName(agentType) {
+    const key = agentType.toLowerCase().replace('agent', '');
+    return AGENT_CONFIG.names[key] || agentType;
+}
+
+/**
+ * 获取Agent图标
+ * @param {string} agentType - Agent类型标识
+ */
+export function getAgentIcon(agentType) {
+    const key = agentType.toLowerCase().replace('agent', '');
+    return AGENT_CONFIG.icons[key] || '🤖';
+}
+
+/**
+ * 获取Agent颜色
+ * @param {string} agentType - Agent类型标识
+ */
+export function getAgentColor(agentType) {
+    const key = agentType.toLowerCase().replace('agent', '');
+    return AGENT_CONFIG.colors[key] || '#6b7280';
+}
+
+/**
+ * Multi-Agent分析（流式模式）
+ * @param {string} company - 公司名称
+ * @param {string} action - 操作意向
+ * @param {object} callbacks - 回调函数集合
+ */
+export async function fetchMultiAgentAnalysis(company, action = 'analyze', callbacks = {}) {
+    const {
+        onAgentStart = () => {},
+        onAgentProgress = () => {},
+        onAgentComplete = () => {},
+        onAgentError = () => {},
+        onSummary = () => {},
+        onError = () => {},
+        onDone = () => {}
+    } = callbacks;
+    
+    // 重置状态
+    resetMultiAgentState();
+    state.multiAgentState.isActive = true;
+    
+    // 检查是否使用流式模式
+    const useStream = AI_CONFIG.MULTI_AGENT_STREAM;
+    
+    if (useStream) {
+        // SSE流式模式
+        return new Promise((resolve, reject) => {
+            try {
+                const url = `${AI_CONFIG.URL}/api/orchestrator`;
+                
+                // 使用fetch + ReadableStream处理SSE（因为EventSource不支持POST）
+                fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ company, action, stream: true })
+                }).then(async response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error: ${response.status}`);
+                    }
+                    
+                    const reader = response.body.getReader();
+                    const decoder = new TextDecoder();
+                    let buffer = '';
+                    
+                    while (true) {
+                        const { done, value } = await reader.read();
+                        if (done) break;
+                        
+                        buffer += decoder.decode(value, { stream: true });
+                        const lines = buffer.split('\n');
+                        buffer = lines.pop() || '';
+                        
+                        for (const line of lines) {
+                            if (line.startsWith('event: ')) {
+                                const eventType = line.slice(7);
+                                continue;
+                            }
+                            if (line.startsWith('data: ')) {
+                                try {
+                                    const data = JSON.parse(line.slice(6));
+                                    handleSSEEvent(data, {
+                                        onAgentStart, onAgentProgress, onAgentComplete,
+                                        onAgentError, onSummary
+                                    });
+                                } catch (e) {
+                                    console.warn('SSE parse error:', e);
+                                }
+                            }
+                        }
+                    }
+                    
+                    state.multiAgentState.isActive = false;
+                    onDone();
+                    resolve(state.multiAgentState.fusionResult);
+                    
+                }).catch(error => {
+                    console.error('[Multi-Agent] Stream error:', error);
+                    state.multiAgentState.isActive = false;
+                    onError(error);
+                    reject(error);
+                });
+                
+            } catch (error) {
+                state.multiAgentState.isActive = false;
+                onError(error);
+                reject(error);
+            }
+        });
+    } else {
+        // 非流式模式
+        try {
+            const response = await fetch(`${AI_CONFIG.URL}/api/orchestrator`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ company, action, stream: false })
+            });
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error: ${response.status}`);
+            }
+            
+            const result = await response.json();
+            state.multiAgentState.fusionResult = result;
+            state.multiAgentState.isActive = false;
+            onSummary(result);
+            onDone();
+            return result;
+            
+        } catch (error) {
+            state.multiAgentState.isActive = false;
+            onError(error);
+            throw error;
+        }
+    }
+}
+
+/**
+ * 处理SSE事件
+ * @param {object} data - 事件数据
+ * @param {object} callbacks - 回调函数
+ */
+function handleSSEEvent(data, callbacks) {
+    const { onAgentStart, onAgentProgress, onAgentComplete, onAgentError, onSummary } = callbacks;
+    
+    if (data.agent) {
+        const agentKey = data.agent.toLowerCase().replace('agent', '');
+        
+        if (data.status === 'processing') {
+            // Agent开始
+            state.multiAgentState.agentProgress[agentKey] = {
+                status: 'processing',
+                progress: 10,
+                result: null
+            };
+            onAgentStart(data);
+        } else if (data.progress !== undefined) {
+            // Agent进度更新
+            state.multiAgentState.agentProgress[agentKey].progress = data.progress;
+            onAgentProgress(data);
+        } else if (data.status === 'completed') {
+            // Agent完成
+            state.multiAgentState.agentProgress[agentKey] = {
+                status: 'completed',
+                progress: 100,
+                result: data
+            };
+            onAgentComplete(data);
+        } else if (data.status === 'failed') {
+            // Agent失败
+            state.multiAgentState.agentProgress[agentKey] = {
+                status: 'failed',
+                progress: 0,
+                result: null,
+                error: data.error
+            };
+            onAgentError(data);
+        }
+    } else if (data.finalScore !== undefined || data.final_score !== undefined) {
+        // 编排器总结
+        state.multiAgentState.fusionResult = data;
+        state.currentScore = data.finalScore || data.final_score;
+        onSummary(data);
+    }
+}
+
+/**
+ * Multi-Agent分析（非流式，简化版）
+ * @param {string} company - 公司名称
+ * @param {string} action - 操作意向
+ */
+export async function fetchMultiAgentAnalysisSimple(company, action = 'analyze') {
+    if (!state.useAIBackend || !state.useMultiAgent) return null;
+    
+    try {
+        const response = await fetch(`${AI_CONFIG.URL}/api/orchestrator`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ company, action, stream: false })
+        });
+        
+        if (response.ok) {
+            const result = await response.json();
+            if (result.success) {
+                state.currentScore = result.finalScore;
+                return result;
+            }
+        }
+    } catch (e) {
+        console.error('[Multi-Agent] 调用失败', e);
+    }
+    return null;
+}
+
+/**
+ * 切换Multi-Agent模式
+ * @param {boolean} enabled - 是否启用
+ */
+export function toggleMultiAgentMode(enabled) {
+    state.useMultiAgent = enabled;
+    console.log(`[Multi-Agent] 模式${enabled ? '已启用' : '已禁用'}`);
+}
+
+/**
+ * 检查Multi-Agent是否可用
+ */
+export async function checkMultiAgentAvailable() {
+    if (!state.useAIBackend) return false;
+    
+    try {
+        const response = await fetch(`${AI_CONFIG.URL}/api/orchestrator`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ company: 'test', action: 'analyze', stream: false })
+        });
+        return response.ok;
+    } catch (e) {
+        return false;
+    }
 }

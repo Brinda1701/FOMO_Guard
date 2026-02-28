@@ -5,6 +5,11 @@ let cooldownTimer = null;
 let breatheInterval = null;
 let currentQuiz = null;
 let quizAnswered = false;
+let cooldownTotalSeconds = 300;
+let cooldownRemainingSeconds = 300;
+let quizAttemptCount = 0;
+let quizCorrectCount = 0;
+let feedbackTimer = null;
 
 // --- 基础 UI 更新 ---
 export function updateGauge(score, company) {
@@ -245,6 +250,59 @@ function stopBreathingGuide() {
     }
 }
 
+/**
+ * 更新环形倒计时进度
+ * @param {number} remaining - 剩余秒数
+ * @param {number} total - 总秒数
+ */
+function updateCountdownRing(remaining, total) {
+    const ring = document.getElementById('countdownRingProgress');
+    if (!ring) return;
+    
+    const circumference = 2 * Math.PI * 54; // r=54
+    const progress = remaining / total;
+    const offset = circumference * (1 - progress);
+    
+    ring.style.strokeDasharray = `${circumference}`;
+    ring.style.strokeDashoffset = `${offset}`;
+    
+    // 根据剩余时间改变颜色
+    if (remaining <= 30) {
+        ring.style.stroke = 'var(--accent-green)';
+    } else if (remaining <= 120) {
+        ring.style.stroke = 'var(--accent-yellow)';
+    } else {
+        ring.style.stroke = 'var(--accent-red)';
+    }
+}
+
+/**
+ * 更新冷却阶段提示
+ * @param {number} remaining - 剩余秒数
+ * @param {number} total - 总秒数
+ */
+function updateCooldownPhase(remaining, total) {
+    const phaseIcon = document.getElementById('phaseIcon');
+    const phaseText = document.getElementById('phaseText');
+    if (!phaseIcon || !phaseText) return;
+    
+    const elapsed = total - remaining;
+    
+    if (elapsed < 30) {
+        phaseIcon.textContent = '🫁';
+        phaseText.textContent = '深呼吸放松阶段';
+    } else if (elapsed < 90) {
+        phaseIcon.textContent = '🧠';
+        phaseText.textContent = '认知反思阶段 - 回顾你的决策动机';
+    } else if (elapsed < 180) {
+        phaseIcon.textContent = '📊';
+        phaseText.textContent = '理性评估阶段 - 重新审视数据';
+    } else {
+        phaseIcon.textContent = '✅';
+        phaseText.textContent = '即将解锁 - 准备做出冷静决策';
+    }
+}
+
 export function showCooldown(msg, isDanger) {
     const modal = document.getElementById('cooldownModal');
     const content = modal.querySelector('.modal-content');
@@ -256,19 +314,43 @@ export function showCooldown(msg, isDanger) {
     document.getElementById('modalText').textContent = msg;
     modal.style.display = 'flex';
     
+    // 重置测试状态
+    quizAttemptCount = 0;
+    quizCorrectCount = 0;
+    const quizScoreBadge = document.getElementById('quizScoreBadge');
+    if (quizScoreBadge) quizScoreBadge.style.display = 'none';
+    
     startBreathingGuide();
     
-    let sec = 300;
+    cooldownTotalSeconds = 300;
+    cooldownRemainingSeconds = 300;
+    let sec = cooldownTotalSeconds;
     timerDisplay.textContent = sec;
+    updateCountdownRing(sec, cooldownTotalSeconds);
+    updateCooldownPhase(sec, cooldownTotalSeconds);
 
     if (cooldownTimer) clearInterval(cooldownTimer);
     cooldownTimer = setInterval(() => {
         sec--;
+        cooldownRemainingSeconds = sec;
         timerDisplay.textContent = sec;
+        updateCountdownRing(sec, cooldownTotalSeconds);
+        updateCooldownPhase(sec, cooldownTotalSeconds);
+        
         if (sec <= 0) {
             clearInterval(cooldownTimer);
-            modal.style.display = 'none';
             stopBreathingGuide();
+            // 倒计时结束弹窗反馈
+            showFeedbackPopup({
+                icon: '✅',
+                title: '冷静期已结束',
+                message: '您已完成认知冷却，现在可以做出更理性的决策。',
+                duration: 3000,
+                type: 'success'
+            });
+            setTimeout(() => {
+                modal.style.display = 'none';
+            }, 500);
         }
     }, 1000);
 }
@@ -279,9 +361,13 @@ export function showQuiz() {
     const quizQuestion = document.getElementById('quizQuestion');
     const quizOptions = document.getElementById('quizOptions');
     const quizResult = document.getElementById('quizResult');
+    const quizBadge = document.getElementById('quizBadge');
     
     currentQuiz = PSYCHOLOGY_QUIZZES[Math.floor(Math.random() * PSYCHOLOGY_QUIZZES.length)];
     quizAnswered = false;
+    quizAttemptCount++;
+    
+    if (quizBadge) quizBadge.textContent = `第 ${quizAttemptCount} 题`;
     
     quizQuestion.textContent = currentQuiz.question;
     quizOptions.innerHTML = currentQuiz.options.map((opt, i) => `
@@ -312,9 +398,26 @@ function handleQuizAnswer(e) {
     });
     
     if (isCorrect) {
+        quizCorrectCount++;
+        const quizScoreBadge = document.getElementById('quizScoreBadge');
+        if (quizScoreBadge) {
+            quizScoreBadge.textContent = `正确: ${quizCorrectCount}`;
+            quizScoreBadge.style.display = 'inline-block';
+        }
+        
         quizResult.className = 'quiz-result success';
         quizResult.innerHTML = `✅ 回答正确！${currentQuiz.explanation}<br><br>冷静期已解除，请谨慎决策。`;
         quizResult.style.display = 'block';
+        
+        // 正确回答 -> 弹窗反馈 + 解锁
+        showFeedbackPopup({
+            icon: '🎉',
+            title: '答题正确 - 冷静期解除',
+            message: `您正确识别了"${currentQuiz.options[currentQuiz.correct]}"，展现了扎实的投资心理学素养。`,
+            duration: 3000,
+            type: 'success'
+        });
+        
         setTimeout(() => {
             if (cooldownTimer) clearInterval(cooldownTimer);
             document.getElementById('cooldownModal').style.display = 'none';
@@ -322,13 +425,126 @@ function handleQuizAnswer(e) {
         }, 3000);
     } else {
         quizResult.className = 'quiz-result fail';
-        quizResult.innerHTML = `❌ 回答错误。正确答案是：${currentQuiz.options[currentQuiz.correct]}<br><br>${currentQuiz.explanation}<br><br>请继续等待冷静期结束，或重新作答。`;
+        
+        // 计算因错误增加的冷却时间
+        const penaltySeconds = 30;
+        cooldownRemainingSeconds = Math.min(cooldownRemainingSeconds + penaltySeconds, cooldownTotalSeconds);
+        document.getElementById('modalTimer').textContent = cooldownRemainingSeconds;
+        updateCountdownRing(cooldownRemainingSeconds, cooldownTotalSeconds);
+        
+        quizResult.innerHTML = `
+            ❌ 回答错误。正确答案是：<strong>${currentQuiz.options[currentQuiz.correct]}</strong>
+            <br><br>${currentQuiz.explanation}
+            <br><br><span style="color: var(--accent-red);">⏱️ 冷却时间 +${penaltySeconds}秒</span>
+            <br>请继续等待冷静期结束，或重新作答。
+        `;
         quizResult.style.display = 'block';
+        
+        // 错误回答 -> 弹窗反馈
+        showFeedbackPopup({
+            icon: '❌',
+            title: '答题错误 - 继续冷静',
+            message: `冷却时间增加${penaltySeconds}秒。正确答案是"${currentQuiz.options[currentQuiz.correct]}"。`,
+            duration: 3000,
+            type: 'error'
+        });
+        
         setTimeout(() => {
             document.getElementById('showQuizBtn').style.display = 'block';
             document.getElementById('showQuizBtn').textContent = '🔄 重新作答';
         }, 2000);
     }
+}
+
+// --- 通用反馈弹窗 ---
+/**
+ * 显示操作反馈弹窗（内置倒计时自动关闭）
+ * @param {object} options - 弹窗配置
+ * @param {string} options.icon - 图标
+ * @param {string} options.title - 标题
+ * @param {string} options.message - 消息内容
+ * @param {number} options.duration - 显示时长(ms)
+ * @param {string} options.type - 类型 (success/error/warning/info)
+ * @param {function} options.onClose - 关闭回调
+ */
+export function showFeedbackPopup(options = {}) {
+    const {
+        icon = '✓',
+        title = '操作完成',
+        message = '',
+        duration = 3000,
+        type = 'info',
+        onClose = null
+    } = options;
+    
+    const popup = document.getElementById('feedbackPopup');
+    const iconEl = document.getElementById('feedbackIcon');
+    const titleEl = document.getElementById('feedbackTitle');
+    const messageEl = document.getElementById('feedbackMessage');
+    const countdownBar = document.getElementById('feedbackCountdownBar');
+    const timerText = document.getElementById('feedbackTimerText');
+    
+    if (!popup) return;
+    
+    // 清除之前的计时器
+    if (feedbackTimer) {
+        clearInterval(feedbackTimer);
+        feedbackTimer = null;
+    }
+    
+    // 设置内容
+    iconEl.textContent = icon;
+    titleEl.textContent = title;
+    messageEl.textContent = message;
+    
+    // 设置类型样式
+    popup.querySelector('.feedback-popup-content').className = `feedback-popup-content feedback-${type}`;
+    
+    // 显示弹窗
+    popup.style.display = 'flex';
+    popup.classList.add('active');
+    
+    // 倒计时进度条
+    const totalMs = duration;
+    let remainingMs = totalMs;
+    const intervalMs = 50;
+    
+    countdownBar.style.width = '100%';
+    timerText.textContent = `${Math.ceil(remainingMs / 1000)}秒后自动关闭`;
+    
+    feedbackTimer = setInterval(() => {
+        remainingMs -= intervalMs;
+        const percent = (remainingMs / totalMs) * 100;
+        countdownBar.style.width = `${Math.max(0, percent)}%`;
+        timerText.textContent = `${Math.ceil(Math.max(0, remainingMs) / 1000)}秒后自动关闭`;
+        
+        if (remainingMs <= 0) {
+            clearInterval(feedbackTimer);
+            feedbackTimer = null;
+            closeFeedbackPopup();
+            if (onClose) onClose();
+        }
+    }, intervalMs);
+    
+    // 点击关闭
+    popup.onclick = (e) => {
+        if (e.target === popup) {
+            clearInterval(feedbackTimer);
+            feedbackTimer = null;
+            closeFeedbackPopup();
+            if (onClose) onClose();
+        }
+    };
+}
+
+function closeFeedbackPopup() {
+    const popup = document.getElementById('feedbackPopup');
+    if (!popup) return;
+    
+    popup.classList.remove('active');
+    setTimeout(() => {
+        popup.style.display = 'none';
+    }, 300);
 }
 
 // --- 交易日记 ---
@@ -406,11 +622,15 @@ export function createEmotionParticles(score) {
     }
 }
 
-export function showLoading(isAI) {
+export function showLoading(isAI, mode = 'single') {
+    const modeText = mode === 'Multi-Agent' 
+        ? '🤖 Multi-Agent 协作分析中...' 
+        : (isAI ? '🤖 AI 正在分析全网舆情...' : '正在分析全网舆情...');
+    
     document.getElementById('gaugeContainer').innerHTML = `
         <div class="loading">
             <div class="spinner"></div>
-            <span>${isAI ? '🤖 AI 正在分析全网舆情...' : '正在分析全网舆情...'}</span>
+            <span>${modeText}</span>
         </div>
     `;
 }

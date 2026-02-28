@@ -1,6 +1,32 @@
 export const AI_CONFIG = {
-    URL: 'http://localhost:5000',
-    TIMEOUT: 3000
+    // 部署时使用相对路径（同域），本地开发可通过环境变量覆盖
+    URL: '',
+    TIMEOUT: 8000,
+    // Multi-Agent模式配置
+    USE_MULTI_AGENT: true,  // 是否启用Multi-Agent模式
+    MULTI_AGENT_STREAM: true,  // 是否使用SSE流式输出
+    AGENT_TIMEOUT: 5000,  // 单个Agent超时时间
+    TOTAL_TIMEOUT: 8000   // 总流程超时时间
+};
+
+// Agent配置
+export const AGENT_CONFIG = {
+    agents: ['sentiment', 'technical', 'psychology'],
+    names: {
+        sentiment: '情绪分析Agent',
+        technical: '技术分析Agent',
+        psychology: '心理诊断Agent'
+    },
+    icons: {
+        sentiment: '😊',
+        technical: '📊',
+        psychology: '🧠'
+    },
+    colors: {
+        sentiment: '#3b82f6',  // 蓝色
+        technical: '#f59e0b',  // 橙色
+        psychology: '#8b5cf6'  // 紫色
+    }
 };
 
 export const PROFILES = {
@@ -105,3 +131,77 @@ export const PSYCHOLOGY_QUIZZES = [
         explanation: "处置效应是指投资者倾向于过早卖出盈利股票，而过久持有亏损股票。"
     }
 ];
+
+// 行业知识库 (RAG数据增强)
+export const INDUSTRY_KNOWLEDGE = {
+    '科技': {
+        risk_factors: ['技术迭代风险', '竞争加剧', '监管政策变化', '人才流失'],
+        positive_signals: ['研发投入增长', '专利数量增加', '市场份额提升', '新产品发布'],
+        sentiment_keywords: ['创新', '突破', 'AI', '芯片', '算力', '研发'],
+        typical_pe: { min: 20, max: 50 }
+    },
+    '消费': {
+        risk_factors: ['消费降级', '品牌老化', '渠道变革', '原材料涨价'],
+        positive_signals: ['品牌升级', '渠道拓展', '提价成功', '新品爆款'],
+        sentiment_keywords: ['业绩', '销量', '品牌', '高端', '消费', '零售'],
+        typical_pe: { min: 15, max: 35 }
+    },
+    '金融': {
+        risk_factors: ['利率下行', '资产质量恶化', '监管趋严', '经济下行'],
+        positive_signals: ['息差改善', '不良率下降', '分红提升', '数字化转型'],
+        sentiment_keywords: ['利率', '坏账', '分红', '监管', '风控', '转型'],
+        typical_pe: { min: 5, max: 12 }
+    },
+    '新能源': {
+        risk_factors: ['补贴退坡', '产能过剩', '技术路线变化', '原材料波动'],
+        positive_signals: ['出海订单增长', '新技术突破', '成本下降', '政策支持'],
+        sentiment_keywords: ['电池', '储能', '出海', '产能', '降本', '技术'],
+        typical_pe: { min: 25, max: 60 }
+    },
+    '医药': {
+        risk_factors: ['集采降价', '研发失败', '审批延迟', '专利到期'],
+        positive_signals: ['创新药获批', '临床进展顺利', '出海成功', '并购整合'],
+        sentiment_keywords: ['研发', '审批', '集采', '创新药', '临床', '出海'],
+        typical_pe: { min: 20, max: 45 }
+    },
+    '房地产': {
+        risk_factors: ['政策调控', '销售下滑', '现金流紧张', '债务风险'],
+        positive_signals: ['政策放松', '销售回暖', '融资改善', '拿地积极'],
+        sentiment_keywords: ['政策', '销售', '债务', '融资', '现金流', '拿地'],
+        typical_pe: { min: 3, max: 10 }
+    },
+    '互联网': {
+        risk_factors: ['流量见顶', '监管趋严', '竞争加剧', '变现困难'],
+        positive_signals: ['用户增长', '变现效率提升', '新业务突破', '出海成功'],
+        sentiment_keywords: ['流量', '变现', '监管', '竞争', '出海', 'AI'],
+        typical_pe: { min: 15, max: 40 }
+    }
+};
+
+// 公司增强画像 (扩展PROFILES)
+export const COMPANY_PROFILES_ENHANCED = {
+    '茅台': {
+        recent_events: [
+            { date: '2025-02', event: '出厂价调整', impact: 'positive' },
+            { date: '2025-01', event: '春节动销良好', impact: 'positive' }
+        ],
+        analyst_ratings: { buy: 25, hold: 5, sell: 1 },
+        key_metrics: { pe: 28, pb: 8.5, dividend_yield: 2.1 }
+    },
+    '比亚迪': {
+        recent_events: [
+            { date: '2025-02', event: '欧洲建厂计划', impact: 'positive' },
+            { date: '2025-01', event: '月销量创新高', impact: 'positive' }
+        ],
+        analyst_ratings: { buy: 30, hold: 8, sell: 2 },
+        key_metrics: { pe: 22, pb: 4.2, dividend_yield: 0.5 }
+    },
+    '特斯拉': {
+        recent_events: [
+            { date: '2025-02', event: 'FSD订阅降价', impact: 'neutral' },
+            { date: '2025-01', event: '新车型发布', impact: 'positive' }
+        ],
+        analyst_ratings: { buy: 15, hold: 12, sell: 8 },
+        key_metrics: { pe: 65, pb: 12.5, dividend_yield: 0 }
+    }
+};

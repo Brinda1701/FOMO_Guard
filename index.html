@@ -45,6 +45,46 @@
                         <p>请输入公司名称开始分析市场情绪</p>
                     </div>
                 </div>
+                <!-- Multi-Agent进度面板 -->
+                <div class="agent-progress-panel" id="agentProgressPanel" style="display:none;">
+                    <div class="agent-progress-header">
+                        <span class="agent-progress-title">Multi-Agent 分析中</span>
+                        <span class="agent-mode-badge" id="agentModeBadge">AI协作模式</span>
+                    </div>
+                    <div class="agent-progress-list">
+                        <div class="agent-progress-item" data-agent="sentiment">
+                            <div class="agent-info">
+                                <span class="agent-icon">😊</span>
+                                <span class="agent-name">情绪分析Agent</span>
+                            </div>
+                            <div class="agent-progress-bar">
+                                <div class="agent-progress-fill" id="sentimentProgress"></div>
+                            </div>
+                            <span class="agent-status" id="sentimentStatus">等待中</span>
+                        </div>
+                        <div class="agent-progress-item" data-agent="technical">
+                            <div class="agent-info">
+                                <span class="agent-icon">📊</span>
+                                <span class="agent-name">技术分析Agent</span>
+                            </div>
+                            <div class="agent-progress-bar">
+                                <div class="agent-progress-fill" id="technicalProgress"></div>
+                            </div>
+                            <span class="agent-status" id="technicalStatus">等待中</span>
+                        </div>
+                        <div class="agent-progress-item" data-agent="psychology">
+                            <div class="agent-info">
+                                <span class="agent-icon">🧠</span>
+                                <span class="agent-name">心理诊断Agent</span>
+                            </div>
+                            <div class="agent-progress-bar">
+                                <div class="agent-progress-fill" id="psychologyProgress"></div>
+                            </div>
+                            <span class="agent-status" id="psychologyStatus">等待中</span>
+                        </div>
+                    </div>
+                    <div class="agent-thinking-chain" id="agentThinkingChain"></div>
+                </div>
             </div>
 
             <div class="card">
@@ -153,14 +193,36 @@
             <h3 class="modal-title">认知隔离舱已启动</h3>
             <p class="modal-text" id="modalText">Loading...</p>
             
+            <!-- 环形倒计时 -->
+            <div class="countdown-ring-container">
+                <svg class="countdown-ring" viewBox="0 0 120 120">
+                    <circle class="countdown-ring-bg" cx="60" cy="60" r="54" />
+                    <circle class="countdown-ring-progress" id="countdownRingProgress" cx="60" cy="60" r="54" />
+                </svg>
+                <div class="countdown-ring-text">
+                    <div class="countdown-time" id="modalTimer">300</div>
+                    <div class="countdown-label">秒</div>
+                </div>
+            </div>
+            
+            <!-- 冷却阶段提示 -->
+            <div class="cooldown-phase" id="cooldownPhase">
+                <span class="phase-icon" id="phaseIcon">🫁</span>
+                <span class="phase-text" id="phaseText">深呼吸放松阶段</span>
+            </div>
+            
             <div class="breathing-guide">
                 <span id="breatheText">深呼吸</span>
             </div>
             
-            <div class="modal-timer" id="modalTimer">300</div>
-            <p style="color: var(--text-secondary); margin-bottom: 15px; font-size: 0.85rem;">秒后可继续操作 | 跟随呼吸圆圈放松心情</p>
+            <p style="color: var(--text-secondary); margin-bottom: 15px; font-size: 0.85rem;">跟随呼吸圆圈放松心情 | 正确答题可提前解锁</p>
             
+            <!-- 心理测试区域 -->
             <div class="quiz-section" id="quizSection">
+                <div class="quiz-header">
+                    <span class="quiz-badge" id="quizBadge">第 1 题</span>
+                    <span class="quiz-score-badge" id="quizScoreBadge" style="display:none;">得分: 0</span>
+                </div>
                 <p class="quiz-question" id="quizQuestion"></p>
                 <div class="quiz-options" id="quizOptions"></div>
                 <div class="quiz-result" id="quizResult" style="display:none;"></div>
@@ -168,6 +230,19 @@
             
             <button class="modal-btn" id="showQuizBtn" style="margin-top: 15px;">🧠 回答问题提前解锁</button>
             <p style="color: var(--text-secondary); font-size: 0.75rem; margin-top: 8px;">正确回答心理学问题可提前退出冷静期</p>
+        </div>
+    </div>
+    
+    <!-- 操作反馈弹窗（通用） -->
+    <div class="feedback-popup" id="feedbackPopup" style="display:none;">
+        <div class="feedback-popup-content">
+            <div class="feedback-icon" id="feedbackIcon">✓</div>
+            <div class="feedback-title" id="feedbackTitle">操作成功</div>
+            <div class="feedback-message" id="feedbackMessage"></div>
+            <div class="feedback-countdown">
+                <div class="feedback-countdown-bar" id="feedbackCountdownBar"></div>
+            </div>
+            <div class="feedback-timer-text" id="feedbackTimerText">3秒后自动关闭</div>
         </div>
     </div>
     

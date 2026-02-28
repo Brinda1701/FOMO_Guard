@@ -1766,3 +1766,261 @@ body::before {
     color: var(--text-secondary);
     margin-top: 5px;
 }
+
+/* ===== Multi-Agent进度面板样式 ===== */
+.agent-progress-panel {
+    margin-top: 20px;
+    padding: 20px;
+    background: var(--bg-secondary);
+    border-radius: 15px;
+    border: 1px solid var(--border-color);
+    animation: fadeIn 0.3s ease;
+}
+
+.agent-progress-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 18px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.agent-progress-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--accent-purple);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.agent-progress-title::before {
+    content: '🤖';
+}
+
+.agent-mode-badge {
+    font-size: 0.75rem;
+    padding: 4px 12px;
+    background: linear-gradient(135deg, var(--accent-purple), var(--accent-blue));
+    color: white;
+    border-radius: 20px;
+    font-weight: 600;
+}
+
+.agent-progress-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.agent-progress-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: var(--bg-card);
+    border-radius: 10px;
+    transition: all 0.3s ease;
+}
+
+.agent-progress-item:hover {
+    transform: translateX(5px);
+}
+
+.agent-progress-item[data-agent="sentiment"] {
+    border-left: 3px solid #3b82f6;
+}
+
+.agent-progress-item[data-agent="technical"] {
+    border-left: 3px solid #f59e0b;
+}
+
+.agent-progress-item[data-agent="psychology"] {
+    border-left: 3px solid #8b5cf6;
+}
+
+.agent-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 140px;
+}
+
+.agent-icon {
+    font-size: 1.2rem;
+}
+
+.agent-name {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.agent-progress-bar {
+    flex: 1;
+    height: 8px;
+    background: var(--bg-secondary);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.agent-progress-fill {
+    height: 100%;
+    width: 0%;
+    border-radius: 4px;
+    transition: width 0.3s ease;
+}
+
+.agent-progress-item[data-agent="sentiment"] .agent-progress-fill {
+    background: linear-gradient(90deg, #3b82f6, #60a5fa);
+}
+
+.agent-progress-item[data-agent="technical"] .agent-progress-fill {
+    background: linear-gradient(90deg, #f59e0b, #fbbf24);
+}
+
+.agent-progress-item[data-agent="psychology"] .agent-progress-fill {
+    background: linear-gradient(90deg, #8b5cf6, #a78bfa);
+}
+
+.agent-status {
+    font-size: 0.75rem;
+    min-width: 60px;
+    text-align: right;
+    color: var(--text-secondary);
+}
+
+.agent-status.processing {
+    color: var(--accent-blue);
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+.agent-status.completed {
+    color: var(--accent-green);
+}
+
+.agent-status.failed {
+    color: var(--accent-red);
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+/* Agent思维链展示 */
+.agent-thinking-chain {
+    margin-top: 15px;
+    padding: 12px;
+    background: var(--bg-card);
+    border-radius: 10px;
+    border: 1px dashed var(--border-color);
+    max-height: 150px;
+    overflow-y: auto;
+    display: none;
+}
+
+.agent-thinking-chain.active {
+    display: block;
+}
+
+.thinking-item {
+    display: flex;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border-color);
+    font-size: 0.85rem;
+}
+
+.thinking-item:last-child {
+    border-bottom: none;
+}
+
+.thinking-agent {
+    font-weight: 600;
+    min-width: 80px;
+}
+
+.thinking-agent.sentiment { color: #3b82f6; }
+.thinking-agent.technical { color: #f59e0b; }
+.thinking-agent.psychology { color: #8b5cf6; }
+
+.thinking-content {
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+/* Agent结果摘要 */
+.agent-result-summary {
+    margin-top: 15px;
+    padding: 15px;
+    background: linear-gradient(135deg, var(--bg-card), var(--bg-secondary));
+    border-radius: 12px;
+    border: 1px solid var(--accent-purple);
+}
+
+.agent-consensus {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.consensus-badge {
+    padding: 4px 12px;
+    border-radius: 15px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.consensus-badge.aligned {
+    background: rgba(16, 185, 129, 0.2);
+    color: var(--accent-green);
+}
+
+.consensus-badge.divergent {
+    background: rgba(245, 158, 11, 0.2);
+    color: var(--accent-yellow);
+}
+
+.agent-scores-breakdown {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.agent-score-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    font-size: 0.8rem;
+}
+
+.agent-score-value {
+    font-weight: 700;
+}
+
+/* 响应式适配 */
+@media (max-width: 768px) {
+    .agent-progress-item {
+        flex-wrap: wrap;
+    }
+    
+    .agent-info {
+        min-width: 100%;
+        margin-bottom: 8px;
+    }
+    
+    .agent-progress-bar {
+        flex: 1;
+        min-width: 60%;
+    }
+    
+    .agent-status {
+        min-width: auto;
+    }
+}
