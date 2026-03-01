@@ -135,6 +135,29 @@ function setupEventListeners() {
     document.getElementById('diaryScore').addEventListener('input', function() {
         document.getElementById('diaryScoreDisplay').textContent = this.value;
     });
+
+    // 日记删除
+    document.getElementById('diaryList').addEventListener('click', (event) => {
+        const deleteBtn = event.target.closest('.diary-delete-btn');
+        if (!deleteBtn) return;
+
+        const entryId = Number(deleteBtn.dataset.entryId);
+        if (!entryId) return;
+
+        const shouldDelete = confirm('确定删除这条决策记录吗？删除后无法恢复。');
+        if (!shouldDelete) return;
+
+        const hasRemoved = Logic.removeDiaryEntry(entryId);
+        if (hasRemoved) {
+            UI.renderDiaryList(Logic.getDiaryEntries());
+            UI.showFeedbackPopup({
+                type: 'success',
+                title: '删除成功',
+                message: '该条决策记录已删除。',
+                durationMs: 1800
+            });
+        }
+    });
 }
 
 // 核心分析流程
@@ -457,16 +480,30 @@ function showAgentConsensus(summary) {
 // 决策检查流程
 function handleImpulseCheck(action) {
     if (!Logic.state.currentCompany) { alert('请先分析一家标的'); return; }
-    
+
     const result = Logic.evaluateImpulse(action, Logic.state.currentCompany, Logic.state.currentScore);
-    
-    UI.showDecisionResult(
-        result.diagnosis, 
-        action, 
-        Logic.state.currentCompany, 
-        Logic.state.currentScore, 
-        result.shouldCooldown
+
+    const showDecisionOverlay = () => UI.showDecisionResult(
+        result.diagnosis,
+        action,
+        Logic.state.currentCompany,
+        Logic.state.currentScore,
+        false
     );
+
+    if (result.shouldCooldown) {
+        document.querySelector('.container').classList.add('impact-active');
+        setTimeout(() => document.querySelector('.container').classList.remove('impact-active'), 500);
+
+        UI.showCooldown(
+            `${result.diagnosis.message}\n\n请先完成冷静期，再查看本次决策复盘。`,
+            true,
+            showDecisionOverlay
+        );
+        return;
+    }
+
+    showDecisionOverlay();
 }
 
 // 保存日记流程
