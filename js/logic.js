@@ -146,7 +146,8 @@ export function evaluateImpulse(action, company, score) {
     
     const level = score > 60 ? 'high' : 'low';
     const diagnosis = diagnosisLib[action][level];
-    const shouldCooldown = (action === 'buy' && score > 60) || (action === 'sell' && score < 40);
+    // 统一规则：只要本次结论属于 warning（错误/高风险决策），立即进入冷静期
+    const shouldCooldown = diagnosis.type === 'warning';
     
     return { diagnosis, shouldCooldown, quote: diagnosis.quote };
 }
@@ -174,6 +175,18 @@ export function addDiaryEntry(entry) {
 
 export function getDiaryEntries() {
     return state.diaryEntries;
+}
+
+export function removeDiaryEntry(entryId) {
+    const originalLength = state.diaryEntries.length;
+    state.diaryEntries = state.diaryEntries.filter(entry => entry.id !== entryId);
+    const hasRemoved = state.diaryEntries.length !== originalLength;
+
+    if (hasRemoved) {
+        localStorage.setItem('tradeDiary', JSON.stringify(state.diaryEntries));
+    }
+
+    return hasRemoved;
 }
 
 // ==================== Multi-Agent 相关函数 ====================
