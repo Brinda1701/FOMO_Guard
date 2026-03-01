@@ -176,6 +176,18 @@ export function getDiaryEntries() {
     return state.diaryEntries;
 }
 
+export function removeDiaryEntry(entryId) {
+    const originalLength = state.diaryEntries.length;
+    state.diaryEntries = state.diaryEntries.filter(entry => entry.id !== entryId);
+    const hasRemoved = state.diaryEntries.length !== originalLength;
+
+    if (hasRemoved) {
+        localStorage.setItem('tradeDiary', JSON.stringify(state.diaryEntries));
+    }
+
+    return hasRemoved;
+}
+
 // ==================== Multi-Agent 相关函数 ====================
 
 /**
