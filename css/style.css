@@ -956,7 +956,7 @@ body::before {
 /* 红色警示模态框 */
 .modal-danger { 
     background: linear-gradient(145deg, rgba(58, 16, 16, 0.97), rgba(33, 8, 8, 0.95)) !important; 
-    border: 3px solid #ef4444 !important; 
+    border: 2px solid color-mix(in srgb, var(--accent-red) 88%, #ffffff) !important; 
     box-shadow: 0 0 80px rgba(239,68,68,0.6), inset 0 0 60px rgba(239,68,68,0.1) !important;
 }
 
@@ -967,6 +967,91 @@ body::before {
 .modal-danger .modal-timer { 
     color: #ef4444 !important;
     animation: timerPulse 1s ease-in-out infinite;
+}
+
+
+/* 冷却倒计时环 */
+.countdown-ring-container {
+    position: relative;
+    width: 140px;
+    height: 140px;
+    margin: 10px auto 16px;
+}
+
+.countdown-ring {
+    width: 140px;
+    height: 140px;
+    transform: rotate(-90deg);
+}
+
+.countdown-ring-bg {
+    fill: rgba(15, 23, 42, 0.82);
+    stroke: rgba(239, 68, 68, 0.2);
+    stroke-width: 8;
+}
+
+.countdown-ring-progress {
+    fill: none;
+    stroke: var(--accent-red);
+    stroke-width: 8;
+    stroke-linecap: round;
+    transition: stroke-dashoffset 0.35s linear, stroke 0.35s ease;
+}
+
+.countdown-ring-text {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+    text-align: center;
+}
+
+.countdown-time {
+    font-size: 2.05rem;
+    line-height: 1;
+    font-weight: 800;
+    color: #ffffff;
+    text-shadow: 0 0 16px rgba(239, 68, 68, 0.35);
+}
+
+.countdown-label {
+    margin-top: 4px;
+    font-size: 0.82rem;
+    color: rgba(255, 255, 255, 0.88);
+}
+
+.cooldown-phase {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-radius: 999px;
+    background: rgba(239, 68, 68, 0.16);
+    border: 1px solid rgba(239, 68, 68, 0.35);
+    color: #ffe4e6;
+    margin-bottom: 10px;
+}
+
+.modal-danger .modal-title,
+.modal-danger .modal-text,
+.modal-danger #breatheText,
+.modal-danger .phase-text,
+.modal-danger .countdown-time,
+.modal-danger .countdown-label {
+    color: #ffffff !important;
+}
+
+.modal-danger .countdown-ring-bg {
+    fill: rgba(0, 0, 0, 0.56);
+    stroke: rgba(248, 113, 113, 0.25);
+}
+
+.modal-danger .cooldown-phase {
+    background: rgba(239, 68, 68, 0.22);
+    border-color: rgba(248, 113, 113, 0.5);
 }
 
 @keyframes timerPulse {
@@ -1038,7 +1123,7 @@ body::before {
     left: 0;
     width: 100%;
     height: 100%;
-    background: var(--bg-primary);
+    background: var(--overlay-surface-bg);
     z-index: 2000;
     overflow-y: auto;
     animation: slideIn 0.5s ease;
@@ -1094,7 +1179,7 @@ body::before {
 }
 
 .decision-card {
-    background: var(--glass-bg);
+    background: var(--surface-card-bg);
     border: 1px solid var(--border-color);
     border-radius: 20px;
     padding: 25px;
@@ -1565,6 +1650,45 @@ body::before {
     color: var(--text-secondary);
     font-style: italic;
 }
+
+
+
+.feedback-popup {
+    position: fixed;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: color-mix(in srgb, var(--modal-overlay-bg) 88%, transparent);
+    z-index: 2100;
+    opacity: 0;
+    transition: opacity 0.25s ease;
+}
+
+.feedback-popup.active {
+    opacity: 1;
+}
+
+.feedback-popup-content {
+    width: min(92vw, 420px);
+    background: var(--modal-surface-bg);
+    border: 1px solid color-mix(in srgb, var(--border-color) 75%, transparent);
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: var(--modal-shadow);
+    text-align: center;
+}
+
+.feedback-icon { font-size: 2rem; margin-bottom: 8px; }
+.feedback-title { font-size: 1.1rem; font-weight: 700; color: var(--text-primary); }
+.feedback-message { margin-top: 8px; color: var(--text-secondary); font-size: 0.92rem; line-height: 1.6; }
+.feedback-countdown { margin-top: 14px; height: 6px; border-radius: 999px; background: var(--bg-secondary); overflow: hidden; }
+.feedback-countdown-bar { height: 100%; width: 100%; background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple)); transform-origin: left center; }
+.feedback-timer-text { margin-top: 8px; font-size: 0.8rem; color: var(--text-secondary); }
+.feedback-success .feedback-icon { color: var(--accent-green); }
+.feedback-error .feedback-icon { color: var(--accent-red); }
+.feedback-warning .feedback-icon { color: var(--accent-yellow); }
+.feedback-info .feedback-icon { color: var(--accent-blue); }
 
 /* 日记弹窗 */
 .diary-modal {

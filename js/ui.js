@@ -7,6 +7,7 @@ let currentQuiz = null;
 let quizAnswered = false;
 let cooldownTotalSeconds = 300;
 let cooldownRemainingSeconds = 300;
+let cooldownUnlockCallback = null;
 let quizAttemptCount = 0;
 let quizCorrectCount = 0;
 let feedbackTimer = null;
@@ -216,13 +217,10 @@ export function showDecisionResult(diagnosis, action, currentCompany, currentSco
     `;
     
     overlay.classList.add('active');
-    
+
+    // 冷静期触发时机由上层流程控制（先冷却再展示结果）
     if (shouldCooldown) {
-        setTimeout(() => {
-            document.querySelector('.container').classList.add('impact-active');
-            setTimeout(() => document.querySelector('.container').classList.remove('impact-active'), 500);
-            showCooldown(diagnosis.quote, true);
-        }, 800);
+        console.debug('[Decision] shouldCooldown=true, cooldown is controlled by app flow');
     }
 }
 
@@ -303,7 +301,7 @@ function updateCooldownPhase(remaining, total) {
     }
 }
 
-export function showCooldown(msg, isDanger) {
+export function showCooldown(msg, isDanger, onUnlock = null) {
     const modal = document.getElementById('cooldownModal');
     const content = modal.querySelector('.modal-content');
     const timerDisplay = document.getElementById('modalTimer');
@@ -313,6 +311,7 @@ export function showCooldown(msg, isDanger) {
 
     document.getElementById('modalText').textContent = msg;
     modal.style.display = 'flex';
+    cooldownUnlockCallback = typeof onUnlock === 'function' ? onUnlock : null;
     
     // 重置测试状态
     quizAttemptCount = 0;
@@ -350,6 +349,11 @@ export function showCooldown(msg, isDanger) {
             });
             setTimeout(() => {
                 modal.style.display = 'none';
+                if (cooldownUnlockCallback) {
+                    const callback = cooldownUnlockCallback;
+                    cooldownUnlockCallback = null;
+                    callback();
+                }
             }, 500);
         }
     }, 1000);
@@ -422,6 +426,11 @@ function handleQuizAnswer(e) {
             if (cooldownTimer) clearInterval(cooldownTimer);
             document.getElementById('cooldownModal').style.display = 'none';
             stopBreathingGuide();
+            if (cooldownUnlockCallback) {
+                const callback = cooldownUnlockCallback;
+                cooldownUnlockCallback = null;
+                callback();
+            }
         }, 3000);
     } else {
         quizResult.className = 'quiz-result fail';

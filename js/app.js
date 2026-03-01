@@ -480,16 +480,30 @@ function showAgentConsensus(summary) {
 // 决策检查流程
 function handleImpulseCheck(action) {
     if (!Logic.state.currentCompany) { alert('请先分析一家标的'); return; }
-    
+
     const result = Logic.evaluateImpulse(action, Logic.state.currentCompany, Logic.state.currentScore);
-    
-    UI.showDecisionResult(
-        result.diagnosis, 
-        action, 
-        Logic.state.currentCompany, 
-        Logic.state.currentScore, 
-        result.shouldCooldown
+
+    const showDecisionOverlay = () => UI.showDecisionResult(
+        result.diagnosis,
+        action,
+        Logic.state.currentCompany,
+        Logic.state.currentScore,
+        false
     );
+
+    if (result.shouldCooldown) {
+        document.querySelector('.container').classList.add('impact-active');
+        setTimeout(() => document.querySelector('.container').classList.remove('impact-active'), 500);
+
+        UI.showCooldown(
+            `${result.diagnosis.message}\n\n请先完成冷静期，再查看本次决策复盘。`,
+            true,
+            showDecisionOverlay
+        );
+        return;
+    }
+
+    showDecisionOverlay();
 }
 
 // 保存日记流程
