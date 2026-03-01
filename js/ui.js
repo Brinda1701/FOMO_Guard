@@ -551,6 +551,13 @@ function closeFeedbackPopup() {
 export function renderDiaryList(entries) {
     const diaryList = document.getElementById('diaryList');
     const diaryCount = document.getElementById('diaryCount');
+
+    const escapeHtml = (text) => String(text)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
     
     diaryCount.textContent = entries.length;
     
@@ -562,12 +569,15 @@ export function renderDiaryList(entries) {
     diaryList.innerHTML = entries.slice().reverse().map(entry => `
         <div class="diary-entry ${entry.type}">
             <div class="diary-meta">
-                <span>${entry.date} | ${entry.company}</span>
+                <span>${escapeHtml(entry.date)} | ${escapeHtml(entry.company)}</span>
                 <span class="diary-action ${entry.type}">${entry.type === 'buy' ? '买入' : (entry.type === 'sell' ? '卖出' : '观望')}</span>
             </div>
-            <div class="diary-content">${entry.note}</div>
-            <div style="margin-top: 10px; font-size: 0.8rem; color: var(--text-secondary);">
-                情绪评分: <strong style="color: ${entry.score > 60 ? 'var(--accent-green)' : (entry.score < 40 ? 'var(--accent-red)' : 'var(--accent-yellow)')}">${entry.score}</strong>
+            <div class="diary-content">${escapeHtml(entry.note)}</div>
+            <div class="diary-entry-footer">
+                <div class="diary-score">
+                    情绪评分: <strong style="color: ${entry.score > 60 ? 'var(--accent-green)' : (entry.score < 40 ? 'var(--accent-red)' : 'var(--accent-yellow)')}">${entry.score}</strong>
+                </div>
+                <button class="diary-delete-btn" data-entry-id="${entry.id}" title="删除这条记录">🗑️ 删除</button>
             </div>
         </div>
     `).join('');

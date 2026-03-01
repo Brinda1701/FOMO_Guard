@@ -135,6 +135,29 @@ function setupEventListeners() {
     document.getElementById('diaryScore').addEventListener('input', function() {
         document.getElementById('diaryScoreDisplay').textContent = this.value;
     });
+
+    // 日记删除
+    document.getElementById('diaryList').addEventListener('click', (event) => {
+        const deleteBtn = event.target.closest('.diary-delete-btn');
+        if (!deleteBtn) return;
+
+        const entryId = Number(deleteBtn.dataset.entryId);
+        if (!entryId) return;
+
+        const shouldDelete = confirm('确定删除这条决策记录吗？删除后无法恢复。');
+        if (!shouldDelete) return;
+
+        const hasRemoved = Logic.removeDiaryEntry(entryId);
+        if (hasRemoved) {
+            UI.renderDiaryList(Logic.getDiaryEntries());
+            UI.showFeedbackPopup({
+                type: 'success',
+                title: '删除成功',
+                message: '该条决策记录已删除。',
+                durationMs: 1800
+            });
+        }
+    });
 }
 
 // 核心分析流程
