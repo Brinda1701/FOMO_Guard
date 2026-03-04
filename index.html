@@ -151,6 +151,86 @@
                 </div>
             </div>
 
+            <!-- Multi-Agent 可视化对比面板 -->
+            <div class="card full-width" id="agentVisualizationCard" style="display:none;">
+                <h2 class="card-title"><span class="icon">🎯</span>Multi-Agent 智能分析对比</h2>
+                <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 20px;">
+                    三个专业 Agent 从不同维度分析，为您提供全方位的投资心理诊断
+                </p>
+                
+                <div class="agent-viz-container">
+                    <!-- 雷达图 -->
+                    <div class="agent-radar-chart">
+                        <canvas id="agentRadarChart"></canvas>
+                    </div>
+                    
+                    <!-- Agent 分数对比 -->
+                    <div class="agent-scores-comparison">
+                        <div class="agent-score-card" data-agent="sentiment">
+                            <div class="agent-score-header">
+                                <span class="agent-score-icon">😊</span>
+                                <span class="agent-score-name">情绪分析 Agent</span>
+                            </div>
+                            <div class="agent-score-gauge">
+                                <div class="agent-score-value" id="sentimentScoreValue">--</div>
+                                <div class="agent-score-label">情绪分数</div>
+                                <div class="agent-score-bar">
+                                    <div class="agent-score-fill" id="sentimentScoreFill"></div>
+                                </div>
+                            </div>
+                            <div class="agent-score-detail" id="sentimentScoreDetail">
+                                <p class="detail-text">分析市场舆论情绪</p>
+                            </div>
+                        </div>
+                        
+                        <div class="agent-score-card" data-agent="technical">
+                            <div class="agent-score-header">
+                                <span class="agent-score-icon">📊</span>
+                                <span class="agent-score-name">技术分析 Agent</span>
+                            </div>
+                            <div class="agent-score-gauge">
+                                <div class="agent-score-value" id="technicalScoreValue">--</div>
+                                <div class="agent-score-label">技术分数</div>
+                                <div class="agent-score-bar">
+                                    <div class="agent-score-fill" id="technicalScoreFill"></div>
+                                </div>
+                            </div>
+                            <div class="agent-score-detail" id="technicalScoreDetail">
+                                <p class="detail-text">评估技术指标信号</p>
+                            </div>
+                        </div>
+                        
+                        <div class="agent-score-card" data-agent="psychology">
+                            <div class="agent-score-header">
+                                <span class="agent-score-icon">🧠</span>
+                                <span class="agent-score-name">心理诊断 Agent</span>
+                            </div>
+                            <div class="agent-score-gauge">
+                                <div class="agent-score-value" id="psychologyScoreValue">--</div>
+                                <div class="agent-score-label">心理分数</div>
+                                <div class="agent-score-bar">
+                                    <div class="agent-score-fill" id="psychologyScoreFill"></div>
+                                </div>
+                            </div>
+                            <div class="agent-score-detail" id="psychologyScoreDetail">
+                                <p class="detail-text">诊断认知偏误风险</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 最终决策建议 -->
+                <div class="agent-final-decision">
+                    <div class="decision-header">
+                        <span class="decision-icon" id="finalDecisionIcon">🎯</span>
+                        <h3>综合决策建议</h3>
+                    </div>
+                    <div class="decision-content" id="finalDecisionContent">
+                        <p>等待分析完成...</p>
+                    </div>
+                </div>
+            </div>
+
             <div class="card">
                 <h2 class="card-title"><span class="icon">📡</span>多源数据监控</h2>
                 <div class="source-stats">

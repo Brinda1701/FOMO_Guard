@@ -1,6 +1,7 @@
 import * as Logic from './logic.js';
 import * as UI from './ui.js';
 import * as Chart from './chart.js';
+import * as AgentViz from './agent-viz.js';
 import { AI_CONFIG, AGENT_CONFIG } from './config.js';
 
 // 初始化
@@ -350,11 +351,47 @@ function handleMultiAgentSummary(summary, company) {
     // 更新情绪趋势图
     Chart.updateSentimentTrendChart(historyData);
 
+    // === 新增：更新 Multi-Agent 可视化面板 ===
+    updateAgentVisualization(summary, company);
+
     const trends = Logic.generateTrendData(company, profile);
     UI.updateHotTrends(trends);
 
     // 显示 Agent 一致性结果
     showAgentConsensus(summary);
+}
+
+// 更新 Multi-Agent 可视化面板
+function updateAgentVisualization(summary, company) {
+    // 显示可视化面板
+    AgentViz.showAgentVisualization();
+
+    // 获取各 Agent 分数
+    const breakdown = summary.breakdown || {};
+    const scores = {
+        sentiment: breakdown.sentiment?.score || 50,
+        technical: breakdown.technical?.score || 50,
+        psychology: breakdown.psychology?.score || 50
+    };
+
+    // 初始化/更新雷达图
+    setTimeout(() => {
+        AgentViz.initAgentRadarChart(scores);
+    }, 100);
+
+    // 更新分数卡片
+    AgentViz.updateAgentScoreCards(scores);
+
+    // 更新最终决策建议
+    const consensus = summary.consensus || 'aligned';
+    const recommendation = summary.recommendation || {};
+
+    AgentViz.updateFinalDecision({
+        icon: consensus === 'divergent' ? '⚠️' : '✓',
+        title: consensus === 'divergent' ? 'Agent 存在分歧，建议谨慎' : 'Agent 达成共识',
+        content: recommendation.message || summary.insights?.[0]?.content || '分析完成',
+        consensus: consensus
+    });
 }
 
 // 渲染 Multi-Agent 洞察
