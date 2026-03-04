@@ -140,30 +140,14 @@
                 </div>
             </div>
 
-            <!-- 第二行：AI 分析与数据源 -->
-            <div class="card">
-                <h2 class="card-title"><span class="icon">🤖</span>AI 舆论去噪总结</h2>
-                <div class="summary-content" id="summaryContent">
-                    <div class="placeholder">
-                        <div class="placeholder-icon">💡</div>
-                        <p>AI 将为您过滤噪音，提炼核心观点</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Multi-Agent 可视化对比面板 -->
+            <!-- Multi-Agent 可视化对比面板（分析后显示） -->
             <div class="card full-width" id="agentVisualizationCard" style="display:none;">
                 <h2 class="card-title"><span class="icon">🎯</span>Multi-Agent 智能分析对比</h2>
-                <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 20px;">
-                    三个专业 Agent 从不同维度分析，为您提供全方位的投资心理诊断
-                </p>
-                
                 <div class="agent-viz-container">
                     <!-- 雷达图 -->
                     <div class="agent-radar-chart">
                         <canvas id="agentRadarChart"></canvas>
                     </div>
-                    
                     <!-- Agent 分数对比 -->
                     <div class="agent-scores-comparison">
                         <div class="agent-score-card" data-agent="sentiment">
@@ -182,7 +166,6 @@
                                 <p class="detail-text">分析市场舆论情绪</p>
                             </div>
                         </div>
-                        
                         <div class="agent-score-card" data-agent="technical">
                             <div class="agent-score-header">
                                 <span class="agent-score-icon">📊</span>
@@ -199,7 +182,6 @@
                                 <p class="detail-text">评估技术指标信号</p>
                             </div>
                         </div>
-                        
                         <div class="agent-score-card" data-agent="psychology">
                             <div class="agent-score-header">
                                 <span class="agent-score-icon">🧠</span>
@@ -218,7 +200,6 @@
                         </div>
                     </div>
                 </div>
-                
                 <!-- 最终决策建议 -->
                 <div class="agent-final-decision">
                     <div class="decision-header">
@@ -227,6 +208,17 @@
                     </div>
                     <div class="decision-content" id="finalDecisionContent">
                         <p>等待分析完成...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 第二行：AI 分析与数据源 -->
+            <div class="card">
+                <h2 class="card-title"><span class="icon">🤖</span>AI 舆论去噪总结</h2>
+                <div class="summary-content" id="summaryContent">
+                    <div class="placeholder">
+                        <div class="placeholder-icon">💡</div>
+                        <p>AI 将为您过滤噪音，提炼核心观点</p>
                     </div>
                 </div>
             </div>
