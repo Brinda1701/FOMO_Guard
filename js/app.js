@@ -332,7 +332,16 @@ async function analyzeWithSingleMode(company) {
 
 // 显示单 Agent 模式可视化（模拟三个 Agent 分数）
 function showSingleAgentVisualization(score, company) {
+    console.log('[AgentViz] 开始显示可视化面板，分数:', score);
+    
+    const card = document.getElementById('agentVisualizationCard');
+    if (!card) {
+        console.error('[AgentViz] 找不到可视化面板元素');
+        return;
+    }
+    
     AgentViz.showAgentVisualization();
+    console.log('[AgentViz] 面板已显示');
 
     // 基于主分数生成三个 Agent 的模拟分数（有一定波动）
     const sentimentScore = Math.max(0, Math.min(100, score + Math.floor(Math.random() * 20) - 10));
@@ -344,14 +353,18 @@ function showSingleAgentVisualization(score, company) {
         technical: technicalScore,
         psychology: psychologyScore
     };
+    
+    console.log('[AgentViz] 分数:', scores);
 
     // 初始化雷达图
     setTimeout(() => {
         AgentViz.initAgentRadarChart(scores);
+        console.log('[AgentViz] 雷达图已初始化');
     }, 100);
 
     // 更新分数卡片
     AgentViz.updateAgentScoreCards(scores);
+    console.log('[AgentViz] 分数卡片已更新');
 
     // 更新最终决策建议
     const consensus = 'aligned';
@@ -365,6 +378,7 @@ function showSingleAgentVisualization(score, company) {
         content: decisionText,
         consensus: consensus
     });
+    console.log('[AgentViz] 决策建议已更新');
 }
 
 // 处理 Multi-Agent 汇总结果
