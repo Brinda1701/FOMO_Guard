@@ -3,9 +3,6 @@
   "version": 2,
   "buildCommand": "",
   "outputDirectory": ".",
-  "functions": {
-    "api-backup/**/*.js": false
-  },
   "headers": [
     {
       "source": "/api/(.*)",
