@@ -146,7 +146,8 @@ export function evaluateImpulse(action, company, score) {
     
     const level = score > 60 ? 'high' : 'low';
     const diagnosis = diagnosisLib[action][level];
-    const shouldCooldown = (action === 'buy' && score > 60) || (action === 'sell' && score < 40);
+    // 统一规则：只要本次结论属于 warning（错误/高风险决策），立即进入冷静期
+    const shouldCooldown = diagnosis.type === 'warning';
     
     return { diagnosis, shouldCooldown, quote: diagnosis.quote };
 }
