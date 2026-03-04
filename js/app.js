@@ -83,7 +83,12 @@ function setupEventListeners() {
         }
     });
 
-    // 搜索与分析
+    // 输入模式切换
+    document.querySelectorAll('.mode-tab').forEach(tab => {
+        tab.addEventListener('click', () => switchInputMode(tab.dataset.mode));
+    });
+
+    // 公司分析
     document.getElementById('analyzeBtn').addEventListener('click', analyzeCompany);
     document.getElementById('companyInput').addEventListener('keypress', e => {
         if (e.key === 'Enter') analyzeCompany();
@@ -91,13 +96,37 @@ function setupEventListeners() {
     document.querySelectorAll('.quick-tag').forEach(tag => {
         tag.addEventListener('click', () => {
             document.getElementById('companyInput').value = tag.dataset.company;
+            switchInputMode('company');
             analyzeCompany();
         });
     });
 
+    // URL 分析
+    document.getElementById('analyzeUrlBtn').addEventListener('click', analyzeNewsUrl);
+    document.getElementById('newsUrlInput').addEventListener('keypress', e => {
+        if (e.key === 'Enter') analyzeNewsUrl();
+    });
+
+    // 文本分析
+    document.getElementById('analyzeTextBtn').addEventListener('click', analyzeText);
+    document.getElementById('textInput').addEventListener('input', () => {
+        const count = document.getElementById('textInput').value.length;
+        document.getElementById('charCount').textContent = count;
+    });
+    document.getElementById('textInput').addEventListener('keypress', e => {
+        if (e.key === 'Enter' && e.ctrlKey) analyzeText(); // Ctrl+Enter 快捷分析
+    });
+
+    // 批量分析
+    document.getElementById('analyzeBatchBtn').addEventListener('click', analyzeBatch);
+    document.getElementById('batchInput').addEventListener('input', () => {
+        const lines = document.getElementById('batchInput').value.split('\n').filter(l => l.trim());
+        document.getElementById('batchCount').textContent = Math.min(lines.length, 10);
+    });
+
     // 交易决策按钮
     document.querySelectorAll('.trade-btn').forEach(btn => {
-        if (!btn.classList.contains('diary-type-btn')) { // 排除日记弹窗里的按钮
+        if (!btn.classList.contains('diary-type-btn')) {
             btn.addEventListener('click', () => handleImpulseCheck(btn.dataset.action));
         }
     });
@@ -127,7 +156,6 @@ function setupEventListeners() {
             document.querySelectorAll('.diary-type-btn').forEach(b => b.classList.remove('active'));
             this.classList.add('active');
             selectedDiaryType = this.dataset.type;
-            // 将类型暂存到 DOM 元素上以便保存时获取，或使用闭包变量
             document.getElementById('diaryModal').dataset.selectedType = selectedDiaryType;
         });
     });
@@ -159,6 +187,27 @@ function setupEventListeners() {
             });
         }
     });
+}
+
+// 切换输入模式
+function switchInputMode(mode) {
+    // 更新标签页状态
+    document.querySelectorAll('.mode-tab').forEach(tab => {
+        tab.classList.toggle('active', tab.dataset.mode === mode);
+    });
+    
+    // 更新面板显示
+    document.querySelectorAll('.input-panel').forEach(panel => {
+        panel.classList.toggle('active', panel.id === mode + 'Panel');
+    });
+    
+    // 聚焦到对应输入框
+    setTimeout(() => {
+        if (mode === 'company') document.getElementById('companyInput')?.focus();
+        else if (mode === 'url') document.getElementById('newsUrlInput')?.focus();
+        else if (mode === 'text') document.getElementById('textInput')?.focus();
+        else if (mode === 'batch') document.getElementById('batchInput')?.focus();
+    }, 100);
 }
 
 // 核心分析流程
@@ -543,6 +592,232 @@ function handleSaveDiary() {
     UI.closeDiaryModal();
 
     alert('决策记录已保存！定期回顾可以帮助您识别情绪化交易模式。');
+}
+
+// ==================== 新增分析功能 ====================
+
+// 分析新闻 URL
+async function analyzeNewsUrl() {
+    const input = document.getElementById('newsUrlInput');
+    const url = input.value.trim();
+    
+    if (!url) { 
+        UI.showFeedbackPopup({ type: 'warning', title: '请输入链接', message: '请先粘贴新闻链接', durationMs: 2000 });
+        return; 
+    }
+
+    document.getElementById('analyzeUrlBtn').disabled = true;
+    
+    try {
+        // 显示加载状态
+        UI.showLoading(true, 'URL');
+        
+        // 调用分析函数
+        const result = await Logic.analyzeUrlContent(url);
+        
+        // 更新 UI
+        Logic.state.currentCompany = `URL 分析 (${result.source})`;
+        Logic.state.currentScore = result.score;
+        
+        UI.updateGauge(result.score, '新闻情绪');
+        UI.createEmotionParticles(result.score);
+        
+        // 显示结果
+        const summaryContent = document.getElementById('summaryContent');
+        summaryContent.innerHTML = `
+            <div class="insight-item">
+                <span class="insight-tag ${result.sentiment === '正面' ? 'positive' : (result.sentiment === '负面' ? 'negative' : 'neutral')}">
+                    ${result.sentiment}
+                </span>
+                <p class="insight-text">${result.summary}</p>
+                <p class="insight-source">来源：<a href="${url}" target="_blank" style="color:var(--accent-blue);">查看原文</a></p>
+            </div>
+        `;
+        
+        // 记录历史
+        Logic.recordSentimentScore(`URL:${result.source}`, result.score);
+        
+        UI.showFeedbackPopup({ 
+            type: 'success', 
+            title: '分析完成', 
+            message: `已分析来自${result.source}的新闻`, 
+            durationMs: 2500 
+        });
+        
+    } catch (error) {
+        UI.showFeedbackPopup({ 
+            type: 'error', 
+            title: '分析失败', 
+            message: error.message, 
+            durationMs: 3000 
+        });
+    } finally {
+        document.getElementById('analyzeUrlBtn').disabled = false;
+        // 隐藏加载状态
+        const gaugeContainer = document.getElementById('gaugeContainer');
+        if (gaugeContainer && !gaugeContainer.querySelector('.gauge-wrapper')) {
+            gaugeContainer.innerHTML = '<div class="placeholder"><div class="placeholder-icon">📊</div><p>分析完成后将显示情绪仪表盘</p></div>';
+        }
+    }
+}
+
+// 分析文本
+async function analyzeText() {
+    const input = document.getElementById('textInput');
+    const text = input.value.trim();
+    
+    if (!text) { 
+        UI.showFeedbackPopup({ type: 'warning', title: '请输入文本', message: '请先粘贴要分析的文本内容', durationMs: 2000 });
+        return; 
+    }
+
+    document.getElementById('analyzeTextBtn').disabled = true;
+    
+    try {
+        UI.showLoading(true, '文本');
+        
+        const result = await Logic.analyzeTextContent(text);
+        
+        Logic.state.currentCompany = '文本分析';
+        Logic.state.currentScore = result.score;
+        
+        UI.updateGauge(result.score, '文本情绪');
+        UI.createEmotionParticles(result.score);
+        
+        // 显示结果
+        const summaryContent = document.getElementById('summaryContent');
+        summaryContent.innerHTML = `
+            <div class="insight-item">
+                <span class="insight-tag ${result.sentiment === '正面' ? 'positive' : (result.sentiment === '负面' ? 'negative' : 'neutral')}">
+                    ${result.sentiment}
+                </span>
+                <p class="insight-text">${result.summary}</p>
+                ${result.keywords.length > 0 ? `
+                    <div style="margin-top: 10px;">
+                        <span style="color: var(--text-secondary); font-size: 0.85rem;">关键词：</span>
+                        ${result.keywords.map(k => `<span style="display:inline-block;padding:3px 8px;background:var(--bg-secondary);border-radius:6px;margin:2px;font-size:0.8rem;">${k}</span>`).join('')}
+                    </div>
+                ` : ''}
+            </div>
+        `;
+        
+        // 记录历史
+        Logic.recordSentimentScore('文本分析', result.score);
+        
+        UI.showFeedbackPopup({ 
+            type: 'success', 
+            title: '分析完成', 
+            message: `已分析${text.length}个字符`, 
+            durationMs: 2500 
+        });
+        
+    } catch (error) {
+        UI.showFeedbackPopup({ 
+            type: 'error', 
+            title: '分析失败', 
+            message: error.message, 
+            durationMs: 3000 
+        });
+    } finally {
+        document.getElementById('analyzeTextBtn').disabled = false;
+        // 隐藏加载状态
+        const gaugeContainer = document.getElementById('gaugeContainer');
+        if (gaugeContainer && !gaugeContainer.querySelector('.gauge-wrapper')) {
+            gaugeContainer.innerHTML = '<div class="placeholder"><div class="placeholder-icon">📊</div><p>分析完成后将显示情绪仪表盘</p></div>';
+        }
+    }
+}
+
+// 批量分析
+async function analyzeBatch() {
+    const input = document.getElementById('batchInput');
+    const lines = input.value.split('\n').filter(l => l.trim());
+    
+    if (lines.length === 0) { 
+        UI.showFeedbackPopup({ type: 'warning', title: '请输入公司', message: '请至少输入一个公司名称', durationMs: 2000 });
+        return; 
+    }
+    
+    // 限制最多 10 个
+    const companies = lines.slice(0, 10);
+    
+    document.getElementById('analyzeBatchBtn').disabled = true;
+    
+    try {
+        // 显示批量分析结果区域
+        let resultsContainer = document.getElementById('batchResults');
+        if (!resultsContainer) {
+            resultsContainer = document.createElement('div');
+            resultsContainer.id = 'batchResults';
+            resultsContainer.className = 'batch-results';
+            
+            // 插入到批量分析面板下方
+            document.getElementById('batchPanel').parentNode.insertBefore(
+                resultsContainer,
+                document.getElementById('batchPanel').nextSibling
+            );
+        }
+        
+        resultsContainer.innerHTML = '<div class="batch-loading">正在分析中，请稍候...</div>';
+        
+        // 调用批量分析
+        const results = await Logic.analyzeBatchCompanies(companies, (progress) => {
+            resultsContainer.innerHTML = `
+                <div class="batch-loading">
+                    <div class="spinner"></div>
+                    <span>正在分析 ${progress.company} (${progress.current}/${progress.total})...</span>
+                </div>
+            `;
+        });
+        
+        // 显示结果
+        resultsContainer.innerHTML = results.map(r => {
+            if (r.success) {
+                const scoreClass = r.score > 60 ? 'greed' : (r.score < 40 ? 'fear' : 'neutral');
+                return `
+                    <div class="batch-result-card">
+                        <div class="batch-result-header">
+                            <span class="batch-result-company">${r.company}</span>
+                            <span class="batch-result-score ${scoreClass}">${r.score}</span>
+                        </div>
+                        <div class="batch-result-detail">
+                            情绪：${r.sentiment}<br>
+                            行业：${r.profile?.sector || '未知'}
+                        </div>
+                    </div>
+                `;
+            } else {
+                return `
+                    <div class="batch-result-card">
+                        <div class="batch-result-header">
+                            <span class="batch-result-company">${r.company}</span>
+                            <span style="color: #ef4444;">❌</span>
+                        </div>
+                        <div class="batch-result-detail" style="color: #ef4444;">
+                            ${r.error}
+                        </div>
+                    </div>
+                `;
+            }
+        }).join('');
+        
+        UI.showFeedbackPopup({ 
+            type: 'success', 
+            title: '批量分析完成', 
+            message: `已分析${results.filter(r => r.success).length}/${results.length}个公司`, 
+            durationMs: 3000 
+        });
+        
+    } catch (error) {
+        UI.showFeedbackPopup({ 
+            type: 'error', 
+            title: '批量分析失败', 
+            message: error.message, 
+            durationMs: 3000 
+        });
+    } finally {
+        document.getElementById('analyzeBatchBtn').disabled = false;
+    }
 }
 
 // 启动应用

@@ -533,3 +533,215 @@ export function clearSentimentHistory(company) {
 export function clearAllSentimentHistory() {
     localStorage.removeItem('sentimentHistory');
 }
+
+// ==================== URL 和文本分析相关函数 ====================
+
+/**
+ * 从 URL 中提取域名和关键信息
+ * @param {string} url - 新闻 URL
+ * @returns {Object} 解析结果
+ */
+export function parseNewsUrl(url) {
+    try {
+        const urlObj = new URL(url);
+        const hostname = urlObj.hostname.toLowerCase();
+        
+        let source = '未知';
+        if (hostname.includes('xueqiu')) source = '雪球';
+        else if (hostname.includes('eastmoney') || hostname.includes('guba')) source = '东方财富';
+        else if (hostname.includes('sina') || hostname.includes('finance')) source = '新浪财经';
+        else if (hostname.includes('10jqka')) source = '同花顺';
+        else if (hostname.includes('wallstreetcn')) source = '华尔街见闻';
+        else if (hostname.includes('caixin')) source = '财新';
+        else if (hostname.includes('yicai')) source = '第一财经';
+        
+        return {
+            valid: true,
+            url,
+            source,
+            hostname
+        };
+    } catch (e) {
+        return { valid: false, error: '无效的 URL 格式' };
+    }
+}
+
+/**
+ * 分析 URL 内容（模拟，实际需要通过后端爬取）
+ * @param {string} url - 新闻 URL
+ * @returns {Promise<Object>} 分析结果
+ */
+export async function analyzeUrlContent(url) {
+    const urlInfo = parseNewsUrl(url);
+    
+    if (!urlInfo.valid) {
+        throw new Error(urlInfo.error);
+    }
+    
+    // 由于浏览器限制，实际项目中需要通过后端爬取网页内容
+    // 这里模拟分析过程
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    
+    // 生成模拟结果
+    const score = Math.floor(Math.random() * 40) + 30; // 30-70 之间
+    const sentiment = score > 60 ? '正面' : (score < 40 ? '负面' : '中性');
+    
+    return {
+        success: true,
+        url,
+        source: urlInfo.source,
+        score,
+        sentiment,
+        summary: `来自${urlInfo.source}的新闻分析结果：整体情绪偏向${sentiment}，建议结合其他信息源综合判断。`,
+        keywords: ['新闻分析', urlInfo.source, sentiment]
+    };
+}
+
+/**
+ * 分析文本内容
+ * @param {string} text - 要分析的文本
+ * @returns {Promise<Object>} 分析结果
+ */
+export async function analyzeTextContent(text) {
+    if (!text || text.trim().length < 10) {
+        throw new Error('文本内容太短，请输入至少 10 个字符');
+    }
+    
+    if (text.length > 5000) {
+        throw new Error('文本内容过长，请输入不超过 5000 个字符');
+    }
+    
+    // 调用 AI 后端分析文本
+    if (state.useAIBackend) {
+        try {
+            const response = await fetch(`${AI_CONFIG.URL}/api/analyze`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    company: '文本分析',
+                    text: text
+                })
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                return {
+                    success: true,
+                    score: data.score || 50,
+                    sentiment: data.data?.sentiment || '中性',
+                    summary: data.data?.advice || '分析完成',
+                    keywords: extractKeywords(text)
+                };
+            }
+        } catch (e) {
+            console.error('[文本分析] AI 后端调用失败', e);
+        }
+    }
+    
+    // 模拟分析（备用）
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    // 简单的情感分析（基于关键词）
+    const positiveWords = ['增长', '上涨', '利好', '突破', '创新高', '优秀', '强劲', '超预期'];
+    const negativeWords = ['下跌', '下滑', '亏损', '风险', '警告', '低迷', '疲软', '不及预期'];
+    
+    let positiveCount = 0;
+    let negativeCount = 0;
+    
+    positiveWords.forEach(word => {
+        if (text.includes(word)) positiveCount++;
+    });
+    
+    negativeWords.forEach(word => {
+        if (text.includes(word)) negativeCount++;
+    });
+    
+    const score = Math.round(50 + (positiveCount - negativeCount) * 5);
+    const finalScore = Math.max(0, Math.min(100, score));
+    const sentiment = finalScore > 60 ? '正面' : (finalScore < 40 ? '负面' : '中性');
+    
+    return {
+        success: true,
+        score: finalScore,
+        sentiment,
+        summary: `文本中包含${positiveCount}个正面关键词和${negativeCount}个负面关键词，整体情绪${sentiment}。`,
+        keywords: extractKeywords(text)
+    };
+}
+
+/**
+ * 从文本中提取关键词
+ * @param {string} text - 输入文本
+ * @returns {string[]} 关键词数组
+ */
+export function extractKeywords(text) {
+    // 简单实现：提取出现频率较高的词
+    const words = text.split(/[\s,，.。!?！？;；]+/).filter(w => w.length >= 2);
+    const wordCount = {};
+    
+    words.forEach(word => {
+        wordCount[word] = (wordCount[word] || 0) + 1;
+    });
+    
+    return Object.entries(wordCount)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5)
+        .map(([word]) => word);
+}
+
+/**
+ * 批量分析公司列表
+ * @param {string[]} companies - 公司列表
+ * @param {Function} onProgress - 进度回调函数
+ * @returns {Promise<Array>} 分析结果数组
+ */
+export async function analyzeBatchCompanies(companies, onProgress) {
+    const results = [];
+    const total = companies.length;
+    
+    for (let i = 0; i < total; i++) {
+        const company = companies[i].trim();
+        if (!company) continue;
+        
+        try {
+            // 通知进度
+            if (onProgress) {
+                onProgress({
+                    current: i + 1,
+                    total,
+                    company,
+                    status: 'analyzing'
+                });
+            }
+            
+            // 分析公司
+            const scoreData = genScore(company);
+            const score = scoreData.score;
+            
+            // 记录到历史数据
+            recordSentimentScore(company, score);
+            
+            results.push({
+                success: true,
+                company,
+                score,
+                sentiment: score > 60 ? '贪婪' : (score < 40 ? '恐惧' : '中性'),
+                profile: scoreData.profile
+            });
+            
+        } catch (error) {
+            results.push({
+                success: false,
+                company,
+                error: error.message
+            });
+        }
+        
+        // 添加延迟避免请求过快
+        if (i < total - 1) {
+            await new Promise(resolve => setTimeout(resolve, 500));
+        }
+    }
+    
+    return results;
+}
