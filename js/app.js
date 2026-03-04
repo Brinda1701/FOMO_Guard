@@ -323,8 +323,48 @@ async function analyzeWithSingleMode(company) {
     // 更新情绪趋势图
     Chart.updateSentimentTrendChart(historyData);
 
+    // === 新增：单 Agent 模式也显示简化版可视化面板 ===
+    showSingleAgentVisualization(score, company);
+
     const trends = Logic.generateTrendData(company, profile);
     UI.updateHotTrends(trends);
+}
+
+// 显示单 Agent 模式可视化（模拟三个 Agent 分数）
+function showSingleAgentVisualization(score, company) {
+    AgentViz.showAgentVisualization();
+
+    // 基于主分数生成三个 Agent 的模拟分数（有一定波动）
+    const sentimentScore = Math.max(0, Math.min(100, score + Math.floor(Math.random() * 20) - 10));
+    const technicalScore = Math.max(0, Math.min(100, score + Math.floor(Math.random() * 20) - 10));
+    const psychologyScore = Math.max(0, Math.min(100, score + Math.floor(Math.random() * 20) - 10));
+
+    const scores = {
+        sentiment: sentimentScore,
+        technical: technicalScore,
+        psychology: psychologyScore
+    };
+
+    // 初始化雷达图
+    setTimeout(() => {
+        AgentViz.initAgentRadarChart(scores);
+    }, 100);
+
+    // 更新分数卡片
+    AgentViz.updateAgentScoreCards(scores);
+
+    // 更新最终决策建议
+    const consensus = 'aligned';
+    const decisionText = score > 60 ? '当前市场情绪偏热，建议保持理性，避免追高。' : 
+                         score < 40 ? '市场情绪偏冷，可能是机会，但需确认基本面。' : 
+                         '市场情绪中性，建议继续观察，等待更明确信号。';
+
+    AgentViz.updateFinalDecision({
+        icon: '✓',
+        title: '综合分析建议',
+        content: decisionText,
+        consensus: consensus
+    });
 }
 
 // 处理 Multi-Agent 汇总结果
