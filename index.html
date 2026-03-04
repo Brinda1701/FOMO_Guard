@@ -4,25 +4,27 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FOMOGuard - 追涨护盾</title>
-    <!-- 内联SVG favicon -->
+    <!-- 内联 SVG favicon -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧠</text></svg>">
+    <!-- Chart.js 库 -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <!-- 引入外部样式 -->
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
     <!-- 情绪粒子背景 -->
     <div class="emotion-particles" id="emotionParticles"></div>
-    
+
     <div class="container">
         <header class="header">
             <button class="theme-toggle" id="themeToggle" title="切换主题">🌙</button>
             <h1>FOMOGuard</h1>
-            <p>追涨护盾 - 守护你的理性，抵御FOMO与恐慌的侵蚀</p>
+            <p>追涨护盾 - 守护你的理性，抵御 FOMO 与恐慌的侵蚀</p>
         </header>
 
         <section class="search-section">
             <div class="search-box">
-                <input type="text" class="search-input" id="companyInput" placeholder="输入公司名称或股票代码 (如: 茅台、AAPL、特斯拉)">
+                <input type="text" class="search-input" id="companyInput" placeholder="输入公司名称或股票代码 (如：茅台、AAPL、特斯拉)">
                 <button class="search-btn" id="analyzeBtn">开始分析</button>
             </div>
             <div class="quick-tags">
@@ -45,17 +47,17 @@
                         <p>请输入公司名称开始分析市场情绪</p>
                     </div>
                 </div>
-                <!-- Multi-Agent进度面板 -->
+                <!-- Multi-Agent 进度面板 -->
                 <div class="agent-progress-panel" id="agentProgressPanel" style="display:none;">
                     <div class="agent-progress-header">
                         <span class="agent-progress-title">Multi-Agent 分析中</span>
-                        <span class="agent-mode-badge" id="agentModeBadge">AI协作模式</span>
+                        <span class="agent-mode-badge" id="agentModeBadge">AI 协作模式</span>
                     </div>
                     <div class="agent-progress-list">
                         <div class="agent-progress-item" data-agent="sentiment">
                             <div class="agent-info">
                                 <span class="agent-icon">😊</span>
-                                <span class="agent-name">情绪分析Agent</span>
+                                <span class="agent-name">情绪分析 Agent</span>
                             </div>
                             <div class="agent-progress-bar">
                                 <div class="agent-progress-fill" id="sentimentProgress"></div>
@@ -65,7 +67,7 @@
                         <div class="agent-progress-item" data-agent="technical">
                             <div class="agent-info">
                                 <span class="agent-icon">📊</span>
-                                <span class="agent-name">技术分析Agent</span>
+                                <span class="agent-name">技术分析 Agent</span>
                             </div>
                             <div class="agent-progress-bar">
                                 <div class="agent-progress-fill" id="technicalProgress"></div>
@@ -75,7 +77,7 @@
                         <div class="agent-progress-item" data-agent="psychology">
                             <div class="agent-info">
                                 <span class="agent-icon">🧠</span>
-                                <span class="agent-name">心理诊断Agent</span>
+                                <span class="agent-name">心理诊断 Agent</span>
                             </div>
                             <div class="agent-progress-bar">
                                 <div class="agent-progress-fill" id="psychologyProgress"></div>
@@ -99,8 +101,8 @@
                     <div class="alert-box" id="alertBox"></div>
                 </div>
             </div>
-            
-            <!-- 第二行：AI分析与数据源 -->
+
+            <!-- 第二行：AI 分析与数据源 -->
             <div class="card">
                 <h2 class="card-title"><span class="icon">🤖</span>AI 舆论去噪总结</h2>
                 <div class="summary-content" id="summaryContent">
@@ -123,15 +125,22 @@
                     <h4 style="margin: 20px 0 12px; font-size: 0.95rem; color: var(--text-secondary);">🔥 实时热搜词</h4>
                     <div class="hot-trends" id="hotTrends"></div>
                 </div>
+                <!-- 实时情绪趋势图 -->
+                <div class="trend-chart-container">
+                    <h4 style="margin: 20px 0 12px; font-size: 0.95rem; color: var(--text-secondary);">📈 实时情绪趋势</h4>
+                    <div class="trend-chart-wrapper">
+                        <canvas id="sentimentTrendChart"></canvas>
+                    </div>
+                </div>
                 <div class="history-chart" id="historyChart">
                     <div style="color: var(--text-secondary); width: 100%; text-align: center;">历史情绪趋势将在分析后显示</div>
                 </div>
             </div>
-            
+
             <!-- 第三行：历史验证（分析后显示） -->
             <div class="card full-width" id="validationCard" style="display:none;">
                 <h2 class="card-title"><span class="icon">📈</span>历史情绪验证 - 数据回测分析</h2>
-                <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 15px;">当市场处于相似情绪水平时，后续30天的历史表现统计：</p>
+                <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 15px;">当市场处于相似情绪水平时，后续 30 天的历史表现统计：</p>
                 <div class="history-validation">
                     <div class="validation-chart" id="validationChart"></div>
                     <div class="validation-summary" id="validationSummary"></div>
@@ -155,7 +164,7 @@
                     <div class="tip-card">
                         <span class="tip-icon-large">⏰</span>
                         <h4>损失厌恶</h4>
-                        <p>亏损带来的痛苦往往是同等收益快乐的2倍，请理性评估实际损失。</p>
+                        <p>亏损带来的痛苦往往是同等收益快乐的 2 倍，请理性评估实际损失。</p>
                     </div>
                     <div class="tip-card">
                         <span class="tip-icon-large">🌊</span>
@@ -164,7 +173,7 @@
                     </div>
                 </div>
             </div>
-            
+
             <!-- 第五行：交易决策日记 -->
             <div class="card full-width">
                 <h2 class="card-title"><span class="icon">📔</span>交易决策日记</h2>
@@ -192,7 +201,7 @@
             <div class="modal-emoji">🧊</div>
             <h3 class="modal-title">认知隔离舱已启动</h3>
             <p class="modal-text" id="modalText">Loading...</p>
-            
+
             <!-- 环形倒计时 -->
             <div class="countdown-ring-container">
                 <svg class="countdown-ring" viewBox="0 0 120 120">
@@ -204,35 +213,35 @@
                     <div class="countdown-label">秒</div>
                 </div>
             </div>
-            
+
             <!-- 冷却阶段提示 -->
             <div class="cooldown-phase" id="cooldownPhase">
                 <span class="phase-icon" id="phaseIcon">🫁</span>
                 <span class="phase-text" id="phaseText">深呼吸放松阶段</span>
             </div>
-            
+
             <div class="breathing-guide">
                 <span id="breatheText">深呼吸</span>
             </div>
-            
+
             <p style="color: var(--text-secondary); margin-bottom: 15px; font-size: 0.85rem;">跟随呼吸圆圈放松心情 | 正确答题可提前解锁</p>
-            
+
             <!-- 心理测试区域 -->
             <div class="quiz-section" id="quizSection">
                 <div class="quiz-header">
                     <span class="quiz-badge" id="quizBadge">第 1 题</span>
-                    <span class="quiz-score-badge" id="quizScoreBadge" style="display:none;">得分: 0</span>
+                    <span class="quiz-score-badge" id="quizScoreBadge" style="display:none;">得分：0</span>
                 </div>
                 <p class="quiz-question" id="quizQuestion"></p>
                 <div class="quiz-options" id="quizOptions"></div>
                 <div class="quiz-result" id="quizResult" style="display:none;"></div>
             </div>
-            
+
             <button class="modal-btn" id="showQuizBtn" style="margin-top: 15px;">🧠 回答问题提前解锁</button>
             <p style="color: var(--text-secondary); font-size: 0.75rem; margin-top: 8px;">正确回答心理学问题可提前退出冷静期</p>
         </div>
     </div>
-    
+
     <!-- 操作反馈弹窗（通用） -->
     <div class="feedback-popup" id="feedbackPopup" style="display:none;">
         <div class="feedback-popup-content">
@@ -242,10 +251,10 @@
             <div class="feedback-countdown">
                 <div class="feedback-countdown-bar" id="feedbackCountdownBar"></div>
             </div>
-            <div class="feedback-timer-text" id="feedbackTimerText">3秒后自动关闭</div>
+            <div class="feedback-timer-text" id="feedbackTimerText">3 秒后自动关闭</div>
         </div>
     </div>
-    
+
     <!-- 模态框：日记录入 -->
     <div class="diary-modal" id="diaryModal">
         <div class="diary-modal-content">
@@ -264,7 +273,7 @@
             </div>
             <div style="margin-bottom: 15px;">
                 <label style="display: block; margin-bottom: 8px; color: var(--text-secondary); font-size: 0.9rem;">决策心理记录</label>
-                <textarea class="diary-textarea" id="diaryNote" placeholder="记录您此刻的想法、情绪和决策依据...&#10;&#10;例如：看到大V推荐后冲动买入，当时情绪比较激动..."></textarea>
+                <textarea class="diary-textarea" id="diaryNote" placeholder="记录您此刻的想法、情绪和决策依据...&#10;&#10;例如：看到大 V 推荐后冲动买入，当时情绪比较激动..."></textarea>
             </div>
             <div style="margin-bottom: 15px;">
                 <label style="display: block; margin-bottom: 8px; color: var(--text-secondary); font-size: 0.9rem;">当前情绪评分：<span id="diaryScoreDisplay">50</span></label>
@@ -286,9 +295,9 @@
                 <h1 class="decision-title" id="decisionTitle">决策诊断结果</h1>
                 <p class="decision-subtitle" id="decisionSubtitle">基于行为金融学的智能分析</p>
             </div>
-            
+
             <div class="decision-cards" id="decisionCards"></div>
-            
+
             <div class="decision-actions">
                 <button class="decision-btn decision-btn-primary" id="recordDecisionBtn">📝 记录本次决策</button>
                 <button class="decision-btn decision-btn-secondary" id="continueAnalyzeBtn">🔄 继续分析其他</button>

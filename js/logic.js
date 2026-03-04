@@ -458,3 +458,77 @@ export async function checkMultiAgentAvailable() {
         return false;
     }
 }
+
+// ==================== 情绪历史数据相关函数 ====================
+
+// 从 localStorage 加载情绪历史数据
+function loadSentimentHistory() {
+    const stored = localStorage.getItem('sentimentHistory');
+    return stored ? JSON.parse(stored) : {};
+}
+
+// 保存情绪历史数据到 localStorage
+function saveSentimentHistory(history) {
+    localStorage.setItem('sentimentHistory', JSON.stringify(history));
+}
+
+/**
+ * 记录情绪分数到历史数据
+ * @param {string} company - 公司名称
+ * @param {number} score - 情绪分数
+ */
+export function recordSentimentScore(company, score) {
+    const history = loadSentimentHistory();
+    const now = new Date();
+    const timestamp = now.getTime();
+    const timeLabel = now.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+
+    if (!history[company]) {
+        history[company] = [];
+    }
+
+    // 添加新记录
+    history[company].push({
+        timestamp,
+        time: timeLabel,
+        score,
+        date: now.toLocaleDateString('zh-CN')
+    });
+
+    // 只保留最近 50 条记录（避免 localStorage 超限）
+    if (history[company].length > 50) {
+        history[company] = history[company].slice(-50);
+    }
+
+    saveSentimentHistory(history);
+    return history[company];
+}
+
+/**
+ * 获取某公司的历史情绪数据
+ * @param {string} company - 公司名称
+ * @returns {Array} 历史情绪数据数组
+ */
+export function getSentimentHistory(company) {
+    const history = loadSentimentHistory();
+    return history[company] || [];
+}
+
+/**
+ * 清除某公司的历史情绪数据
+ * @param {string} company - 公司名称
+ */
+export function clearSentimentHistory(company) {
+    const history = loadSentimentHistory();
+    if (history[company]) {
+        delete history[company];
+        saveSentimentHistory(history);
+    }
+}
+
+/**
+ * 清除所有历史情绪数据
+ */
+export function clearAllSentimentHistory() {
+    localStorage.removeItem('sentimentHistory');
+}

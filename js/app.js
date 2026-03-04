@@ -1,5 +1,6 @@
 import * as Logic from './logic.js';
 import * as UI from './ui.js';
+import * as Chart from './chart.js';
 import { AI_CONFIG, AGENT_CONFIG } from './config.js';
 
 // 初始化
@@ -8,10 +9,10 @@ async function init() {
     // 修复：传入 'init' 标记，让初始粒子显示为品牌蓝色，避免黄色的误导
     UI.createEmotionParticles('init');
     UI.renderDiaryList(Logic.getDiaryEntries());
-    
+
     const hasAI = await Logic.checkAIBackend();
     UI.showAIModeIndicator(hasAI);
-    
+
     setupEventListeners();
     setupRealtimeWS();
 }
@@ -56,7 +57,7 @@ function setupRealtimeWS() {
 function initTheme() {
     const savedTheme = localStorage.getItem('theme') || 'dark';
     const themeToggle = document.getElementById('themeToggle');
-    
+
     if (savedTheme === 'light') {
         document.documentElement.setAttribute('data-theme', 'light');
         themeToggle.textContent = '☀️';
@@ -84,8 +85,8 @@ function setupEventListeners() {
 
     // 搜索与分析
     document.getElementById('analyzeBtn').addEventListener('click', analyzeCompany);
-    document.getElementById('companyInput').addEventListener('keypress', e => { 
-        if (e.key === 'Enter') analyzeCompany(); 
+    document.getElementById('companyInput').addEventListener('keypress', e => {
+        if (e.key === 'Enter') analyzeCompany();
     });
     document.querySelectorAll('.quick-tag').forEach(tag => {
         tag.addEventListener('click', () => {
@@ -118,7 +119,7 @@ function setupEventListeners() {
     });
     document.getElementById('cancelDiaryBtn').addEventListener('click', UI.closeDiaryModal);
     document.getElementById('saveDiaryBtn').addEventListener('click', handleSaveDiary);
-    
+
     // 日记类型选择
     let selectedDiaryType = 'hold';
     document.querySelectorAll('.diary-type-btn').forEach(btn => {
@@ -130,7 +131,7 @@ function setupEventListeners() {
             document.getElementById('diaryModal').dataset.selectedType = selectedDiaryType;
         });
     });
-    
+
     // 日记滑块
     document.getElementById('diaryScore').addEventListener('input', function() {
         document.getElementById('diaryScoreDisplay').textContent = this.value;
@@ -165,11 +166,11 @@ async function analyzeCompany() {
     const input = document.getElementById('companyInput');
     const company = input.value.trim();
     if (!company) { alert('请输入公司名称'); return; }
-    
+
     Logic.state.currentCompany = company;
     document.getElementById('analyzeBtn').disabled = true;
-    
-    // 检查是否启用Multi-Agent模式
+
+    // 检查是否启用 Multi-Agent 模式
     if (Logic.state.useAIBackend && Logic.state.useMultiAgent) {
         await analyzeWithMultiAgent(company);
     } else {
@@ -179,12 +180,12 @@ async function analyzeCompany() {
     document.getElementById('analyzeBtn').disabled = false;
 }
 
-// Multi-Agent分析模式
+// Multi-Agent 分析模式
 async function analyzeWithMultiAgent(company) {
-    // 显示Multi-Agent进度面板
+    // 显示 Multi-Agent 进度面板
     showAgentProgressPanel();
     UI.showLoading(true, 'Multi-Agent');
-    
+
     try {
         const result = await Logic.fetchMultiAgentAnalysis(company, 'analyze', {
             onAgentStart: (data) => {
@@ -199,18 +200,18 @@ async function analyzeWithMultiAgent(company) {
             },
             onAgentComplete: (data) => {
                 updateAgentProgress(data.agent, 'completed', 100, data.score);
-                addThinkingItem(data.agent, `分析完成，得分: ${data.score}分`);
+                addThinkingItem(data.agent, `分析完成，得分：${data.score}分`);
             },
             onAgentError: (data) => {
                 updateAgentProgress(data.agent, 'failed', 0);
-                addThinkingItem(data.agent, `分析失败: ${data.error || '未知错误'}`);
+                addThinkingItem(data.agent, `分析失败：${data.error || '未知错误'}`);
             },
             onSummary: (summary) => {
                 handleMultiAgentSummary(summary, company);
             },
             onError: (error) => {
                 console.error('[Multi-Agent] Error:', error);
-                // 降级到单Agent模式
+                // 降级到单 Agent 模式
                 hideAgentProgressPanel();
                 analyzeWithSingleMode(company);
             },
@@ -221,13 +222,13 @@ async function analyzeWithMultiAgent(company) {
                 }, 2000);
             }
         });
-        
+
         if (!result) {
-            // Multi-Agent失败，降级
+            // Multi-Agent 失败，降级
             hideAgentProgressPanel();
             await analyzeWithSingleMode(company);
         }
-        
+
     } catch (error) {
         console.error('[Multi-Agent] Failed:', error);
         hideAgentProgressPanel();
@@ -235,7 +236,7 @@ async function analyzeWithMultiAgent(company) {
     }
 }
 
-// 单Agent/Mock模式分析
+// 单 Agent/Mock 模式分析
 async function analyzeWithSingleMode(company) {
     UI.showLoading(Logic.state.useAIBackend);
 
@@ -257,7 +258,10 @@ async function analyzeWithSingleMode(company) {
     }
 
     const { score, profile } = scoreData;
-    
+
+    // 记录情绪分数到历史数据
+    const historyData = Logic.recordSentimentScore(company, score);
+
     // 更新所有 UI 组件
     UI.updateGauge(score, company);
     UI.updateHistory();
@@ -265,52 +269,61 @@ async function analyzeWithSingleMode(company) {
     UI.renderAIInsights(score, company, profile, aiData);
     UI.updateValidationChart(score, company);
     UI.createEmotionParticles(score);
-    
+
+    // 更新情绪趋势图
+    Chart.updateSentimentTrendChart(historyData);
+
     const trends = Logic.generateTrendData(company, profile);
     UI.updateHotTrends(trends);
 }
 
-// 处理Multi-Agent汇总结果
+// 处理 Multi-Agent 汇总结果
 function handleMultiAgentSummary(summary, company) {
     const score = summary.finalScore || summary.final_score || 50;
     Logic.state.currentScore = score;
-    
+
     const profile = Logic.getProfile(company);
-    
-    // 更新主要UI
+
+    // 记录情绪分数到历史数据
+    const historyData = Logic.recordSentimentScore(company, score);
+
+    // 更新主要 UI
     UI.updateGauge(score, company);
     UI.updateHistory();
     UI.updateSources();
     UI.createEmotionParticles(score);
-    
-    // 渲染Multi-Agent增强的AI洞察
+
+    // 渲染 Multi-Agent 增强的 AI 洞察
     renderMultiAgentInsights(summary, company, profile);
-    
+
     UI.updateValidationChart(score, company);
-    
+
+    // 更新情绪趋势图
+    Chart.updateSentimentTrendChart(historyData);
+
     const trends = Logic.generateTrendData(company, profile);
     UI.updateHotTrends(trends);
-    
-    // 显示Agent一致性结果
+
+    // 显示 Agent 一致性结果
     showAgentConsensus(summary);
 }
 
-// 渲染Multi-Agent洞察
+// 渲染 Multi-Agent 洞察
 function renderMultiAgentInsights(summary, company, profile) {
     const summaryContent = document.getElementById('summaryContent');
-    
+
     let insightsHtml = `
         <div class="agent-result-summary">
             <div class="agent-consensus">
-                <span>Agent共识: </span>
+                <span>Agent 共识：</span>
                 <span class="consensus-badge ${summary.consensus || 'aligned'}">
                     ${summary.consensus === 'divergent' ? '⚠️ 存在分歧' : '✓ 一致认同'}
                 </span>
             </div>
             <div class="agent-scores-breakdown">
     `;
-    
-    // 显示各Agent分数
+
+    // 显示各 Agent 分数
     if (summary.breakdown) {
         for (const [agent, data] of Object.entries(summary.breakdown)) {
             const icon = AGENT_CONFIG.icons[agent] || '🤖';
@@ -324,9 +337,9 @@ function renderMultiAgentInsights(summary, company, profile) {
             `;
         }
     }
-    
+
     insightsHtml += '</div></div>';
-    
+
     // 添加洞察列表
     if (summary.insights && summary.insights.length > 0) {
         insightsHtml += '<div class="insights-list" style="margin-top: 15px;">';
@@ -341,7 +354,7 @@ function renderMultiAgentInsights(summary, company, profile) {
         }
         insightsHtml += '</div>';
     }
-    
+
     // 添加警告
     if (summary.warnings && summary.warnings.length > 0) {
         insightsHtml += '<div class="warnings-list" style="margin-top: 15px;">';
@@ -355,21 +368,21 @@ function renderMultiAgentInsights(summary, company, profile) {
         }
         insightsHtml += '</div>';
     }
-    
+
     // 添加建议
     if (summary.recommendation) {
         insightsHtml += `
             <div class="recommendation" style="margin-top: 15px; padding: 15px; background: var(--bg-card); border-radius: 12px; border-left: 3px solid var(--accent-purple);">
-                <strong>💡 AI建议:</strong>
+                <strong>💡 AI 建议:</strong>
                 <p style="margin-top: 8px; color: var(--text-secondary);">${summary.recommendation.message || ''}</p>
             </div>
         `;
     }
-    
+
     summaryContent.innerHTML = insightsHtml;
 }
 
-// 显示Agent进度面板
+// 显示 Agent 进度面板
 function showAgentProgressPanel() {
     const panel = document.getElementById('agentProgressPanel');
     if (panel) {
@@ -379,7 +392,7 @@ function showAgentProgressPanel() {
     }
 }
 
-// 隐藏Agent进度面板
+// 隐藏 Agent 进度面板
 function hideAgentProgressPanel() {
     const panel = document.getElementById('agentProgressPanel');
     if (panel) {
@@ -387,7 +400,7 @@ function hideAgentProgressPanel() {
     }
 }
 
-// 重置Agent进度UI
+// 重置 Agent 进度 UI
 function resetAgentProgressUI() {
     for (const agent of ['sentiment', 'technical', 'psychology']) {
         const progressFill = document.getElementById(`${agent}Progress`);
@@ -406,16 +419,16 @@ function resetAgentProgressUI() {
     }
 }
 
-// 更新Agent进度
+// 更新 Agent 进度
 function updateAgentProgress(agentType, status, progress, score = null) {
     const agentKey = agentType.toLowerCase().replace('agent', '');
     const progressFill = document.getElementById(`${agentKey}Progress`);
     const statusEl = document.getElementById(`${agentKey}Status`);
-    
+
     if (progressFill) {
         progressFill.style.width = `${progress}%`;
     }
-    
+
     if (statusEl) {
         statusEl.className = `agent-status ${status}`;
         if (status === 'completed' && score !== null) {
@@ -434,29 +447,29 @@ function updateAgentProgress(agentType, status, progress, score = null) {
 function addThinkingItem(agentType, content) {
     const thinkingChain = document.getElementById('agentThinkingChain');
     if (!thinkingChain) return;
-    
+
     thinkingChain.classList.add('active');
-    
+
     const agentKey = agentType.toLowerCase().replace('agent', '');
     const agentName = AGENT_CONFIG.names[agentKey] || agentType;
-    
+
     const item = document.createElement('div');
     item.className = 'thinking-item';
     item.innerHTML = `
         <span class="thinking-agent ${agentKey}">${agentName}</span>
         <span class="thinking-content">${content}</span>
     `;
-    
+
     thinkingChain.appendChild(item);
     thinkingChain.scrollTop = thinkingChain.scrollHeight;
 }
 
-// 显示Agent一致性结果
+// 显示 Agent 一致性结果
 function showAgentConsensus(summary) {
     // 在进度面板中显示最终共识
     const panel = document.getElementById('agentProgressPanel');
     if (!panel) return;
-    
+
     // 检查是否已有共识元素
     let consensusEl = panel.querySelector('.agent-final-consensus');
     if (!consensusEl) {
@@ -465,14 +478,14 @@ function showAgentConsensus(summary) {
         consensusEl.style.cssText = 'margin-top: 15px; padding: 12px; background: var(--bg-card); border-radius: 10px; text-align: center;';
         panel.appendChild(consensusEl);
     }
-    
+
     const score = summary.finalScore || summary.final_score || 50;
     const consensus = summary.consensus || 'aligned';
-    
+
     consensusEl.innerHTML = `
         <div style="font-size: 1.5rem; font-weight: 700; color: ${score > 60 ? 'var(--accent-green)' : score < 40 ? 'var(--accent-red)' : 'var(--accent-yellow)'}">${score}分</div>
         <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 5px;">
-            ${consensus === 'divergent' ? '⚠️ Agent存在分歧，建议谨慎决策' : '✓ 3个Agent达成共识'}
+            ${consensus === 'divergent' ? '⚠️ Agent 存在分歧，建议谨慎决策' : '✓ 3 个 Agent 达成共识'}
         </div>
     `;
 }
@@ -512,10 +525,10 @@ function handleSaveDiary() {
     const note = document.getElementById('diaryNote').value.trim();
     const score = document.getElementById('diaryScore').value;
     const type = document.getElementById('diaryModal').dataset.selectedType || 'hold';
-    
+
     if (!company) { alert('请输入标的名称'); return; }
     if (!note) { alert('请输入决策心理记录'); return; }
-    
+
     const entry = {
         id: Date.now(),
         date: new Date().toLocaleDateString('zh-CN'),
@@ -524,11 +537,11 @@ function handleSaveDiary() {
         note: note,
         score: parseInt(score)
     };
-    
+
     Logic.addDiaryEntry(entry);
     UI.renderDiaryList(Logic.getDiaryEntries());
     UI.closeDiaryModal();
-    
+
     alert('决策记录已保存！定期回顾可以帮助您识别情绪化交易模式。');
 }
 

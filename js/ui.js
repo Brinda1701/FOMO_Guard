@@ -671,3 +671,6 @@ export function showAIModeIndicator(hasModelScope) {
         header.appendChild(indicator);
     }
 }
+""  
+"// ==================== Chart.js 情绪趋势图相关 ===================="  
+"let sentimentChartInstance = null;" 
