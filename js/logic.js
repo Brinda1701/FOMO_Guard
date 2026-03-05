@@ -367,7 +367,7 @@ function handleSSEEvent(data, callbacks) {
     if (data.agent) {
         const agentKey = data.agent.toLowerCase().replace('agent', '');
         
-        if (data.status === 'processing') {
+        if (data.status === 'processing' && !state.multiAgentState.agentProgress[agentKey]?.status) {
             // Agent开始
             state.multiAgentState.agentProgress[agentKey] = {
                 status: 'processing',
@@ -375,7 +375,7 @@ function handleSSEEvent(data, callbacks) {
                 result: null
             };
             onAgentStart(data);
-        } else if (data.progress !== undefined) {
+        } else if (data.progress !== undefined && data.progress < 100) {
             // Agent进度更新
             state.multiAgentState.agentProgress[agentKey].progress = data.progress;
             onAgentProgress(data);
