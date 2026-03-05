@@ -980,9 +980,17 @@ function showBatchResultsModal(results) {
 let batchChartInstance = null;
 
 function updateBatchComparisonChart(results) {
+    console.log('[Batch] Chart 对象:', typeof Chart, Chart);
+    
     // 检查 Chart.js 是否加载
     if (typeof Chart === 'undefined') {
         console.error('[Batch] Chart.js 未加载，跳过图表更新');
+        return;
+    }
+    
+    // 检查 Chart 是否是构造函数
+    if (typeof Chart !== 'function') {
+        console.error('[Batch] Chart 不是构造函数，当前类型:', typeof Chart);
         return;
     }
 
