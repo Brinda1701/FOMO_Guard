@@ -976,112 +976,12 @@ function showBatchResultsModal(results) {
     }
 }
 
-// 更新批量分析对比图表
+// 更新批量分析对比图表（已禁用）
 let batchChartInstance = null;
 
 function updateBatchComparisonChart(results) {
-    console.log('[Batch] Chart 对象:', typeof Chart, Chart);
-    
-    // 检查 Chart.js 是否加载
-    if (typeof Chart === 'undefined') {
-        console.error('[Batch] Chart.js 未加载，跳过图表更新');
-        return;
-    }
-    
-    // 检查 Chart 是否是构造函数
-    if (typeof Chart !== 'function') {
-        console.error('[Batch] Chart 不是构造函数，当前类型:', typeof Chart);
-        return;
-    }
-
-    const ctx = document.getElementById('batchComparisonChart');
-    if (!ctx) {
-        console.error('[Batch] 找不到 canvas 元素');
-        return;
-    }
-
-    const context = ctx.getContext('2d');
-    const maxItems = 10;
-    const chartData = results.slice(0, maxItems);
-
-    console.log('[Batch] 开始更新图表，数据数量:', chartData.length);
-
-    // 销毁旧图表
-    if (batchChartInstance) {
-        batchChartInstance.destroy();
-        console.log('[Batch] 旧图表已销毁');
-    }
-
-    // 创建新图表
-    try {
-        batchChartInstance = new Chart(context, {
-            type: 'bar',
-            data: {
-                labels: chartData.map(r => r.company.length > 8 ? r.company.substring(0, 8) + '...' : r.company),
-                datasets: [{
-                    label: '情绪分数',
-                    data: chartData.map(r => r.score),
-                    backgroundColor: chartData.map(r => {
-                        if (r.score > 60) return 'rgba(16, 185, 129, 0.7)';
-                        if (r.score < 40) return 'rgba(239, 68, 68, 0.7)';
-                        return 'rgba(245, 158, 11, 0.7)';
-                    }),
-                    borderColor: chartData.map(r => {
-                        if (r.score > 60) return '#10b981';
-                        if (r.score < 40) return '#ef4444';
-                        return '#f59e0b';
-                    }),
-                    borderWidth: 2,
-                    borderRadius: 6
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: false
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                const index = context.dataIndex;
-                                const r = chartData[index];
-                                return [
-                                    `分数：${r.score}`,
-                                    `情绪：${r.score > 60 ? '贪婪' : (r.score < 40 ? '恐惧' : '中性')}`,
-                                    `行业：${r.profile?.sector || '综合'}`
-                                ];
-                            }
-                        }
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        max: 100,
-                        grid: {
-                            color: 'rgba(255, 255, 255, 0.1)'
-                        },
-                        ticks: {
-                            color: '#94a3b8'
-                        }
-                    },
-                    x: {
-                        grid: {
-                            display: false
-                        },
-                        ticks: {
-                            color: '#94a3b8'
-                        }
-                    }
-                }
-            }
-        });
-        console.log('[Batch] 图表创建成功');
-    } catch (error) {
-        console.error('[Batch] 图表创建失败:', error);
-    }
+    // 图表功能已禁用
+    console.log('[Batch] 图表功能已禁用');
 }
 
 // 选择批量分析中的公司进行详细分析
