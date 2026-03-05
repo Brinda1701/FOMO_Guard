@@ -12,6 +12,22 @@ const MODELSCOPE_API_KEY = process.env.MODELSCOPE_API_KEY;
 const MODELSCOPE_API_URL = process.env.MODELSCOPE_API_URL || 'https://api-inference.modelscope.cn/v1/';
 const MODEL_NAME = process.env.MODEL_NAME || 'deepseek-ai/DeepSeek-R1';
 
+// 简单的 HTML 解析工具（不依赖 cheerio）
+function stripHtml(html) {
+  return html
+    .replace(/<script[\s\S]*?<\/script>/gi, '')
+    .replace(/<style[\s\S]*?<\/style>/gi, '')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&#39;/g, "'")
+    .replace(/&quot;/g, '"')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 // 健康检查
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', modelscope_available: !!MODELSCOPE_API_KEY });
@@ -342,4 +358,88 @@ app.post('/api/batch-analyze', async (req, res) => {
 app.listen(PORT, () => {
   console.log(`FOMOGuard 后端运行在 http://localhost:${PORT}`);
   console.log(`Multi-Agent 编排器：${!!MODELSCOPE_API_KEY ? '已启用 (AI 模式)' : '模拟模式'}`);
+});
+
+// ==================== URL 爬取接口 ====================
+app.post('/api/scrape-url', async (req, res) => {
+  try {
+    const { url } = req.body;
+    if (!url) {
+      return res.status(400).json({ success: false, error: 'URL is required' });
+    }
+
+    // 验证 URL
+    let parsedUrl;
+    try {
+      parsedUrl = new URL(url);
+    } catch (e) {
+      return res.status(400).json({ success: false, error: '无效的 URL 格式' });
+    }
+
+    // 检查支持的网站
+    const supportedDomains = ['xueqiu.com', 'eastmoney.com', 'guba.eastmoney.com', 'sina.com.cn', 'finance.sina.com.cn', 'wallstreetcn.com'];
+    const domain = parsedUrl.hostname.replace('www.', '');
+    const isSupported = supportedDomains.some(d => domain.includes(d));
+
+    if (!isSupported) {
+      return res.status(400).json({ 
+        success: false, 
+        error: `暂不支持该网站，目前支持：${supportedDomains.join('、')}` 
+      });
+    }
+
+    // 识别来源
+    let source = '未知';
+    if (domain.includes('xueqiu')) source = '雪球';
+    else if (domain.includes('eastmoney') || domain.includes('guba')) source = '东方财富';
+    else if (domain.includes('sina') || domain.includes('finance')) source = '新浪财经';
+    else if (domain.includes('wallstreetcn')) source = '华尔街见闻';
+
+    // 爬取网页（需要 API Key 才启用）
+    if (!MODELSCOPE_API_KEY) {
+      // 模拟模式
+      return res.status(200).json({
+        success: true,
+        url,
+        source,
+        title: `${source}新闻 - ${parsedUrl.pathname}`,
+        content: '模拟内容：该新闻分析了市场动态和行业发展趋势，整体情绪偏向正面。',
+        publishTime: new Date().toISOString()
+      });
+    }
+
+    // 真实爬取
+    const fetch = require('node-fetch');
+    const response = await fetch(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error: ${response.status}`);
+    }
+
+    const html = await response.text();
+
+    // 提取标题
+    const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
+    const title = titleMatch ? titleMatch[1].trim().replace(/_-.*$/, '').replace(/-.*$/, '') : '';
+
+    // 提取内容（简化版）
+    const content = stripHtml(html).substring(0, 5000);
+
+    res.status(200).json({
+      success: true,
+      url,
+      source,
+      title,
+      content,
+      publishTime: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error('[Scrape URL] Error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
 });

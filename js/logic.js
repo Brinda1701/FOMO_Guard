@@ -567,34 +567,105 @@ export function parseNewsUrl(url) {
 }
 
 /**
- * 分析 URL 内容（模拟，实际需要通过后端爬取）
+ * 分析 URL 内容（通过后端爬取）
  * @param {string} url - 新闻 URL
  * @returns {Promise<Object>} 分析结果
  */
 export async function analyzeUrlContent(url) {
     const urlInfo = parseNewsUrl(url);
-    
+
     if (!urlInfo.valid) {
         throw new Error(urlInfo.error);
     }
-    
-    // 由于浏览器限制，实际项目中需要通过后端爬取网页内容
-    // 这里模拟分析过程
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    // 生成模拟结果
-    const score = Math.floor(Math.random() * 40) + 30; // 30-70 之间
-    const sentiment = score > 60 ? '正面' : (score < 40 ? '负面' : '中性');
-    
-    return {
-        success: true,
-        url,
-        source: urlInfo.source,
-        score,
-        sentiment,
-        summary: `来自${urlInfo.source}的新闻分析结果：整体情绪偏向${sentiment}，建议结合其他信息源综合判断。`,
-        keywords: ['新闻分析', urlInfo.source, sentiment]
-    };
+
+    // 调用后端爬取网页内容
+    try {
+        const scrapeResponse = await fetch(`${AI_CONFIG.URL}/api/scrape-url`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url })
+        });
+
+        if (!scrapeResponse.ok) {
+            const errorData = await scrapeResponse.json();
+            throw new Error(errorData.error || '爬取失败');
+        }
+
+        const scrapedData = await scrapeResponse.json();
+
+        // 如果有 AI 后端，调用 AI 分析爬取的内容
+        if (state.useAIBackend) {
+            try {
+                const analyzeResponse = await fetch(`${AI_CONFIG.URL}/api/analyze`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        company: scrapedData.title || '新闻分析',
+                        text: scrapedData.content
+                    })
+                });
+
+                if (analyzeResponse.ok) {
+                    const aiData = await analyzeResponse.json();
+                    return {
+                        success: true,
+                        url,
+                        source: scrapedData.source,
+                        title: scrapedData.title,
+                        content: scrapedData.content,
+                        score: aiData.score || 50,
+                        sentiment: aiData.data?.sentiment || '中性',
+                        summary: aiData.data?.advice || scrapedData.title,
+                        publishTime: scrapedData.publishTime
+                    };
+                }
+            } catch (e) {
+                console.error('[URL 分析] AI 分析失败，使用基础分析', e);
+            }
+        }
+
+        // 备用：简单情感分析
+        const score = simpleSentimentAnalysis(scrapedData.content);
+        const sentiment = score > 60 ? '正面' : (score < 40 ? '负面' : '中性');
+
+        return {
+            success: true,
+            url,
+            source: scrapedData.source,
+            title: scrapedData.title,
+            content: scrapedData.content,
+            score,
+            sentiment,
+            summary: `来自${scraped.source}的新闻：${scrapedData.title}`,
+            publishTime: scrapedData.publishTime
+        };
+
+    } catch (error) {
+        console.error('[URL 分析] 错误:', error);
+        throw new Error(`无法获取新闻内容：${error.message}`);
+    }
+}
+
+/**
+ * 简单情感分析（备用）
+ */
+function simpleSentimentAnalysis(text) {
+    const positiveWords = ['增长', '上涨', '利好', '突破', '创新高', '优秀', '强劲', '超预期', '盈利', '复苏', '回暖', '突破'];
+    const negativeWords = ['下跌', '下滑', '亏损', '风险', '警告', '低迷', '疲软', '不及预期', '暴跌', '崩盘', '危机', '衰退'];
+
+    let positiveCount = 0;
+    let negativeCount = 0;
+
+    positiveWords.forEach(word => {
+        if (text.includes(word)) positiveCount++;
+    });
+
+    negativeWords.forEach(word => {
+        if (text.includes(word)) negativeCount++;
+    });
+
+    const score = Math.round(50 + (positiveCount - negativeCount) * 5);
+    return Math.max(0, Math.min(100, score));
 }
 
 /**

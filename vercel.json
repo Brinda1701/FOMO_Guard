@@ -6,7 +6,8 @@
   "rewrites": [
     { "source": "/api/health", "destination": "/api/health.js" },
     { "source": "/api/analyze", "destination": "/api/analyze.js" },
-    { "source": "/api/orchestrator", "destination": "/api/orchestrator.js" }
+    { "source": "/api/orchestrator", "destination": "/api/orchestrator.js" },
+    { "source": "/api/scrape-url", "destination": "/api/scrape-url.js" }
   ],
   "headers": [
     {
