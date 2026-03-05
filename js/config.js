@@ -2,6 +2,15 @@ export const AI_CONFIG = {
     // 部署时使用相对路径（同域），本地开发可通过环境变量覆盖
     URL: '',
     TIMEOUT: 8000,
+    // WebSocket 配置（Vercel 不支持 WebSocket）
+    ENABLE_WEBSOCKET: false,  // 默认禁用，因为部署在 Vercel 上
+    // Multi-Agent 模式配置
+    USE_MULTI_AGENT: true,  // 是否启用 Multi-Agent 模式
+    MULTI_AGENT_STREAM: true,  // 是否使用 SSE 流式输出
+    AGENT_TIMEOUT: 5000,  // 单个 Agent 超时时间
+    TOTAL_TIMEOUT: 8000   // 总流程超时时间
+};
+    TIMEOUT: 8000,
     // Multi-Agent模式配置
     USE_MULTI_AGENT: true,  // 是否启用Multi-Agent模式
     MULTI_AGENT_STREAM: true,  // 是否使用SSE流式输出
