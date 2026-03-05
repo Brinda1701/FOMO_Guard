@@ -1,5 +1,5 @@
 // Vercel Serverless Function: 健康检查
-export default function handler(req, res) {
+module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   
