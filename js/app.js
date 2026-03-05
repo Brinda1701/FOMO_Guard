@@ -41,6 +41,10 @@ function setupRealtimeWS() {
                         Logic.state.currentScore = msg.score;
                         UI.updateGauge(msg.score, msg.company);
                         UI.createEmotionParticles(msg.score);
+                        
+                        // 更新实时情绪趋势图
+                        const historyData = Logic.getSentimentHistory(msg.company);
+                        Chart.updateSentimentTrendChart(historyData);
                     }
                     // update history / source displays
                     UI.updateHistory();
@@ -741,15 +745,17 @@ async function analyzeNewsUrl() {
                 <p class="insight-source">来源：<a href="${url}" target="_blank" style="color:var(--accent-blue);">查看原文</a></p>
             </div>
         `;
-        
-        // 记录历史
+
+        // 记录历史并更新趋势图
         Logic.recordSentimentScore(`URL:${result.source}`, result.score);
-        
-        UI.showFeedbackPopup({ 
-            type: 'success', 
-            title: '分析完成', 
-            message: `已分析来自${result.source}的新闻`, 
-            durationMs: 2500 
+        const historyData = Logic.getSentimentHistory(`URL:${result.source}`);
+        Chart.updateSentimentTrendChart(historyData);
+
+        UI.showFeedbackPopup({
+            type: 'success',
+            title: '分析完成',
+            message: `已分析来自${result.source}的新闻`,
+            durationMs: 2500
         });
         
     } catch (error) {
@@ -808,15 +814,17 @@ async function analyzeText() {
                 ` : ''}
             </div>
         `;
-        
-        // 记录历史
+
+        // 记录历史并更新趋势图
         Logic.recordSentimentScore('文本分析', result.score);
-        
-        UI.showFeedbackPopup({ 
-            type: 'success', 
-            title: '分析完成', 
-            message: `已分析${text.length}个字符`, 
-            durationMs: 2500 
+        const historyData = Logic.getSentimentHistory('文本分析');
+        Chart.updateSentimentTrendChart(historyData);
+
+        UI.showFeedbackPopup({
+            type: 'success',
+            title: '分析完成',
+            message: `已分析${text.length}个字符`,
+            durationMs: 2500
         });
         
     } catch (error) {
