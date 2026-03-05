@@ -188,6 +188,22 @@ function setupEventListeners() {
             });
         }
     });
+
+    // 批量分析模态框交互
+    document.getElementById('closeBatchModal')?.addEventListener('click', () => {
+        document.getElementById('batchModalOverlay').style.display = 'none';
+    });
+    document.getElementById('closeBatchModalBtn')?.addEventListener('click', () => {
+        document.getElementById('batchModalOverlay').style.display = 'none';
+    });
+    document.getElementById('exportBatchResults')?.addEventListener('click', exportBatchResults);
+
+    // 点击模态框背景关闭
+    document.getElementById('batchModalOverlay')?.addEventListener('click', (e) => {
+        if (e.target === document.getElementById('batchModalOverlay')) {
+            document.getElementById('batchModalOverlay').style.display = 'none';
+        }
+    });
 }
 
 // 切换输入模式
@@ -823,92 +839,258 @@ async function analyzeText() {
 async function analyzeBatch() {
     const input = document.getElementById('batchInput');
     const lines = input.value.split('\n').filter(l => l.trim());
-    
-    if (lines.length === 0) { 
+
+    if (lines.length === 0) {
         UI.showFeedbackPopup({ type: 'warning', title: '请输入公司', message: '请至少输入一个公司名称', durationMs: 2000 });
-        return; 
+        return;
     }
-    
+
     // 限制最多 10 个
     const companies = lines.slice(0, 10);
-    
+
     document.getElementById('analyzeBatchBtn').disabled = true;
-    
+
     try {
-        // 显示批量分析结果区域
-        let resultsContainer = document.getElementById('batchResults');
-        if (!resultsContainer) {
-            resultsContainer = document.createElement('div');
-            resultsContainer.id = 'batchResults';
-            resultsContainer.className = 'batch-results';
-            
-            // 插入到批量分析面板下方
-            document.getElementById('batchPanel').parentNode.insertBefore(
-                resultsContainer,
-                document.getElementById('batchPanel').nextSibling
-            );
-        }
-        
-        resultsContainer.innerHTML = '<div class="batch-loading">正在分析中，请稍候...</div>';
-        
+        // 显示加载状态
+        UI.showLoading(false, '批量');
+
         // 调用批量分析
         const results = await Logic.analyzeBatchCompanies(companies, (progress) => {
-            resultsContainer.innerHTML = `
-                <div class="batch-loading">
+            // 更新加载状态
+            const gaugeContainer = document.getElementById('gaugeContainer');
+            gaugeContainer.innerHTML = `
+                <div class="loading">
                     <div class="spinner"></div>
                     <span>正在分析 ${progress.company} (${progress.current}/${progress.total})...</span>
                 </div>
             `;
         });
-        
-        // 显示结果
-        resultsContainer.innerHTML = results.map(r => {
-            if (r.success) {
-                const scoreClass = r.score > 60 ? 'greed' : (r.score < 40 ? 'fear' : 'neutral');
-                return `
-                    <div class="batch-result-card">
-                        <div class="batch-result-header">
-                            <span class="batch-result-company">${r.company}</span>
-                            <span class="batch-result-score ${scoreClass}">${r.score}</span>
-                        </div>
-                        <div class="batch-result-detail">
-                            情绪：${r.sentiment}<br>
-                            行业：${r.profile?.sector || '未知'}
-                        </div>
-                    </div>
-                `;
-            } else {
-                return `
-                    <div class="batch-result-card">
-                        <div class="batch-result-header">
-                            <span class="batch-result-company">${r.company}</span>
-                            <span style="color: #ef4444;">❌</span>
-                        </div>
-                        <div class="batch-result-detail" style="color: #ef4444;">
-                            ${r.error}
-                        </div>
-                    </div>
-                `;
-            }
-        }).join('');
-        
-        UI.showFeedbackPopup({ 
-            type: 'success', 
-            title: '批量分析完成', 
-            message: `已分析${results.filter(r => r.success).length}/${results.length}个公司`, 
-            durationMs: 3000 
+
+        // 存储结果到全局变量
+        window.lastBatchResults = results;
+
+        // 显示批量分析模态框
+        showBatchResultsModal(results);
+
+        UI.showFeedbackPopup({
+            type: 'success',
+            title: '批量分析完成',
+            message: `已分析${results.filter(r => r.success).length}/${results.length}个公司`,
+            durationMs: 3000
         });
-        
+
     } catch (error) {
-        UI.showFeedbackPopup({ 
-            type: 'error', 
-            title: '批量分析失败', 
-            message: error.message, 
-            durationMs: 3000 
+        UI.showFeedbackPopup({
+            type: 'error',
+            title: '批量分析失败',
+            message: error.message,
+            durationMs: 3000
         });
     } finally {
         document.getElementById('analyzeBatchBtn').disabled = false;
+        // 恢复仪表盘
+        const gaugeContainer = document.getElementById('gaugeContainer');
+        if (gaugeContainer && !gaugeContainer.querySelector('.gauge-wrapper')) {
+            gaugeContainer.innerHTML = '<div class="placeholder"><div class="placeholder-icon">📊</div><p>请输入公司名称开始分析市场情绪</p></div>';
+        }
     }
+}
+
+// 显示批量分析结果模态框
+function showBatchResultsModal(results) {
+    const modal = document.getElementById('batchModalOverlay');
+    const tbody = document.getElementById('batchResultsTableBody');
+    
+    // 计算统计数据
+    const successResults = results.filter(r => r.success);
+    const totalCount = results.length;
+    const avgScore = successResults.length > 0 
+        ? Math.round(successResults.reduce((sum, r) => sum + r.score, 0) / successResults.length) 
+        : 0;
+    const positiveCount = successResults.filter(r => r.score > 60).length;
+    const negativeCount = successResults.filter(r => r.score < 40).length;
+
+    // 更新统计卡片
+    document.getElementById('batchTotalCount').textContent = totalCount;
+    document.getElementById('batchAvgScore').textContent = avgScore;
+    document.getElementById('batchPositiveCount').textContent = positiveCount;
+    document.getElementById('batchNegativeCount').textContent = negativeCount;
+
+    // 按分数排序
+    const sortedResults = [...successResults].sort((a, b) => b.score - a.score);
+
+    // 填充表格
+    tbody.innerHTML = sortedResults.map((r, index) => {
+        const scoreClass = r.score > 60 ? 'greed' : (r.score < 40 ? 'fear' : 'neutral');
+        const sentimentText = r.score > 60 ? '贪婪' : (r.score < 40 ? '恐惧' : '中性');
+        return `
+            <tr>
+                <td><span class="batch-rank">${index + 1}</span></td>
+                <td><span class="batch-company-name">${r.company}</span></td>
+                <td><span class="batch-score-badge ${scoreClass}">${r.score}</span></td>
+                <td><span class="batch-sentiment-tag">${sentimentText}</span></td>
+                <td><span class="batch-sector-tag">${r.profile?.sector || '综合'}</span></td>
+                <td>
+                    <button class="batch-action-btn" onclick="window.selectBatchCompany('${r.company}')">分析</button>
+                </td>
+            </tr>
+        `;
+    }).join('');
+
+    // 如果没有结果，显示空状态
+    if (successResults.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text-secondary);">暂无分析结果</td></tr>';
+    }
+
+    // 更新图表
+    updateBatchComparisonChart(sortedResults);
+
+    // 显示模态框
+    modal.style.display = 'flex';
+}
+
+// 更新批量分析对比图表
+let batchChartInstance = null;
+
+function updateBatchComparisonChart(results) {
+    const ctx = document.getElementById('batchComparisonChart').getContext('2d');
+    const maxItems = 10;
+    const chartData = results.slice(0, maxItems);
+
+    // 销毁旧图表
+    if (batchChartInstance) {
+        batchChartInstance.destroy();
+    }
+
+    // 创建新图表
+    batchChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: chartData.map(r => r.company.length > 8 ? r.company.substring(0, 8) + '...' : r.company),
+            datasets: [{
+                label: '情绪分数',
+                data: chartData.map(r => r.score),
+                backgroundColor: chartData.map(r => {
+                    if (r.score > 60) return 'rgba(16, 185, 129, 0.7)';
+                    if (r.score < 40) return 'rgba(239, 68, 68, 0.7)';
+                    return 'rgba(245, 158, 11, 0.7)';
+                }),
+                borderColor: chartData.map(r => {
+                    if (r.score > 60) return '#10b981';
+                    if (r.score < 40) return '#ef4444';
+                    return '#f59e0b';
+                }),
+                borderWidth: 2,
+                borderRadius: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const index = context.dataIndex;
+                            const r = chartData[index];
+                            return [
+                                `分数：${r.score}`,
+                                `情绪：${r.score > 60 ? '贪婪' : (r.score < 40 ? '恐惧' : '中性')}`,
+                                `行业：${r.profile?.sector || '综合'}`
+                            ];
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100,
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)'
+                    },
+                    ticks: {
+                        color: '#94a3b8'
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    },
+                    ticks: {
+                        color: '#94a3b8'
+                    }
+                }
+            }
+        }
+    });
+}
+
+// 选择批量分析中的公司进行详细分析
+window.selectBatchCompany = function(company) {
+    // 关闭模态框
+    document.getElementById('batchModalOverlay').style.display = 'none';
+    
+    // 切换到公司分析模式
+    document.getElementById('companyInput').value = company;
+    
+    // 触发分析
+    analyzeCompany();
+};
+
+// 导出批量分析结果为 CSV
+function exportBatchResults() {
+    const results = window.lastBatchResults;
+    if (!results || results.length === 0) {
+        UI.showFeedbackPopup({
+            type: 'warning',
+            title: '无数据',
+            message: '没有可导出的分析结果',
+            durationMs: 2000
+        });
+        return;
+    }
+
+    // 生成 CSV 内容
+    const headers = ['排名', '公司', '情绪分数', '情绪状态', '行业', '分析时间'];
+    const sortedResults = [...results.filter(r => r.success)].sort((a, b) => b.score - a.score);
+    
+    const csvRows = [
+        headers.join(','),
+        ...sortedResults.map((r, index) => [
+            index + 1,
+            `"${r.company}"`,
+            r.score,
+            r.score > 60 ? '贪婪' : (r.score < 40 ? '恐惧' : '中性'),
+            r.profile?.sector || '综合',
+            new Date().toLocaleString('zh-CN')
+        ].join(','))
+    ];
+
+    const csvContent = csvRows.join('\n');
+
+    // 创建下载链接
+    const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    
+    link.setAttribute('href', url);
+    link.setAttribute('download', `FOMOGuard_批量分析_${new Date().getTime()}.csv`);
+    link.style.visibility = 'hidden';
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    UI.showFeedbackPopup({
+        type: 'success',
+        title: '导出成功',
+        message: '分析结果已导出为 CSV 文件',
+        durationMs: 2500
+    });
 }
 
 // 启动应用

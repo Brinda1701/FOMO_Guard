@@ -415,6 +415,71 @@
         </div>
     </div>
 
+    <!-- 模态框：批量分析结果 -->
+    <div class="batch-modal-overlay" id="batchModalOverlay" style="display:none;">
+        <div class="batch-modal-content">
+            <div class="batch-modal-header">
+                <h2>📊 批量分析结果</h2>
+                <button class="batch-modal-close" id="closeBatchModal">×</button>
+            </div>
+            <div class="batch-modal-body">
+                <!-- 统计摘要 -->
+                <div class="batch-summary-stats">
+                    <div class="batch-stat-card">
+                        <div class="batch-stat-icon">🏢</div>
+                        <div class="batch-stat-value" id="batchTotalCount">0</div>
+                        <div class="batch-stat-label">分析公司数</div>
+                    </div>
+                    <div class="batch-stat-card">
+                        <div class="batch-stat-icon">📈</div>
+                        <div class="batch-stat-value" id="batchAvgScore">0</div>
+                        <div class="batch-stat-label">平均情绪分</div>
+                    </div>
+                    <div class="batch-stat-card">
+                        <div class="batch-stat-icon">😊</div>
+                        <div class="batch-stat-value" id="batchPositiveCount">0</div>
+                        <div class="batch-stat-label">正面情绪</div>
+                    </div>
+                    <div class="batch-stat-card">
+                        <div class="batch-stat-icon">😟</div>
+                        <div class="batch-stat-value" id="batchNegativeCount">0</div>
+                        <div class="batch-stat-label">负面情绪</div>
+                    </div>
+                </div>
+
+                <!-- 结果表格 -->
+                <div class="batch-results-table-container">
+                    <table class="batch-results-table" id="batchResultsTable">
+                        <thead>
+                            <tr>
+                                <th>排名</th>
+                                <th>公司</th>
+                                <th>情绪分数</th>
+                                <th>情绪状态</th>
+                                <th>行业</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="batchResultsTableBody">
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- 可视化图表 -->
+                <div class="batch-chart-container">
+                    <h4 style="margin-bottom: 15px; color: var(--text-secondary);">📊 情绪分布对比</h4>
+                    <div class="batch-chart-wrapper">
+                        <canvas id="batchComparisonChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="batch-modal-footer">
+                <button class="batch-modal-btn batch-export-btn" id="exportBatchResults">📥 导出 CSV</button>
+                <button class="batch-modal-btn batch-close-btn" id="closeBatchModalBtn">关闭</button>
+            </div>
+        </div>
+    </div>
+
     <!-- 模块化 JS 入口 -->
     <script type="module" src="js/app.js"></script>
 </body>
