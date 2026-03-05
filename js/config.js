@@ -2,29 +2,20 @@ export const AI_CONFIG = {
     // 部署时使用相对路径（同域），本地开发可通过环境变量覆盖
     URL: '',
     TIMEOUT: 8000,
-    // WebSocket 配置（Vercel 不支持 WebSocket）
-    ENABLE_WEBSOCKET: true,  // 启用 WebSocket
     // Multi-Agent 模式配置
     USE_MULTI_AGENT: true,  // 是否启用 Multi-Agent 模式
     MULTI_AGENT_STREAM: true,  // 是否使用 SSE 流式输出
     AGENT_TIMEOUT: 5000,  // 单个 Agent 超时时间
     TOTAL_TIMEOUT: 8000   // 总流程超时时间
 };
-    TIMEOUT: 8000,
-    // Multi-Agent模式配置
-    USE_MULTI_AGENT: true,  // 是否启用Multi-Agent模式
-    MULTI_AGENT_STREAM: true,  // 是否使用SSE流式输出
-    AGENT_TIMEOUT: 5000,  // 单个Agent超时时间
-    TOTAL_TIMEOUT: 8000   // 总流程超时时间
-};
 
-// Agent配置
+// Agent 配置
 export const AGENT_CONFIG = {
     agents: ['sentiment', 'technical', 'psychology'],
     names: {
-        sentiment: '情绪分析Agent',
-        technical: '技术分析Agent',
-        psychology: '心理诊断Agent'
+        sentiment: '情绪分析 Agent',
+        technical: '技术分析 Agent',
+        psychology: '心理诊断 Agent'
     },
     icons: {
         sentiment: '😊',
@@ -45,9 +36,9 @@ export const PROFILES = {
     '特斯拉': { base: 55, vol: 15, sector: '科技', kw: ['马斯克', 'FSD', '降价', '产能'] },
     'Tesla': { base: 55, vol: 15, sector: '科技', kw: ['马斯克', 'FSD', '降价', '产能'] },
     'TSLA': { base: 55, vol: 15, sector: '科技', kw: ['马斯克', 'FSD', '降价', '产能'] },
-    '英伟达': { base: 85, vol: 8, sector: 'AI芯片', kw: ['AI', 'GPU', '数据中心', '算力'] },
-    'NVIDIA': { base: 85, vol: 8, sector: 'AI芯片', kw: ['AI', 'GPU', '数据中心', '算力'] },
-    'NVDA': { base: 85, vol: 8, sector: 'AI芯片', kw: ['AI', 'GPU', '数据中心', '算力'] },
+    '英伟达': { base: 85, vol: 8, sector: 'AI 芯片', kw: ['AI', 'GPU', '数据中心', '算力'] },
+    'NVIDIA': { base: 85, vol: 8, sector: 'AI 芯片', kw: ['AI', 'GPU', '数据中心', '算力'] },
+    'NVDA': { base: 85, vol: 8, sector: 'AI 芯片', kw: ['AI', 'GPU', '数据中心', '算力'] },
     '苹果': { base: 62, vol: 8, sector: '科技', kw: ['iPhone', 'AI', '供应链', '创新'] },
     'Apple': { base: 62, vol: 8, sector: '科技', kw: ['iPhone', 'AI', '供应链', '创新'] },
     'AAPL': { base: 62, vol: 8, sector: '科技', kw: ['iPhone', 'AI', '供应链', '创新'] },
@@ -94,7 +85,7 @@ export const PSYCHOLOGY_LIBRARY = {
     },
     'sell': {
         'high': { title: '📈 止盈的艺术', content: '盈利是拿出来的，不是看出来的。由于处置效应，你可能正错过最佳卖点。', cooldown: false },
-        'low': { title: '⏰ 割肉心理诱导', content: '亏损的痛苦是盈利的2倍。不要因为害怕账户红色而选择在黎明前离场。', cooldown: true }
+        'low': { title: '⏰ 割肉心理诱导', content: '亏损的痛苦是盈利的 2 倍。不要因为害怕账户红色而选择在黎明前离场。', cooldown: true }
     },
     'hold': {
         'high': { title: '🧘 拒绝 FOMO', content: '在别人疯狂时选择按兵不动。你不需要赚到每一分钱，稳健比频率更重要。', cooldown: false },
@@ -107,7 +98,7 @@ export const PSYCHOLOGY_QUIZZES = [
         question: "当股价连续下跌时，'损失厌恶'会导致投资者？",
         options: ["更倾向于持有亏损股票", "理性止损离场", "加仓摊平成本", "以上都不对"],
         correct: 0,
-        explanation: "损失厌恶使人对亏损的痛苦感受是同等收益快乐的2倍，导致不愿承认亏损而继续持有。"
+        explanation: "损失厌恶使人对亏损的痛苦感受是同等收益快乐的 2 倍，导致不愿承认亏损而继续持有。"
     },
     {
         question: "'锚定效应'指的是什么？",
@@ -141,7 +132,7 @@ export const PSYCHOLOGY_QUIZZES = [
     }
 ];
 
-// 行业知识库 (RAG数据增强)
+// 行业知识库 (RAG 数据增强)
 export const INDUSTRY_KNOWLEDGE = {
     '科技': {
         risk_factors: ['技术迭代风险', '竞争加剧', '监管政策变化', '人才流失'],
@@ -187,7 +178,7 @@ export const INDUSTRY_KNOWLEDGE = {
     }
 };
 
-// 公司增强画像 (扩展PROFILES)
+// 公司增强画像 (扩展 PROFILES)
 export const COMPANY_PROFILES_ENHANCED = {
     '茅台': {
         recent_events: [
@@ -207,7 +198,7 @@ export const COMPANY_PROFILES_ENHANCED = {
     },
     '特斯拉': {
         recent_events: [
-            { date: '2025-02', event: 'FSD订阅降价', impact: 'neutral' },
+            { date: '2025-02', event: 'FSD 订阅降价', impact: 'neutral' },
             { date: '2025-01', event: '新车型发布', impact: 'positive' }
         ],
         analyst_ratings: { buy: 15, hold: 12, sell: 8 },
