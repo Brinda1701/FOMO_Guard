@@ -192,17 +192,17 @@ function setupEventListeners() {
 
     // 批量分析模态框交互
     document.getElementById('closeBatchModal')?.addEventListener('click', () => {
-        document.getElementById('batchModalOverlay').style.display = 'none';
+        document.getElementById('batchModalOverlay').classList.remove('active');
     });
     document.getElementById('closeBatchModalBtn')?.addEventListener('click', () => {
-        document.getElementById('batchModalOverlay').style.display = 'none';
+        document.getElementById('batchModalOverlay').classList.remove('active');
     });
     document.getElementById('exportBatchResults')?.addEventListener('click', exportBatchResults);
 
     // 点击模态框背景关闭
     document.getElementById('batchModalOverlay')?.addEventListener('click', (e) => {
         if (e.target === document.getElementById('batchModalOverlay')) {
-            document.getElementById('batchModalOverlay').style.display = 'none';
+            document.getElementById('batchModalOverlay').classList.remove('active');
         }
     });
 }
@@ -953,10 +953,10 @@ function showBatchResultsModal(results) {
     // 更新图表
     updateBatchComparisonChart(sortedResults);
 
-    // 显示模态框 - 使用 setTimeout 确保 DOM 更新完成
+    // 显示模态框 - 使用 active 类
     setTimeout(() => {
-        modal.style.display = 'flex';
-        console.log('[Batch] 模态框 display 设置为 flex，当前样式:', modal.style.display);
+        modal.classList.add('active');
+        console.log('[Batch] 模态框 active 类已添加');
     }, 100);
 }
 

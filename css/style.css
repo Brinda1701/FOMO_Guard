@@ -2697,11 +2697,15 @@ html[data-theme="light"] .modal-content::before {
     right: 0;
     bottom: 0;
     background: var(--modal-overlay-bg);
-    display: flex;
+    display: none;
     align-items: center;
     justify-content: center;
     z-index: 1500;
     padding: 20px;
+}
+
+.batch-modal-overlay.active {
+    display: flex;
 }
 
 .batch-modal-content {
