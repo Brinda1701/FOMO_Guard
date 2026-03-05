@@ -899,65 +899,81 @@ async function analyzeBatch() {
 
 // 显示批量分析结果模态框
 function showBatchResultsModal(results) {
-    console.log('[Batch] 显示结果模态框，结果数量:', results.length);
+    console.log('[Batch] 开始显示结果模态框，结果数量:', results.length);
     
     const modal = document.getElementById('batchModalOverlay');
     const tbody = document.getElementById('batchResultsTableBody');
     
     console.log('[Batch] modal 元素:', modal);
     console.log('[Batch] tbody 元素:', tbody);
+    console.log('[Batch] modal 当前类名:', modal?.className);
 
-    // 计算统计数据
-    const successResults = results.filter(r => r.success);
-    const totalCount = results.length;
-    const avgScore = successResults.length > 0
-        ? Math.round(successResults.reduce((sum, r) => sum + r.score, 0) / successResults.length)
-        : 0;
-    const positiveCount = successResults.filter(r => r.score > 60).length;
-    const negativeCount = successResults.filter(r => r.score < 40).length;
+    try {
+        // 计算统计数据
+        const successResults = results.filter(r => r.success);
+        const totalCount = results.length;
+        const avgScore = successResults.length > 0
+            ? Math.round(successResults.reduce((sum, r) => sum + r.score, 0) / successResults.length)
+            : 0;
+        const positiveCount = successResults.filter(r => r.score > 60).length;
+        const negativeCount = successResults.filter(r => r.score < 40).length;
 
-    console.log('[Batch] 统计数据:', { totalCount, avgScore, positiveCount, negativeCount });
+        console.log('[Batch] 统计数据:', { totalCount, avgScore, positiveCount, negativeCount });
 
-    // 更新统计卡片
-    document.getElementById('batchTotalCount').textContent = totalCount;
-    document.getElementById('batchAvgScore').textContent = avgScore;
-    document.getElementById('batchPositiveCount').textContent = positiveCount;
-    document.getElementById('batchNegativeCount').textContent = negativeCount;
+        // 更新统计卡片
+        document.getElementById('batchTotalCount').textContent = totalCount;
+        document.getElementById('batchAvgScore').textContent = avgScore;
+        document.getElementById('batchPositiveCount').textContent = positiveCount;
+        document.getElementById('batchNegativeCount').textContent = negativeCount;
 
-    // 按分数排序
-    const sortedResults = [...successResults].sort((a, b) => b.score - a.score);
+        console.log('[Batch] 统计卡片已更新');
 
-    // 填充表格
-    tbody.innerHTML = sortedResults.map((r, index) => {
-        const scoreClass = r.score > 60 ? 'greed' : (r.score < 40 ? 'fear' : 'neutral');
-        const sentimentText = r.score > 60 ? '贪婪' : (r.score < 40 ? '恐惧' : '中性');
-        return `
-            <tr>
-                <td><span class="batch-rank">${index + 1}</span></td>
-                <td><span class="batch-company-name">${r.company}</span></td>
-                <td><span class="batch-score-badge ${scoreClass}">${r.score}</span></td>
-                <td><span class="batch-sentiment-tag">${sentimentText}</span></td>
-                <td><span class="batch-sector-tag">${r.profile?.sector || '综合'}</span></td>
-                <td>
-                    <button class="batch-action-btn" onclick="window.selectBatchCompany('${r.company}')">分析</button>
-                </td>
-            </tr>
-        `;
-    }).join('');
+        // 按分数排序
+        const sortedResults = [...successResults].sort((a, b) => b.score - a.score);
 
-    // 如果没有结果，显示空状态
-    if (successResults.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text-secondary);">暂无分析结果</td></tr>';
+        // 填充表格
+        tbody.innerHTML = sortedResults.map((r, index) => {
+            const scoreClass = r.score > 60 ? 'greed' : (r.score < 40 ? 'fear' : 'neutral');
+            const sentimentText = r.score > 60 ? '贪婪' : (r.score < 40 ? '恐惧' : '中性');
+            return `
+                <tr>
+                    <td><span class="batch-rank">${index + 1}</span></td>
+                    <td><span class="batch-company-name">${r.company}</span></td>
+                    <td><span class="batch-score-badge ${scoreClass}">${r.score}</span></td>
+                    <td><span class="batch-sentiment-tag">${sentimentText}</span></td>
+                    <td><span class="batch-sector-tag">${r.profile?.sector || '综合'}</span></td>
+                    <td>
+                        <button class="batch-action-btn" onclick="window.selectBatchCompany('${r.company}')">分析</button>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+
+        console.log('[Batch] 表格已填充');
+
+        // 如果没有结果，显示空状态
+        if (successResults.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text-secondary);">暂无分析结果</td></tr>';
+        }
+
+        // 更新图表
+        updateBatchComparisonChart(sortedResults);
+
+        console.log('[Batch] 图表已更新');
+
+        // 显示模态框 - 使用 active 类
+        setTimeout(() => {
+            if (modal) {
+                modal.classList.add('active');
+                console.log('[Batch] 模态框 active 类已添加，当前类名:', modal.className);
+            } else {
+                console.error('[Batch] modal 元素不存在');
+            }
+        }, 100);
+        
+    } catch (error) {
+        console.error('[Batch] 显示模态框出错:', error);
     }
-
-    // 更新图表
-    updateBatchComparisonChart(sortedResults);
-
-    // 显示模态框 - 使用 active 类
-    setTimeout(() => {
-        modal.classList.add('active');
-        console.log('[Batch] 模态框 active 类已添加');
-    }, 100);
 }
 
 // 更新批量分析对比图表
