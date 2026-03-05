@@ -315,11 +315,18 @@
             <!-- 环形倒计时 -->
             <div class="countdown-ring-container">
                 <svg class="countdown-ring" viewBox="0 0 120 120">
+                    <defs>
+                        <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#f59e0b"/>
+                            <stop offset="50%" stop-color="#f97316"/>
+                            <stop offset="100%" stop-color="#ef4444"/>
+                        </linearGradient>
+                    </defs>
                     <circle class="countdown-ring-bg" cx="60" cy="60" r="54" />
                     <circle class="countdown-ring-progress" id="countdownRingProgress" cx="60" cy="60" r="54" />
                 </svg>
                 <div class="countdown-ring-text">
-                    <div class="countdown-time" id="modalTimer">300</div>
+                    <div class="countdown-time" id="modalTimer">100</div>
                     <div class="countdown-label">秒</div>
                 </div>
             </div>

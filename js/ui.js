@@ -256,21 +256,24 @@ function stopBreathingGuide() {
 function updateCountdownRing(remaining, total) {
     const ring = document.getElementById('countdownRingProgress');
     if (!ring) return;
-    
-    const circumference = 2 * Math.PI * 54; // r=54
+
+    const circumference = 2 * Math.PI * 54;
     const progress = remaining / total;
     const offset = circumference * (1 - progress);
-    
+
     ring.style.strokeDasharray = `${circumference}`;
     ring.style.strokeDashoffset = `${offset}`;
-    
+
     // æ ¹æ®å‰©ä½™æ—¶é—´æ”¹å˜é¢œè‰²
     if (remaining <= 30) {
-        ring.style.stroke = 'var(--accent-green)';
-    } else if (remaining <= 120) {
-        ring.style.stroke = 'var(--accent-yellow)';
+        ring.style.stroke = '#10b981';
+        ring.style.color = '#10b981';
+    } else if (remaining <= 60) {
+        ring.style.stroke = '#f59e0b';
+        ring.style.color = '#f59e0b';
     } else {
-        ring.style.stroke = 'var(--accent-red)';
+        ring.style.stroke = 'url(#gradient)';
+        ring.style.color = '#ef4444';
     }
 }
 
@@ -672,5 +675,5 @@ export function showAIModeIndicator(hasModelScope) {
     }
 }
 ""  
-"// ==================== Chart.js ÇéĞ÷Ç÷ÊÆÍ¼Ïà¹Ø ===================="  
+"// ==================== Chart.js ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í¼ï¿½ï¿½ï¿½ ===================="  
 "let sentimentChartInstance = null;" 
