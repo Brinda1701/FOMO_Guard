@@ -16,22 +16,12 @@ async function init() {
 
     setupEventListeners();
     
-    // 仅在配置启用时尝试连接 WebSocket（Vercel 不支持 WebSocket，默认禁用）
-    if (AI_CONFIG.ENABLE_WEBSOCKET !== false) {
-        setupRealtimeWS();
-    }
+    setupRealtimeWS();
 }
 
 // WebSocket realtime connection to backend
 let ws;
 function setupRealtimeWS() {
-    // 检查是否在 Vercel 环境（不支持 WebSocket）
-    const isVercel = window.location.hostname.includes('vercel.app');
-    if (isVercel) {
-        console.log('[WS] 检测到 Vercel 环境，跳过 WebSocket 连接');
-        return;
-    }
-    
     try {
         const base = AI_CONFIG.URL || window.location.origin;
         const wsUrl = base.replace(/^http/, 'ws') + '/ws';

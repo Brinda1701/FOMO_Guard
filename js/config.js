@@ -3,7 +3,7 @@ export const AI_CONFIG = {
     URL: '',
     TIMEOUT: 8000,
     // WebSocket 配置（Vercel 不支持 WebSocket）
-    ENABLE_WEBSOCKET: false,  // 默认禁用，因为部署在 Vercel 上
+    ENABLE_WEBSOCKET: true,  // 启用 WebSocket
     // Multi-Agent 模式配置
     USE_MULTI_AGENT: true,  // 是否启用 Multi-Agent 模式
     MULTI_AGENT_STREAM: true,  // 是否使用 SSE 流式输出
