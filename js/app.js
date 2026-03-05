@@ -899,17 +899,24 @@ async function analyzeBatch() {
 
 // 显示批量分析结果模态框
 function showBatchResultsModal(results) {
+    console.log('[Batch] 显示结果模态框，结果数量:', results.length);
+    
     const modal = document.getElementById('batchModalOverlay');
     const tbody = document.getElementById('batchResultsTableBody');
     
+    console.log('[Batch] modal 元素:', modal);
+    console.log('[Batch] tbody 元素:', tbody);
+
     // 计算统计数据
     const successResults = results.filter(r => r.success);
     const totalCount = results.length;
-    const avgScore = successResults.length > 0 
-        ? Math.round(successResults.reduce((sum, r) => sum + r.score, 0) / successResults.length) 
+    const avgScore = successResults.length > 0
+        ? Math.round(successResults.reduce((sum, r) => sum + r.score, 0) / successResults.length)
         : 0;
     const positiveCount = successResults.filter(r => r.score > 60).length;
     const negativeCount = successResults.filter(r => r.score < 40).length;
+
+    console.log('[Batch] 统计数据:', { totalCount, avgScore, positiveCount, negativeCount });
 
     // 更新统计卡片
     document.getElementById('batchTotalCount').textContent = totalCount;
@@ -946,8 +953,11 @@ function showBatchResultsModal(results) {
     // 更新图表
     updateBatchComparisonChart(sortedResults);
 
-    // 显示模态框
-    modal.style.display = 'flex';
+    // 显示模态框 - 使用 setTimeout 确保 DOM 更新完成
+    setTimeout(() => {
+        modal.style.display = 'flex';
+        console.log('[Batch] 模态框 display 设置为 flex，当前样式:', modal.style.display);
+    }, 100);
 }
 
 // 更新批量分析对比图表
