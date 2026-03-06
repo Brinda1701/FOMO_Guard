@@ -2097,6 +2097,30 @@ html[data-theme="light"] .modal-content::before {
     color: var(--text-secondary);
 }
 
+.diary-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.diary-edit-btn {
+    padding: 6px 10px;
+    border-radius: 8px;
+    border: 1px solid rgba(59, 130, 246, 0.35);
+    background: rgba(59, 130, 246, 0.08);
+    color: var(--accent-blue);
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    font-weight: 500;
+}
+
+.diary-edit-btn:hover {
+    background: rgba(59, 130, 246, 0.16);
+    border-color: rgba(59, 130, 246, 0.55);
+    transform: translateY(-1px);
+}
+
 .diary-delete-btn {
     padding: 6px 10px;
     border-radius: 8px;
