@@ -3,17 +3,23 @@
   "version": 2,
   "buildCommand": "",
   "outputDirectory": ".",
+  "functions": {
+    "api/*.js": {
+      "runtime": "@vercel/node@3"
+    }
+  },
   "rewrites": [
     { "source": "/api/health", "destination": "/api/health.js" },
     { "source": "/api/analyze", "destination": "/api/analyze.js" },
     { "source": "/api/orchestrator", "destination": "/api/orchestrator.js" },
-    { "source": "/api/scrape-url", "destination": "/api/scrape-url.js" }
+    { "source": "/api/scrape-url", "destination": "/api/scrape-url.js" },
+    { "source": "/api/backtest", "destination": "/api/backtest.js" }
   ],
   "headers": [
     {
       "source": "/api/(.*)",
       "headers": [
-        { "key": "Access-Control-Allow-Origin", "value": "http://localhost:3000,http://127.0.0.1:3000" },
+        { "key": "Access-Control-Allow-Origin", "value": "*" },
         { "key": "Access-Control-Allow-Methods", "value": "GET, POST, OPTIONS" },
         { "key": "Access-Control-Allow-Headers", "value": "Content-Type, Authorization" }
       ]

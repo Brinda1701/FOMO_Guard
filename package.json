@@ -2,7 +2,6 @@
   "name": "fomoguard",
   "version": "1.0.0",
   "description": "FOMOGuard - 追涨护盾，守护投资者的理性决策",
-  "type": "module",
   "scripts": {
     "dev": "vercel dev",
     "build": "echo 'Static site, no build needed'",

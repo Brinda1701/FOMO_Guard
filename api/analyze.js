@@ -1,9 +1,9 @@
 // Vercel Serverless Function: AI 分析接口
 // 使用共享 utils 模块
 
-import { parseJSONFromContent, setSecureCorsHeaders } from './utils.js';
+const { parseJSONFromContent, setSecureCorsHeaders } = require('./utils');
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   // 使用安全的 CORS 配置
   setSecureCorsHeaders(res);
 
@@ -17,7 +17,7 @@ export default async function handler(req, res) {
 
   const MODELSCOPE_API_KEY = process.env.MODELSCOPE_API_KEY;
   const MODELSCOPE_API_URL = process.env.MODELSCOPE_API_URL || 'https://api-inference.modelscope.cn/v1/';
-  const MODEL_NAME = process.env.MODEL_NAME || 'deepseek-ai/DeepSeek-R1';
+  const MODEL_NAME = process.env.MODEL_NAME || 'Qwen/Qwen3.5-35B-A3B';
 
   if (!MODELSCOPE_API_KEY) {
     return res.status(500).json({
@@ -38,7 +38,8 @@ export default async function handler(req, res) {
 
     const prompt = `请分析${company}的市场情绪。当前操作意向：${action || '分析'}。根据行为金融学，给出情绪分（0-100，越高越贪婪）、认知偏差诊断和简要建议。`;
 
-    const response = await fetch(`${MODELSCOPE_API_URL}chat/completions`, {
+    const fetch = await import('node-fetch');
+    const response = await fetch.default(`${MODELSCOPE_API_URL}chat/completions`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -90,4 +91,4 @@ export default async function handler(req, res) {
       error: error.message
     });
   }
-}
+};
