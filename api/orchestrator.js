@@ -20,6 +20,12 @@ import {
   getAgentTaskName
 } from './utils.js';
 
+import {
+  fetchMarketData,
+  calculateTechnicalIndicators,
+  formatKlineDataForPrompt
+} from './market-data.js';
+
 export default async function handler(req, res) {
   // 使用安全的 CORS 配置
   setSecureCorsHeaders(res);
@@ -145,9 +151,21 @@ async function runMultiAgentAnalysis(req, res, company, action, apiKey, apiUrl, 
   const agents = ['sentiment', 'technical', 'psychology'];
   const results = {};
 
+  // 获取市场数据（仅用于技术分析 Agent）
+  let marketData = null;
+  try {
+    const klineData = await fetchMarketData(company);
+    const indicators = calculateTechnicalIndicators(klineData);
+    marketData = { klineData, indicators };
+    console.log('[Orchestrator] 已获取市场数据:', company, klineData.length, '天');
+  } catch (error) {
+    console.warn('[Orchestrator] 获取市场数据失败:', error.message);
+  }
+
   const agentPromises = agents.map(async (agent) => {
     try {
-      const prompt = buildAgentPrompt(agent, company, action);
+      // 技术分析 Agent 传入市场数据
+      const prompt = buildAgentPrompt(agent, company, action, agent === 'technical' ? marketData : null);
       const agentResult = await callAIModel(prompt, apiKey, apiUrl, modelName);
       results[agent] = parseAgentResult(agent, agentResult);
       return { agent, success: true, data: results[agent] };
@@ -172,6 +190,17 @@ async function streamMultiAgentAnalysis(req, res, company, action, apiKey, apiUr
   const agents = ['sentiment', 'technical', 'psychology'];
   const results = {};
 
+  // 获取市场数据（仅用于技术分析 Agent）
+  let marketData = null;
+  try {
+    const klineData = await fetchMarketData(company);
+    const indicators = calculateTechnicalIndicators(klineData);
+    marketData = { klineData, indicators };
+    console.log('[Orchestrator] 已获取市场数据:', company, klineData.length, '天');
+  } catch (error) {
+    console.warn('[Orchestrator] 获取市场数据失败:', error.message);
+  }
+
   for (const agent of agents) {
     sendSSEEvent(res, 'agent_start', { agent, status: 'processing' });
 
@@ -182,7 +211,8 @@ async function streamMultiAgentAnalysis(req, res, company, action, apiKey, apiUr
         message: `正在分析${getAgentTaskName(agent)}...`
       });
 
-      const prompt = buildAgentPrompt(agent, company, action);
+      // 技术分析 Agent 传入市场数据
+      const prompt = buildAgentPrompt(agent, company, action, agent === 'technical' ? marketData : null);
       await new Promise(resolve => setTimeout(resolve, 500));
 
       sendSSEEvent(res, 'agent_progress', {

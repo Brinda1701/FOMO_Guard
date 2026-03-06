@@ -70,8 +70,12 @@ function parseJSONFromContent(content) {
 
 /**
  * 构建 Multi-Agent 提示词（防御 Prompt 注入版本）
+ * @param {string} agent - Agent 类型
+ * @param {string} company - 公司名称
+ * @param {string} action - 操作意向
+ * @param {Object} marketData - 市场数据（可选，用于技术分析）
  */
-function buildAgentPrompt(agent, company, action) {
+function buildAgentPrompt(agent, company, action, marketData = null) {
   const safeCompany = `<<<${company}>>>`;
   const safeAction = action ? `<<<${action}>>>` : '分析';
 
@@ -107,10 +111,19 @@ function buildAgentPrompt(agent, company, action) {
 ---
 你是一名技术分析专家。请分析标的：${safeCompany} 的技术面信号。
 
-任务：
-1. 评估趋势、动量、支撑阻力等技术指标
-2. 判断当前是否处于超买或超卖状态
-3. 给出技术分数（0-100，越高表示技术面越乐观）
+【重要指令】
+你必须**严格基于以下提供的近 14 天量价数据**进行计算和推理。
+严禁凭空捏造不存在的技术形态或数据点。
+在你的 summary 中，必须明确引用具体日期的数据（例如"根据 2024-01-15 到 2024-01-20 的放量下跌…"）。
+
+【14 天量价数据】
+${marketData ? formatMarketDataForPrompt(marketData) : '暂无数据，请基于一般技术分析原则给出谨慎判断'}
+
+【计算要求】
+1. 根据上述数据计算 RSI、移动平均线等技术指标
+2. 识别趋势方向（上涨/下跌/震荡）
+3. 判断支撑位和阻力位
+4. 评估成交量变化
 
 当前操作意向：${safeAction}
 
@@ -118,7 +131,7 @@ function buildAgentPrompt(agent, company, action) {
 {
   "score": 数字 (0-100),
   "confidence": 数字 (0-1),
-  "summary": "技术分析总结",
+  "summary": "技术分析总结（必须引用具体日期和数据点）",
   "signals": ["看涨信号 1", "看跌信号 1", ...]
 }`,
 
@@ -144,6 +157,42 @@ function buildAgentPrompt(agent, company, action) {
   };
 
   return prompts[agent];
+}
+
+/**
+ * 格式化市场数据为 Prompt 字符串
+ */
+function formatMarketDataForPrompt(marketData) {
+  if (!marketData || !marketData.klineData || !marketData.indicators) {
+    return '暂无数据';
+  }
+  
+  const { klineData, indicators } = marketData;
+  
+  const header = '日期       | 开盘    | 收盘    | 最高    | 最低    | 成交量 (万)';
+  const separator = '─'.repeat(60);
+  
+  const rows = klineData.map(day => 
+    `${day.date} | ${day.open.toFixed(2).padStart(6)} | ${day.close.toFixed(2).padStart(6)} | ${day.high.toFixed(2).padStart(6)} | ${day.low.toFixed(2).padStart(6)} | ${(day.volume / 10000).toFixed(0).padStart(5)}`
+  );
+  
+  const indicatorText = `
+【技术指标】
+- RSI(14): ${indicators.rsi} ${indicators.rsi > 70 ? '(超买)' : indicators.rsi < 30 ? '(超卖)' : '(中性)'}`;
+  
+  let result = `${header}\n${separator}\n${rows.join('\n')}\n${separator}${indicatorText}`;
+  
+  if (indicators.ma5) {
+    result += `
+- MA5: ${indicators.ma5} (当前价格 ${indicators.priceVsMA5})
+- MA10: ${indicators.ma10} (当前价格 ${indicators.priceVsMA10})
+- MA20: ${indicators.ma20} (当前价格 ${indicators.priceVsMA20})
+- MACD: ${indicators.macd}, Signal: ${indicators.signal}
+- 布林带：上轨${indicators.upperBand}, 中轨${indicators.middleBand}, 下轨${indicators.lowerBand}
+- 成交量：5 日均量${(indicators.volMA5 / 10000).toFixed(0)}万，10 日均量${(indicators.volMA10 / 10000).toFixed(0)}万`;
+  }
+  
+  return result;
 }
 
 /**

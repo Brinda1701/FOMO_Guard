@@ -4,6 +4,7 @@ const cors = require('cors');
 const fetch = require('node-fetch');
 const cheerio = require('cheerio');
 const utils = require('./utils');
+const { fetchMarketData, calculateTechnicalIndicators } = require('./market-data');
 
 const app = express();
 
@@ -167,6 +168,17 @@ app.post('/api/orchestrator', async (req, res) => {
     const agents = ['sentiment', 'technical', 'psychology'];
     const results = {};
 
+    // 获取市场数据（仅用于技术分析 Agent）
+    let marketData = null;
+    try {
+      const klineData = await fetchMarketData(company);
+      const indicators = calculateTechnicalIndicators(klineData);
+      marketData = { klineData, indicators };
+      console.log('[Orchestrator] 已获取市场数据:', company, klineData.length, '天');
+    } catch (error) {
+      console.warn('[Orchestrator] 获取市场数据失败:', error.message);
+    }
+
     if (stream) {
       utils.setSSEHeaders(res);
       const sendEvent = (event, data) => utils.sendSSEEvent(res, event, data);
@@ -175,7 +187,8 @@ app.post('/api/orchestrator', async (req, res) => {
         sendEvent('agent_start', { agent, status: 'processing' });
         sendEvent('agent_progress', { agent, progress: 30, message: '正在分析...' });
         try {
-          const prompt = utils.buildAgentPrompt(agent, company, action);
+          // 技术分析 Agent 传入市场数据
+          const prompt = utils.buildAgentPrompt(agent, company, action, agent === 'technical' ? marketData : null);
           await new Promise(resolve => setTimeout(resolve, 500));
           sendEvent('agent_progress', { agent, progress: 70, message: '生成结果...' });
           const agentResult = await utils.callAIModel(prompt, MODELSCOPE_API_KEY, MODELSCOPE_API_URL, MODEL_NAME);
@@ -195,7 +208,8 @@ app.post('/api/orchestrator', async (req, res) => {
     } else {
       await Promise.all(agents.map(async (agent) => {
         try {
-          const prompt = utils.buildAgentPrompt(agent, company, action);
+          // 技术分析 Agent 传入市场数据
+          const prompt = utils.buildAgentPrompt(agent, company, action, agent === 'technical' ? marketData : null);
           const agentResult = await utils.callAIModel(prompt, MODELSCOPE_API_KEY, MODELSCOPE_API_URL, MODEL_NAME);
           results[agent] = utils.parseAgentResult(agent, agentResult);
         } catch (error) {
