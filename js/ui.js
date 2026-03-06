@@ -164,9 +164,6 @@ export function updateValidationChart(score, company) {
     `;
 
     validationCard.style.display = 'block';
-    setTimeout(() => {
-        validationCard.classList.add('visible');
-    }, 10);
 }
 
 // --- 沉浸式界面 ---

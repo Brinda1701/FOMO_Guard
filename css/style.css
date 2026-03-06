@@ -720,33 +720,14 @@ body::before {
     50% { transform: translateY(-10px); }
 }
 
-.full-width { 
-    grid-column: 1 / -1; 
-}
-
-/* 动态显示的全宽卡片过渡效果 */
-#agentVisualizationCard,
-#validationCard {
-    max-height: 0;
-    opacity: 0;
-    padding: 0 20px;
-    border: none;
-    overflow: hidden;
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-#agentVisualizationCard.visible,
-#validationCard.visible {
-    max-height: 1000px;
-    opacity: 1;
-    padding: 20px;
-    border: 1px solid var(--border-color);
+.full-width {
+    grid-column: 1 / -1;
 }
 .psychology-tips {
     background: linear-gradient(135deg, rgba(59, 130, 246, 0.08), rgba(139, 92, 246, 0.08), rgba(16, 185, 129, 0.08));
     border: 1px solid rgba(59, 130, 246, 0.25);
     position: relative;
-    overflow: visible;
+    overflow: hidden;
 }
 
 .psychology-tips::before {
