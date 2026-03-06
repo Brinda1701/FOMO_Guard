@@ -3,11 +3,6 @@
   "version": 2,
   "buildCommand": "",
   "outputDirectory": ".",
-  "functions": {
-    "api/*.js": {
-      "runtime": "@vercel/node@3"
-    }
-  },
   "rewrites": [
     { "source": "/api/health", "destination": "/api/health.js" },
     { "source": "/api/analyze", "destination": "/api/analyze.js" },
