@@ -123,6 +123,46 @@ function initTheme() {
     }
 }
 
+// 快速保存决策记录（无需填写表单）
+function quickSaveDiary() {
+    const company = Logic.state.currentCompany;
+    const score = Logic.state.currentScore;
+    const type = Logic.state.lastAction || 'hold';
+    
+    if (!company) {
+        UI.showFeedbackPopup({
+            type: 'warning',
+            title: '请先分析标的',
+            message: '请先分析一家公司后再记录决策',
+            durationMs: 2000
+        });
+        return;
+    }
+    
+    const entry = {
+        id: Date.now(),
+        date: new Date().toLocaleDateString('zh-CN'),
+        company: company,
+        type: type,
+        note: '决策类型：' + (type === 'buy' ? '买入' : (type === 'sell' ? '卖出' : '观望')) + '，情绪分数：' + score,
+        score: score
+    };
+    
+    Logic.addDiaryEntry(entry);
+    renderInlineDiaryList();
+    
+    UI.showFeedbackPopup({
+        type: 'success',
+        title: '记录成功',
+        message: '决策已保存到日记',
+        durationMs: 1500
+    });
+}
+
+// 导出全局函数供决策结果界面调用
+window.quickSaveDiaryFromDecision = quickSaveDiary;
+
+
 function setupEventListeners() {
     // 主题切换
     document.getElementById('themeToggle').addEventListener('click', () => {

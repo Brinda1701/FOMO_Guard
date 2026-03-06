@@ -1619,10 +1619,19 @@ html[data-theme="light"] .modal-content::before {
 .decision-safe { border-left: 4px solid var(--accent-green); }
 .decision-neutral { border-left: 4px solid var(--accent-yellow); }
 
-/* 决策已自动记录卡片 */
-.decision-recorded {
+/* 决策行动引导卡片 */
+.decision-action-guide {
     border-left: 4px solid var(--accent-blue);
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.05), rgba(139, 92, 246, 0.03));
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.08), rgba(139, 92, 246, 0.05));
+}
+
+.decision-quick-save-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
+}
+
+.decision-quick-save-btn:active {
+    transform: translateY(0);
 }
 
 .decision-quote {

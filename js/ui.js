@@ -217,17 +217,32 @@ export function showDecisionResult(diagnosis, action, currentCompany, currentSco
             </div>
         </div>
 
-        <div class="decision-card decision-recorded">
-            <h3 class="decision-card-title">✅ 决策已自动记录</h3>
+        <div class="decision-card decision-action-guide">
+            <h3 class="decision-card-title">📝 记录本次决策</h3>
             <div class="decision-card-content">
-                <p style="font-size: 0.9rem; color: var(--text-secondary);">
-                    本次决策已自动保存到交易决策日记，您可以在下方直接查看记录，或点击编辑补充决策原因。
+                <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 15px;">
+                    点击下方按钮，立即保存本次决策到交易日记
                 </p>
+                <button class="decision-quick-save-btn" id="decisionQuickSaveBtn" style="width: 100%; padding: 12px; background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple)); color: white; border: none; border-radius: 10px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.3s ease;">
+                    ✓ 保存决策到日记
+                </button>
             </div>
         </div>
     `;
 
     overlay.classList.add('active');
+    
+    // 绑定快速保存按钮事件
+    setTimeout(() => {
+        const quickSaveBtn = document.getElementById('decisionQuickSaveBtn');
+        if (quickSaveBtn) {
+            quickSaveBtn.addEventListener('click', () => {
+                if (typeof window.quickSaveDiaryFromDecision === 'function') {
+                    window.quickSaveDiaryFromDecision();
+                }
+            });
+        }
+    }, 100);
 
     // 冷静期触发时机由上层流程控制（先冷却再展示结果）
     if (shouldCooldown) {
