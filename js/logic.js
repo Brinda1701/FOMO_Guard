@@ -91,6 +91,23 @@ export async function fetchAIAnalysis(company) {
     return null;
 }
 
+// 获取历史回测数据（真实股价 + 估算情绪）
+export async function fetchBacktestData(symbol) {
+    try {
+        const response = await fetch(`${AI_CONFIG.URL}/api/backtest?symbol=${encodeURIComponent(symbol)}`);
+        
+        if (response.ok) {
+            const result = await response.json();
+            if (result.success) {
+                return result;
+            }
+        }
+    } catch (e) {
+        console.error('[Backtest] 调用失败', e);
+    }
+    return null;
+}
+
 // 交易冲动评估逻辑
 export function evaluateImpulse(action, company, score) {
     const diagnosisLib = {
