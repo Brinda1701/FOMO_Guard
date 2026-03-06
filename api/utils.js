@@ -102,10 +102,15 @@ export function buildAgentPrompt(agent, company, action, marketData = null) {
 ---
 你是一名情绪分析专家。请分析标的：${safeCompany} 的市场情绪。
 
+【重要指令】
+你必须提供**可追溯的证据链**来支持你的情绪评分。
+在 summary 中，必须明确引用检测到的具体情绪化表述或关键事件。
+
 任务：
 1. 分析社交媒体、新闻、论坛上的舆论情绪
 2. 评估市场热度是否过高或过低
 3. 给出情绪分数（0-100，越高表示越贪婪/乐观）
+4. **提取 3-5 个关键证据短语**（导致你打出这个分数的具体原话或表述）
 
 当前操作意向：${safeAction}
 
@@ -113,9 +118,31 @@ export function buildAgentPrompt(agent, company, action, marketData = null) {
 {
   "score": 数字 (0-100),
   "confidence": 数字 (0-1),
-  "summary": "情绪分析总结",
-  "signals": ["正面信号 1", "负面信号 1", ...]
-}`,
+  "summary": "情绪分析总结（必须引用具体情绪化表述）",
+  "signals": ["正面信号 1", "负面信号 1", ...],
+  "key_evidence": [
+    {
+      "text": "具体短语或原话",
+      "sentiment": "positive/negative/emotional",
+      "impact": "high/medium/low",
+      "source": "来源类型（如：社交媒体/新闻/论坛）"
+    }
+  ]
+}
+
+【证据提取要求】
+- text: 必须是检测到的原始表述（加引号）
+- sentiment: positive(正面)/negative(负面)/emotional(情绪化)
+- impact: high(高影响)/medium(中影响)/low(低影响)
+- source: 来源类型
+
+【示例】
+key_evidence: [
+  {"text": "某大 V 宣称即将涨停", "sentiment": "emotional", "impact": "high", "source": "社交媒体"},
+  {"text": "财报净利润同比下滑 20%", "sentiment": "negative", "impact": "high", "source": "新闻"},
+  {"text": "机构上调目标价至 300 元", "sentiment": "positive", "impact": "medium", "source": "新闻"}
+]
+`,
 
     technical: `${systemInstructions}
 
@@ -250,6 +277,7 @@ export function parseAgentResult(agent, aiResult) {
     confidence: 0.5,
     summary: '市场情绪中性，建议保持理性判断',
     signals: [],
+    keyEvidence: [],
     biasDetected: [],
     isFallback: false
   };
@@ -263,21 +291,28 @@ export function parseAgentResult(agent, aiResult) {
     // 验证并规范化分数
     let score = aiResult.score;
     if (typeof score !== 'number' || isNaN(score)) {
-      // 尝试从其他字段提取分数
       score = aiResult.sentiment_score || aiResult.technical_score || 50;
     }
-    
-    // 确保分数在有效范围内
-    score = Math.max(0, Math.min(100, Number(score)));
 
-    // 检查是否是降级结果
+    score = Math.max(0, Math.min(100, Number(score)));
     const isFallback = aiResult.fallback === true || !aiResult.summary;
+
+    // 解析证据链（情绪分析 Agent 特有）
+    const keyEvidence = Array.isArray(aiResult.key_evidence)
+      ? aiResult.key_evidence.map(e => ({
+          text: e.text || '',
+          sentiment: e.sentiment || 'neutral',
+          impact: e.impact || 'medium',
+          source: e.source || '未知'
+        }))
+      : [];
 
     return {
       score,
       confidence: typeof aiResult.confidence === 'number' ? aiResult.confidence : 0.5,
       summary: aiResult.summary || (isFallback ? '分析结果仅供参考' : defaultResult.summary),
       signals: Array.isArray(aiResult.signals) ? aiResult.signals : [],
+      keyEvidence,
       biasDetected: Array.isArray(aiResult.biasDetected) ? aiResult.biasDetected : [],
       isFallback
     };

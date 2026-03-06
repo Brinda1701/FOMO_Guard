@@ -3156,6 +3156,225 @@ html[data-theme="light"] .modal-content::before {
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
 }
 
+/* 情绪证据链样式 */
+.evidence-section {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid var(--border-color);
+}
+
+.evidence-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.evidence-title-icon {
+    font-size: 1.2rem;
+}
+
+.evidence-count {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    background: var(--bg-secondary);
+    padding: 3px 10px;
+    border-radius: 20px;
+    margin-left: auto;
+}
+
+.evidence-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 15px;
+}
+
+.evidence-card {
+    background: var(--bg-card);
+    border-radius: 10px;
+    padding: 12px 15px;
+    border-left: 4px solid var(--border-color);
+    animation: slideInLeft 0.4s ease forwards;
+    opacity: 0;
+    transform: translateX(-20px);
+}
+
+@keyframes slideInLeft {
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.evidence-card.evidence-positive {
+    border-left-color: var(--accent-green);
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.05), transparent);
+}
+
+.evidence-card.evidence-negative {
+    border-left-color: var(--accent-red);
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.05), transparent);
+}
+
+.evidence-card.evidence-emotional {
+    border-left-color: var(--accent-yellow);
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.05), transparent);
+}
+
+.evidence-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.evidence-sentiment {
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 20px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.evidence-sentiment.evidence-positive {
+    background: rgba(16, 185, 129, 0.15);
+    color: var(--accent-green);
+}
+
+.evidence-sentiment.evidence-negative {
+    background: rgba(239, 68, 68, 0.15);
+    color: var(--accent-red);
+}
+
+.evidence-sentiment.evidence-emotional {
+    background: rgba(245, 158, 11, 0.15);
+    color: var(--accent-yellow);
+}
+
+.evidence-impact {
+    font-size: 0.7rem;
+    padding: 3px 8px;
+    border-radius: 12px;
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+}
+
+.evidence-impact.impact-high {
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--accent-red);
+    font-weight: 600;
+}
+
+.evidence-impact.impact-medium {
+    background: rgba(245, 158, 11, 0.1);
+    color: var(--accent-yellow);
+}
+
+.evidence-content {
+    margin-bottom: 10px;
+}
+
+.evidence-quote {
+    font-size: 0.85rem;
+    line-height: 1.6;
+    color: var(--text-primary);
+    font-style: italic;
+    padding: 8px 12px;
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    display: block;
+    border-left: 3px solid var(--accent-blue);
+}
+
+.evidence-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+.evidence-source {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.evidence-confidence {
+    letter-spacing: 2px;
+}
+
+.evidence-empty {
+    text-align: center;
+    padding: 30px 20px;
+    color: var(--text-secondary);
+}
+
+.evidence-empty-icon {
+    font-size: 2rem;
+    display: block;
+    margin-bottom: 10px;
+    opacity: 0.5;
+}
+
+.evidence-legend {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border-color);
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+.legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+}
+
+.legend-dot.legend-positive {
+    background: var(--accent-green);
+}
+
+.legend-dot.legend-negative {
+    background: var(--accent-red);
+}
+
+.legend-dot.legend-emotional {
+    background: var(--accent-yellow);
+}
+
+.evidence-section.score-high .evidence-title {
+    color: var(--accent-green);
+}
+
+.evidence-section.score-low .evidence-title {
+    color: var(--accent-red);
+}
+
+.evidence-section.score-neutral .evidence-title {
+    color: var(--accent-yellow);
+}
+
+.agent-score-card:hover {
+    border-color: var(--accent-blue);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
 .agent-score-header {
     display: flex;
     align-items: center;
