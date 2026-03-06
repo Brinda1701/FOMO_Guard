@@ -137,6 +137,25 @@
                         <button class="trade-btn hold" data-action="hold">观望</button>
                     </div>
                     <div class="alert-box" id="alertBox"></div>
+                    
+                    <!-- 决策记录入口 -->
+                    <div class="diary-entry-trigger">
+                        <button class="diary-trigger-btn" id="showDiaryBtn">
+                            📔 查看/记录决策日记
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- 内联决策日记区域（默认隐藏） -->
+                <div class="inline-diary-section" id="inlineDiarySection" style="display: none;">
+                    <div class="diary-header">
+                        <span style="font-size: 0.9rem; color: var(--text-secondary);">共 <span id="inlineDiaryCount">0</span> 条记录</span>
+                        <button class="diary-btn" id="inlineAddDiaryBtn">+ 记录本次决策</button>
+                        <button class="diary-close-btn" id="closeDiaryBtn">✕ 关闭</button>
+                    </div>
+                    <div class="diary-list" id="inlineDiaryList">
+                        <div class="diary-empty">暂无记录，点击上方按钮开始记录您的交易决策</div>
+                    </div>
                 </div>
             </div>
 
@@ -301,21 +320,6 @@
                             <p>当所有人都在买入时，可能正是风险最高的时刻；所有人恐慌时，可能暗藏机会。</p>
                         </div>
                     </details>
-                </div>
-            </div>
-
-            <!-- 第五行：交易决策日记 -->
-            <div class="card full-width">
-                <h2 class="card-title"><span class="icon">📔</span>交易决策日记</h2>
-                <p style="color: var(--text-secondary); margin-bottom: 15px;">记录每次交易决策，复盘情绪对投资的影响，形成个人投资成长档案</p>
-                <div class="diary-section">
-                    <div class="diary-header">
-                        <span style="font-size: 0.9rem; color: var(--text-secondary);">共 <span id="diaryCount">0</span> 条记录</span>
-                        <button class="diary-btn" id="addDiaryBtn">+ 记录本次决策</button>
-                    </div>
-                    <div class="diary-list" id="diaryList">
-                        <div class="diary-empty">暂无记录，点击上方按钮开始记录您的交易决策</div>
-                    </div>
                 </div>
             </div>
         </div>

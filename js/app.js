@@ -4,18 +4,60 @@ import * as Chart from './chart.js';
 import * as AgentViz from './agent-viz.js';
 import { AI_CONFIG, AGENT_CONFIG } from './config.js';
 
+// 渲染日记列表（独立区域 - 已移除）
+function renderDiaryList(entries) {
+    // 独立日记区域已移除，此函数保留以兼容
+}
+
+// 渲染内联日记列表
+function renderInlineDiaryList() {
+    const entries = Logic.getDiaryEntries();
+    const diaryList = document.getElementById('inlineDiaryList');
+    const diaryCount = document.getElementById('inlineDiaryCount');
+
+    const escapeHtml = (text) => String(text)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
+
+    diaryCount.textContent = entries.length;
+
+    if (entries.length === 0) {
+        diaryList.innerHTML = '<div class="diary-empty">暂无记录，点击上方按钮开始记录您的交易决策</div>';
+        return;
+    }
+
+    diaryList.innerHTML = entries.slice().reverse().map(entry => `
+        <div class="diary-entry ${entry.type}">
+            <div class="diary-meta">
+                <span>${escapeHtml(entry.date)} | ${escapeHtml(entry.company)}</span>
+                <span class="diary-action ${entry.type}">${entry.type === 'buy' ? '买入' : (entry.type === 'sell' ? '卖出' : '观望')}</span>
+            </div>
+            <div class="diary-content">${escapeHtml(entry.note)}</div>
+            <div class="diary-entry-footer">
+                <div class="diary-score">
+                    情绪评分：<strong style="color: ${entry.score > 60 ? 'var(--accent-green)' : (entry.score < 40 ? 'var(--accent-red)' : 'var(--accent-yellow)')}">${entry.score}</strong>
+                </div>
+                <button class="diary-delete-btn" data-entry-id="${entry.id}" title="删除这条记录">🗑️ 删除</button>
+            </div>
+        </div>
+    `).join('');
+}
+
 // 初始化
 async function init() {
     initTheme();
     // 修复：传入 'init' 标记，让初始粒子显示为品牌蓝色，避免黄色的误导
     UI.createEmotionParticles('init');
-    UI.renderDiaryList(Logic.getDiaryEntries());
+    renderInlineDiaryList();
 
     const hasAI = await Logic.checkAIBackend();
     UI.showAIModeIndicator(hasAI);
 
     setupEventListeners();
-    
+
     setupRealtimeWS();
 }
 
@@ -148,10 +190,7 @@ function setupEventListeners() {
     // 心理测试
     document.getElementById('showQuizBtn').addEventListener('click', UI.showQuiz);
 
-    // 日记相关
-    document.getElementById('addDiaryBtn').addEventListener('click', () => {
-        UI.openDiaryModal(Logic.state.currentCompany, Logic.state.currentScore);
-    });
+    // 日记相关（模态框）
     document.getElementById('cancelDiaryBtn').addEventListener('click', UI.closeDiaryModal);
     document.getElementById('saveDiaryBtn').addEventListener('click', handleSaveDiary);
 
@@ -171,7 +210,37 @@ function setupEventListeners() {
         document.getElementById('diaryScoreDisplay').textContent = this.value;
     });
 
-    // 日记删除
+    // 显示/隐藏内联日记区域
+    const showDiaryBtn = document.getElementById('showDiaryBtn');
+    const closeDiaryBtn = document.getElementById('closeDiaryBtn');
+    const inlineDiarySection = document.getElementById('inlineDiarySection');
+    
+    if (showDiaryBtn) {
+        showDiaryBtn.addEventListener('click', () => {
+            inlineDiarySection.style.display = 'block';
+            renderInlineDiaryList();
+            // 滚动到日记区域
+            setTimeout(() => {
+                inlineDiarySection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 100);
+        });
+    }
+    
+    if (closeDiaryBtn && inlineDiarySection) {
+        closeDiaryBtn.addEventListener('click', () => {
+            inlineDiarySection.style.display = 'none';
+        });
+    }
+    
+    // 内联日记添加按钮
+    const inlineAddDiaryBtn = document.getElementById('inlineAddDiaryBtn');
+    if (inlineAddDiaryBtn) {
+        inlineAddDiaryBtn.addEventListener('click', () => {
+            UI.openDiaryModal(Logic.state.currentCompany, Logic.state.currentScore);
+        });
+    }
+
+    // 日记删除（支持内联和独立列表）
     document.getElementById('diaryList').addEventListener('click', (event) => {
         const deleteBtn = event.target.closest('.diary-delete-btn');
         if (!deleteBtn) return;
@@ -184,7 +253,8 @@ function setupEventListeners() {
 
         const hasRemoved = Logic.removeDiaryEntry(entryId);
         if (hasRemoved) {
-            UI.renderDiaryList(Logic.getDiaryEntries());
+            renderDiaryList(Logic.getDiaryEntries());
+            renderInlineDiaryList();
             UI.showFeedbackPopup({
                 type: 'success',
                 title: '删除成功',
