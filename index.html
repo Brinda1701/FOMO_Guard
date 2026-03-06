@@ -351,57 +351,55 @@
         </footer>
     </div>
 
-    <!-- 模态框：冷却舱 -->
+    <!-- 模态框：冷静舱（认知隔离舱） -->
     <div class="modal-overlay" id="cooldownModal" style="display: none;">
-        <div class="modal-content">
+        <div class="modal-content cooldown-modal">
             <div class="modal-emoji">🧊</div>
             <h3 class="modal-title">认知隔离舱已启动</h3>
             <p class="modal-text" id="modalText">Loading...</p>
 
-            <!-- 环形倒计时 -->
-            <div class="countdown-ring-container">
-                <svg class="countdown-ring" viewBox="0 0 120 120">
-                    <defs>
-                        <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" stop-color="#f59e0b"/>
-                            <stop offset="50%" stop-color="#f97316"/>
-                            <stop offset="100%" stop-color="#ef4444"/>
-                        </linearGradient>
-                    </defs>
-                    <circle class="countdown-ring-bg" cx="60" cy="60" r="54" />
-                    <circle class="countdown-ring-progress" id="countdownRingProgress" cx="60" cy="60" r="54" />
-                </svg>
-                <div class="countdown-ring-text">
-                    <div class="countdown-time" id="modalTimer">100</div>
-                    <div class="countdown-label">秒</div>
+            <!-- 抄写防线区域 -->
+            <div class="copywall-section" id="copywallSection">
+                <div class="copywall-header">
+                    <span class="copywall-icon">📝</span>
+                    <span class="copywall-title">防冲动宣言抄写</span>
+                </div>
+                
+                <div class="copywall-declaration" id="copywallDeclaration">
+                    <!-- 宣言内容将动态插入 -->
+                </div>
+                
+                <div class="copywall-input-wrapper">
+                    <textarea 
+                        class="copywall-input" 
+                        id="copywallInput" 
+                        placeholder="请一字不差地抄写上面的宣言..."
+                        autocomplete="off"
+                        autocorrect="off"
+                        autocapitalize="off"
+                        spellcheck="false"
+                    ></textarea>
+                    <div class="copywall-hint">
+                        ⚠️ 必须完全一致才能解锁 | 禁止复制粘贴
+                    </div>
+                </div>
+                
+                <div class="copywall-progress" id="copywallProgress">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="copywallProgressFill"></div>
+                    </div>
+                    <div class="progress-text" id="copywallProgressText">0%</div>
                 </div>
             </div>
 
-            <!-- 冷却阶段提示 -->
-            <div class="cooldown-phase" id="cooldownPhase">
-                <span class="phase-icon" id="phaseIcon">🫁</span>
-                <span class="phase-text" id="phaseText">深呼吸放松阶段</span>
-            </div>
-
-            <div class="breathing-guide">
-                <span id="breatheText">深呼吸</span>
-            </div>
-
-            <p style="color: var(--text-secondary); margin-bottom: 15px; font-size: 0.85rem;">跟随呼吸圆圈放松心情 | 正确答题可提前解锁</p>
-
-            <!-- 心理测试区域 -->
-            <div class="quiz-section" id="quizSection">
-                <div class="quiz-header">
-                    <span class="quiz-badge" id="quizBadge">第 1 题</span>
-                    <span class="quiz-score-badge" id="quizScoreBadge" style="display:none;">得分：0</span>
-                </div>
-                <p class="quiz-question" id="quizQuestion"></p>
-                <div class="quiz-options" id="quizOptions"></div>
-                <div class="quiz-result" id="quizResult" style="display:none;"></div>
-            </div>
-
-            <button class="modal-btn" id="showQuizBtn" style="margin-top: 15px;">🧠 回答问题提前解锁</button>
-            <p style="color: var(--text-secondary); font-size: 0.75rem; margin-top: 8px;">正确回答心理学问题可提前退出冷静期</p>
+            <!-- 解锁按钮 -->
+            <button class="modal-btn modal-btn-disabled" id="unlockBtn" disabled>
+                🔓 解除隔离
+            </button>
+            
+            <p style="color: var(--text-secondary); font-size: 0.75rem; margin-top: 12px; text-align: center;">
+                🛡️ 这是为了保护您免受冲动决策的伤害
+            </p>
         </div>
     </div>
 

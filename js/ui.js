@@ -387,10 +387,29 @@ function updateCooldownPhase(remaining, total) {
     }
 }
 
+// --- 冷静舱（认知隔离舱）增强版 - 强制抄写防线 ---
+
+// 防冲动宣言库
+const DECLARATIONS = {
+    danger: [
+        "我承认我现在正处于极度的贪婪状态，我现在的买入决策可能是不理性的。",
+        "我意识到 FOMO 情绪正在控制我的决策，我需要停下来深呼吸。",
+        "我承认追高风险极大，我现在买入可能成为接盘侠。",
+        "我意识到市场情绪过热，我应该观望而不是盲目跟风。",
+        "我承认我现在想买入是因为害怕错过，这是认知偏误。"
+    ],
+    fear: [
+        "我承认我现在正处于极度的恐惧状态，我现在的卖出决策可能是不理性的。",
+        "我意识到恐慌情绪正在控制我的决策，我需要停下来深呼吸。",
+        "我承认现在卖出可能割在地板上，我应该冷静评估基本面。",
+        "我意识到市场情绪过冷，我应该理性分析而不是盲目抛售。",
+        "我承认我现在想卖出是因为损失厌恶，这是认知偏误。"
+    ]
+};
+
 export function showCooldown(msg, isDanger, onUnlock = null) {
     const modal = document.getElementById('cooldownModal');
     const content = modal.querySelector('.modal-content');
-    const timerDisplay = document.getElementById('modalTimer');
     
     if (isDanger) content.classList.add('modal-danger');
     else content.classList.remove('modal-danger');
@@ -398,51 +417,113 @@ export function showCooldown(msg, isDanger, onUnlock = null) {
     document.getElementById('modalText').textContent = msg;
     modal.style.display = 'flex';
     cooldownUnlockCallback = typeof onUnlock === 'function' ? onUnlock : null;
-    
-    // 重置测试状态
-    quizAttemptCount = 0;
-    quizCorrectCount = 0;
-    const quizScoreBadge = document.getElementById('quizScoreBadge');
-    if (quizScoreBadge) quizScoreBadge.style.display = 'none';
-    
-    startBreathingGuide();
-    
-    cooldownTotalSeconds = 300;
-    cooldownRemainingSeconds = 300;
-    let sec = cooldownTotalSeconds;
-    timerDisplay.textContent = sec;
-    updateCountdownRing(sec, cooldownTotalSeconds);
-    updateCooldownPhase(sec, cooldownTotalSeconds);
 
-    if (cooldownTimer) clearInterval(cooldownTimer);
-    cooldownTimer = setInterval(() => {
-        sec--;
-        cooldownRemainingSeconds = sec;
-        timerDisplay.textContent = sec;
-        updateCountdownRing(sec, cooldownTotalSeconds);
-        updateCooldownPhase(sec, cooldownTotalSeconds);
+    // 初始化抄写防线
+    initCopywall(isDanger);
+    
+    // 阻止点击背景关闭
+    modal.onclick = (e) => {
+        // 只有点击解锁按钮才能关闭，点击背景无效
+        e.stopPropagation();
+    };
+}
+
+// 初始化抄写防线
+function initCopywall(isDanger) {
+    const declarationText = isDanger ? 'danger' : 'fear';
+    const declarations = DECLARATIONS[declarationText];
+    const declaration = declarations[Math.floor(Math.random() * declarations.length)];
+    
+    const declarationEl = document.getElementById('copywallDeclaration');
+    const inputEl = document.getElementById('copywallInput');
+    const progressFill = document.getElementById('copywallProgressFill');
+    const progressText = document.getElementById('copywallProgressText');
+    const unlockBtn = document.getElementById('unlockBtn');
+    
+    // 设置宣言内容
+    declarationEl.innerHTML = `<div class="copywall-declaration-text ${isDanger ? 'highlight' : ''}">${declaration}</div>`;
+    
+    // 清空输入框
+    inputEl.value = '';
+    inputEl.disabled = false;
+    inputEl.classList.remove('error');
+    
+    // 重置进度条
+    progressFill.style.width = '0%';
+    progressText.textContent = '0%';
+    
+    // 禁用解锁按钮
+    unlockBtn.disabled = true;
+    unlockBtn.classList.add('modal-btn-disabled');
+    unlockBtn.textContent = '🔒 请完成抄写';
+    
+    // 阻止复制粘贴
+    inputEl.onpaste = (e) => {
+        e.preventDefault();
+        showFeedbackPopup({
+            type: 'warning',
+            title: '禁止复制粘贴',
+            message: '请一字一句地手写，这是为了帮助您冷静思考。',
+            durationMs: 2000
+        });
+        inputEl.classList.add('error');
+        setTimeout(() => inputEl.classList.remove('error'), 400);
+    };
+    
+    // 监听输入，实时比对
+    inputEl.oninput = () => {
+        const userInput = inputEl.value.trim();
+        const matchPercent = calculateMatchPercent(userInput, declaration);
         
-        if (sec <= 0) {
-            clearInterval(cooldownTimer);
-            stopBreathingGuide();
-            // 倒计时结束弹窗反馈
+        // 更新进度条
+        progressFill.style.width = `${matchPercent}%`;
+        progressText.textContent = `${Math.round(matchPercent)}%`;
+        
+        // 检查是否完全匹配
+        if (matchPercent >= 100 && userInput === declaration) {
+            // 激活解锁按钮
+            unlockBtn.disabled = false;
+            unlockBtn.classList.remove('modal-btn-disabled');
+            unlockBtn.textContent = '🔓 解除隔离';
+            inputEl.disabled = true;
+            
             showFeedbackPopup({
-                icon: '✅',
-                title: '冷静期已结束',
-                message: '您已完成认知冷却，现在可以做出更理性的决策。',
-                duration: 3000,
-                type: 'success'
+                type: 'success',
+                title: '抄写完成',
+                message: '您已完成防冲动宣言，现在可以理性决策了。',
+                durationMs: 1500
             });
-            setTimeout(() => {
-                modal.style.display = 'none';
-                if (cooldownUnlockCallback) {
-                    const callback = cooldownUnlockCallback;
-                    cooldownUnlockCallback = null;
-                    callback();
-                }
-            }, 500);
         }
-    }, 1000);
+    };
+    
+    // 解锁按钮点击事件
+    unlockBtn.onclick = () => {
+        if (!unlockBtn.disabled) {
+            modal.style.display = 'none';
+            if (cooldownUnlockCallback) {
+                const callback = cooldownUnlockCallback;
+                cooldownUnlockCallback = null;
+                callback();
+            }
+        }
+    };
+}
+
+// 计算匹配百分比（用于进度条）
+function calculateMatchPercent(input, target) {
+    if (!input) return 0;
+    if (input === target) return 100;
+    
+    let matchCount = 0;
+    const len = Math.min(input.length, target.length);
+    
+    for (let i = 0; i < len; i++) {
+        if (input[i] === target[i]) {
+            matchCount++;
+        }
+    }
+    
+    return (matchCount / target.length) * 100;
 }
 
 // --- 心理测试 ---
