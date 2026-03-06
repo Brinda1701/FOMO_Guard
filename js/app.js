@@ -51,12 +51,16 @@ function renderInlineDiaryList() {
 // 初始化
 async function init() {
     initTheme();
-    // 修复：传入 'init' 标记，让初始粒子显示为品牌蓝色，避免黄色的误导
     UI.createEmotionParticles('init');
     renderInlineDiaryList();
 
     const hasAI = await Logic.checkAIBackend();
     UI.showAIModeIndicator(hasAI);
+    
+    // 如果没有 AI，显示模拟模式警告
+    if (!hasAI) {
+        UI.showSimulatedModeWarning();
+    }
 
     setupEventListeners();
 }

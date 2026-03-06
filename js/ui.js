@@ -13,6 +13,63 @@ let quizAttemptCount = 0;
 let quizCorrectCount = 0;
 let feedbackTimer = null;
 
+// --- 模拟模式警告 ---
+export function showSimulatedModeWarning() {
+    // 检查是否已存在警告
+    let warningEl = document.getElementById('simulatedModeWarning');
+    if (warningEl) {
+        warningEl.style.display = 'block';
+        return;
+    }
+
+    // 创建警告元素
+    warningEl = document.createElement('div');
+    warningEl.id = 'simulatedModeWarning';
+    warningEl.style.cssText = `
+        background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(239, 68, 68, 0.1));
+        border: 2px solid var(--accent-yellow);
+        border-radius: 12px;
+        padding: 15px 20px;
+        margin: 15px 0;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        animation: pulseWarning 2s infinite;
+    `;
+    warningEl.innerHTML = `
+        <span style="font-size: 1.5rem;">⚠️</span>
+        <div>
+            <strong style="color: var(--accent-yellow); font-size: 1rem;">当前未配置 AI 模型 Key，处于本地模拟演示模式</strong>
+            <p style="margin: 5px 0 0; font-size: 0.85rem; color: var(--text-secondary);">
+                分析结果均为随机生成，仅供参考，不构成投资建议。请在 .env 文件中配置 MODELSCOPE_API_KEY 以启用真实 AI 分析。
+            </p>
+        </div>
+    `;
+
+    // 添加到标题下方
+    const header = document.querySelector('header') || document.querySelector('.main-title');
+    if (header) {
+        header.parentNode.insertBefore(warningEl, header.nextSibling);
+    }
+
+    // 添加动画样式
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes pulseWarning {
+            0%, 100% { box-shadow: 0 0 10px rgba(245, 158, 11, 0.3); }
+            50% { box-shadow: 0 0 20px rgba(245, 158, 11, 0.5); }
+        }
+    `;
+    document.head.appendChild(style);
+}
+
+export function hideSimulatedModeWarning() {
+    const warningEl = document.getElementById('simulatedModeWarning');
+    if (warningEl) {
+        warningEl.style.display = 'none';
+    }
+}
+
 // --- 基础 UI 更新 ---
 export function updateGauge(score, company) {
     const rotation = (score / 100) * 180 - 90;
