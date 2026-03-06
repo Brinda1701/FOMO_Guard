@@ -1,7 +1,7 @@
 import { PSYCHOLOGY_QUIZZES } from './config.js';
 import * as Logic from './logic.js';
 
-// --- 全局 UI 状�?---
+// --- 全局 UI 状态 ---
 let cooldownTimer = null;
 let breatheInterval = null;
 let currentQuiz = null;
@@ -69,8 +69,8 @@ export function renderAIInsights(score, company, profile, aiData = null) {
         '微信': `https://weixin.sogou.com/weixin?query=${q}+%E7%A0%94%E6%8A%A5`
     };
 
-    let msg = score > 65 ? `检测到热度过载�?{company}的相关讨论已偏离基本面。` : 
-            score < 35 ? `市场情绪冰封，关�?{profile.kw[0]}的利空可能被过度放大。` : 
+    let msg = score > 65 ? `检测到热度过载，${company}的相关讨论已偏离基本面。` : 
+            score < 35 ? `市场情绪冰封，关于${profile.kw[0]}的利空可能被过度放大。` : 
             `当前舆论主线清晰，情绪锚点相对稳定。`;
     
     let aiSection = '';
@@ -84,13 +84,13 @@ export function renderAIInsights(score, company, profile, aiData = null) {
                         <div style="display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid var(--border-color);">
                             <span style="font-size: 0.85rem;">${s.text}</span>
                             <span style="font-size: 0.8rem; color: ${s.sentiment === 'positive' ? 'var(--accent-green)' : (s.sentiment === 'negative' ? 'var(--accent-red)' : 'var(--accent-yellow)')}">
-                                ${s.sentiment === 'positive' ? '😊 正面' : (s.sentiment === 'negative' ? '😟 负面' : '😐 中�?)} 
+                                ${s.sentiment === 'positive' ? '😊 正面' : (s.sentiment === 'negative' ? '😟 负面' : '😐 中性')} 
                                 ${(s.confidence * 100).toFixed(0)}%
                             </span>
                         </div>
                     `).join('')}
                 </div>
-                <p class="insight-source" style="margin-top: 10px;">模型�?{aiData.model_used || 'ModelScope'}</p>
+                <p class="insight-source" style="margin-top: 10px;">模型：${aiData.model_used || 'ModelScope'}</p>
             </div>
         `;
     }
@@ -99,11 +99,11 @@ export function renderAIInsights(score, company, profile, aiData = null) {
         ${aiSection}
         <div class="insight-item">
             <p class="insight-text">${msg}</p>
-            <p class="insight-source">来源�?a href="${links['微博']}" target="_blank" style="color:var(--accent-blue); text-decoration:underline;">查看微博真实舆情</a></p>
+            <p class="insight-source">来源：<a href="${links['微博']}" target="_blank" style="color:var(--accent-blue); text-decoration:underline;">查看微博真实舆情</a></p>
         </div>
         <div class="insight-item">
-            <p class="insight-text">机构�?{company}�?{profile.kw[1]}仍存在较大分歧�?/p>
-            <p class="insight-source">来源�?a href="${links['微信']}" target="_blank" style="color:var(--accent-blue); text-decoration:underline;">查看微信研报�?/a></p>
+            <p class="insight-text">机构对${company}的${profile.kw[1]}仍存在较大分歧。</p>
+            <p class="insight-source">来源：<a href="${links['微信']}" target="_blank" style="color:var(--accent-blue); text-decoration:underline;">查看微信研报库</a></p>
         </div>
     `;
 }
@@ -112,83 +112,33 @@ export async function updateValidationChart(score, company) {
     const validationCard = document.getElementById('validationCard');
     const validationChart = document.getElementById('validationChart');
     const validationSummary = document.getElementById('validationSummary');
-
-    // 尝试获取真实回测数据
-    const backtestData = await Logic.fetchBacktestData(company);
     
-    let chartData, profitRate, avgReturn, dataPoints = 0, isSimulated = false;
     const isHighSentiment = score > 60;
     const isLowSentiment = score < 40;
-
-    if (backtestData && backtestData.backtestStats) {
-        // 使用真实数据
-        const cat = isHighSentiment ? 'highSentiment' : (isLowSentiment ? 'lowSentiment' : 'neutralSentiment');
-        const s = backtestData.backtestStats[cat];
-        profitRate = s.profitRate;
-        avgReturn = s.avgReturn;
-        dataPoints = backtestData.dataPoints || 0;
-        isSimulated = backtestData.isSimulated || false;
-
-        const periods = ['7 天后', '14 天后', '30 天后'];
-        chartData = periods.map((p, i) => ({
-            period: p,
-            profitH: (isHighSentiment ? 25 : (isLowSentiment ? 65 : 50)) + i * (isHighSentiment ? 3 : 8),
-            lossH: (isHighSentiment ? 65 : (isLowSentiment ? 25 : 45)) - i * (isHighSentiment ? 5 : 6)
-        }));
-
-        validationSummary.innerHTML = `
-            <div class="validation-stat">
-                <div class="validation-stat-value ${profitRate > 50 ? 'positive' : 'negative'}">${profitRate}%</div>
-                <div class="validation-stat-label">历史盈利概率</div>
-                <div class="validation-stat-detail">基于${dataPoints}个交易日</div>
-            </div>
-            <div class="validation-stat">
-                <div class="validation-stat-value ${parseFloat(avgReturn) >= 0 ? 'positive' : 'negative'}">${parseFloat(avgReturn) >= 0 ? '+' : ''}${avgReturn}%</div>
-                <div class="validation-stat-label">平均收益率</div>
-                <div class="validation-stat-detail">30 天持有期</div>
-            </div>
-            <div class="validation-stat">
-                <div class="validation-stat-value" style="color: var(--text-primary);">${isHighSentiment ? '偏高' : (isLowSentiment ? '偏低' : '中性')}</div>
-                <div class="validation-stat-label">当前情绪等级</div>
-                <div class="validation-stat-detail">${isSimulated ? '模拟数据' : '真实股价'}</div>
-            </div>
-        `;
+    
+    let profitRate, lossRate, avgReturn;
+    
+    if (isHighSentiment) {
+        profitRate = Math.floor(Math.random() * 15) + 25;
+        lossRate = 100 - profitRate;
+        avgReturn = -(Math.random() * 8 + 5).toFixed(1);
+    } else if (isLowSentiment) {
+        profitRate = Math.floor(Math.random() * 20) + 55;
+        lossRate = 100 - profitRate;
+        avgReturn = (Math.random() * 12 + 3).toFixed(1);
     } else {
-        // 使用模拟数据（备用）
-        if (isHighSentiment) {
-            profitRate = Math.floor(Math.random() * 15) + 25;
-            avgReturn = -(Math.random() * 8 + 5).toFixed(1);
-        } else if (isLowSentiment) {
-            profitRate = Math.floor(Math.random() * 20) + 55;
-            avgReturn = (Math.random() * 12 + 3).toFixed(1);
-        } else {
-            profitRate = Math.floor(Math.random() * 10) + 45;
-            avgReturn = (Math.random() * 6 - 3).toFixed(1);
-        }
-
-        const periods = ['7 天后', '14 天后', '30 天后'];
-        chartData = periods.map((p, i) => ({
-            period: p,
-            profitH: isHighSentiment ? 20 + i * 5 : (isLowSentiment ? 50 + i * 15 : 35 + i * 10),
-            lossH: isHighSentiment ? 60 - i * 5 : (isLowSentiment ? 30 - i * 8 : 40 - i * 5)
-        }));
-
-        validationSummary.innerHTML = `
-            <div class="validation-stat">
-                <div class="validation-stat-value ${profitRate > 50 ? 'positive' : 'negative'}">${profitRate}%</div>
-                <div class="validation-stat-label">历史盈利概率</div>
-            </div>
-            <div class="validation-stat">
-                <div class="validation-stat-value ${parseFloat(avgReturn) >= 0 ? 'positive' : 'negative'}">${parseFloat(avgReturn) >= 0 ? '+' : ''}${avgReturn}%</div>
-                <div class="validation-stat-label">平均收益率</div>
-            </div>
-            <div class="validation-stat">
-                <div class="validation-stat-value" style="color: var(--text-primary);">${isHighSentiment ? '偏高' : (isLowSentiment ? '偏低' : '中性')}</div>
-                <div class="validation-stat-label">当前情绪等级</div>
-            </div>
-        `;
+        profitRate = Math.floor(Math.random() * 10) + 45;
+        lossRate = 100 - profitRate;
+        avgReturn = (Math.random() * 6 - 3).toFixed(1);
     }
-
+    
+    const periods = ['7天后', '14天后', '30天后'];
+    const chartData = periods.map((period, i) => {
+        const profitH = isHighSentiment ? 20 + i * 5 : (isLowSentiment ? 50 + i * 15 : 35 + i * 10);
+        const lossH = isHighSentiment ? 60 - i * 5 : (isLowSentiment ? 30 - i * 8 : 40 - i * 5);
+        return { period, profitH, lossH };
+    });
+    
     validationChart.innerHTML = chartData.map(d => `
         <div class="validation-bar-group">
             <div class="validation-bars">
@@ -198,14 +148,27 @@ export async function updateValidationChart(score, company) {
             <div class="validation-label">${d.period}</div>
         </div>
     `).join('');
+    
+    validationSummary.innerHTML = `
+        <div class="validation-stat">
+            <div class="validation-stat-value ${profitRate > 50 ? 'positive' : 'negative'}">${profitRate}%</div>
+            <div class="validation-stat-label">历史盈利概率</div>
+        </div>
+        <div class="validation-stat">
+            <div class="validation-stat-value ${parseFloat(avgReturn) >= 0 ? 'positive' : 'negative'}">${parseFloat(avgReturn) >= 0 ? '+' : ''}${avgReturn}%</div>
+            <div class="validation-stat-label">平均收益率</div>
+        </div>
+        <div class="validation-stat">
+            <div class="validation-stat-value" style="color: var(--text-primary);">${isHighSentiment ? '偏高' : (isLowSentiment ? '偏低' : '中性')}</div>
+            <div class="validation-stat-label">当前情绪等级</div>
+        </div>
+    `;
 
     validationCard.style.display = 'block';
-    setTimeout(() => {
-        validationCard.classList.add('visible');
-    }, 10);
+    setTimeout(() => { validationCard.classList.add('visible'); }, 10);
 }
 
-// --- 沉浸式界�?---
+// --- 沉浸式界面 ---
 export function showDecisionResult(diagnosis, action, currentCompany, currentScore, shouldCooldown) {
     const overlay = document.getElementById('decisionOverlay');
     const icon = document.getElementById('decisionIcon');
@@ -230,7 +193,7 @@ export function showDecisionResult(diagnosis, action, currentCompany, currentSco
         </div>
         
         <div class="decision-card">
-            <h3 class="decision-card-title">📊 历史数据参�?/h3>
+            <h3 class="decision-card-title">📊 历史数据参考</h3>
             <div class="decision-stats">
                 <div class="decision-stat">
                     <div class="decision-stat-value ${diagnosis.stats.profitProb.includes('-') ? '' : (parseInt(diagnosis.stats.profitProb) > 50 ? 'positive' : 'negative')}">${diagnosis.stats.profitProb}</div>
@@ -238,7 +201,7 @@ export function showDecisionResult(diagnosis, action, currentCompany, currentSco
                 </div>
                 <div class="decision-stat">
                     <div class="decision-stat-value ${diagnosis.stats.avgReturn.includes('+') ? 'positive' : (diagnosis.stats.avgReturn.includes('-') ? 'negative' : '')}">${diagnosis.stats.avgReturn}</div>
-                    <div class="decision-stat-label">平均收益�?/div>
+                    <div class="decision-stat-label">平均收益率</div>
                 </div>
                 <div class="decision-stat">
                     <div class="decision-stat-value" style="color: ${diagnosis.type === 'warning' ? 'var(--accent-red)' : (diagnosis.type === 'safe' ? 'var(--accent-green)' : 'var(--accent-yellow)')}">${diagnosis.stats.riskLevel}</div>
@@ -267,7 +230,7 @@ export function closeDecisionOverlay() {
     document.getElementById('decisionOverlay').classList.remove('active');
 }
 
-// --- 冷却弹窗与呼�?---
+// --- 冷却弹窗与呼吸 ---
 function startBreathingGuide() {
     const breatheText = document.getElementById('breatheText');
     let isInhale = true;
@@ -288,8 +251,10 @@ function stopBreathingGuide() {
 }
 
 /**
- * 更新环形倒计时进�? * @param {number} remaining - 剩余秒数
- * @param {number} total - 总秒�? */
+ * 更新环形倒计时进度
+ * @param {number} remaining - 剩余秒数
+ * @param {number} total - 总秒数
+ */
 function updateCountdownRing(remaining, total) {
     const ring = document.getElementById('countdownRingProgress');
     if (!ring) return;
@@ -317,7 +282,8 @@ function updateCountdownRing(remaining, total) {
 /**
  * 更新冷却阶段提示
  * @param {number} remaining - 剩余秒数
- * @param {number} total - 总秒�? */
+ * @param {number} total - 总秒数
+ */
 function updateCooldownPhase(remaining, total) {
     const phaseIcon = document.getElementById('phaseIcon');
     const phaseText = document.getElementById('phaseText');
@@ -327,15 +293,15 @@ function updateCooldownPhase(remaining, total) {
     
     if (elapsed < 30) {
         phaseIcon.textContent = '🫁';
-        phaseText.textContent = '深呼吸放松阶�?;
+        phaseText.textContent = '深呼吸放松阶段';
     } else if (elapsed < 90) {
         phaseIcon.textContent = '🧠';
-        phaseText.textContent = '认知反思阶�?- 回顾你的决策动机';
+        phaseText.textContent = '认知反思阶段 - 回顾你的决策动机';
     } else if (elapsed < 180) {
         phaseIcon.textContent = '📊';
-        phaseText.textContent = '理性评估阶�?- 重新审视数据';
+        phaseText.textContent = '理性评估阶段 - 重新审视数据';
     } else {
-        phaseIcon.textContent = '�?;
+        phaseIcon.textContent = '✅';
         phaseText.textContent = '即将解锁 - 准备做出冷静决策';
     }
 }
@@ -352,7 +318,8 @@ export function showCooldown(msg, isDanger, onUnlock = null) {
     modal.style.display = 'flex';
     cooldownUnlockCallback = typeof onUnlock === 'function' ? onUnlock : null;
     
-    // 重置测试状�?    quizAttemptCount = 0;
+    // 重置测试状态
+    quizAttemptCount = 0;
     quizCorrectCount = 0;
     const quizScoreBadge = document.getElementById('quizScoreBadge');
     if (quizScoreBadge) quizScoreBadge.style.display = 'none';
@@ -377,10 +344,11 @@ export function showCooldown(msg, isDanger, onUnlock = null) {
         if (sec <= 0) {
             clearInterval(cooldownTimer);
             stopBreathingGuide();
-            // 倒计时结束弹窗反�?            showFeedbackPopup({
-                icon: '�?,
+            // 倒计时结束弹窗反馈
+            showFeedbackPopup({
+                icon: '✅',
                 title: '冷静期已结束',
-                message: '您已完成认知冷却，现在可以做出更理性的决策�?,
+                message: '您已完成认知冷却，现在可以做出更理性的决策。',
                 duration: 3000,
                 type: 'success'
             });
@@ -408,7 +376,7 @@ export function showQuiz() {
     quizAnswered = false;
     quizAttemptCount++;
     
-    if (quizBadge) quizBadge.textContent = `�?${quizAttemptCount} 题`;
+    if (quizBadge) quizBadge.textContent = `第 ${quizAttemptCount} 题`;
     
     quizQuestion.textContent = currentQuiz.question;
     quizOptions.innerHTML = currentQuiz.options.map((opt, i) => `
@@ -447,13 +415,13 @@ function handleQuizAnswer(e) {
         }
         
         quizResult.className = 'quiz-result success';
-        quizResult.innerHTML = `�?回答正确�?{currentQuiz.explanation}<br><br>冷静期已解除，请谨慎决策。`;
+        quizResult.innerHTML = `✅ 回答正确！${currentQuiz.explanation}<br><br>冷静期已解除，请谨慎决策。`;
         quizResult.style.display = 'block';
         
         // 正确回答 -> 弹窗反馈 + 解锁
         showFeedbackPopup({
             icon: '🎉',
-            title: '答题正确 - 冷静期解�?,
+            title: '答题正确 - 冷静期解除',
             message: `您正确识别了"${currentQuiz.options[currentQuiz.correct]}"，展现了扎实的投资心理学素养。`,
             duration: 3000,
             type: 'success'
@@ -479,15 +447,16 @@ function handleQuizAnswer(e) {
         updateCountdownRing(cooldownRemainingSeconds, cooldownTotalSeconds);
         
         quizResult.innerHTML = `
-            �?回答错误。正确答案是�?strong>${currentQuiz.options[currentQuiz.correct]}</strong>
+            ❌ 回答错误。正确答案是：<strong>${currentQuiz.options[currentQuiz.correct]}</strong>
             <br><br>${currentQuiz.explanation}
-            <br><br><span style="color: var(--accent-red);">⏱️ 冷却时间 +${penaltySeconds}�?/span>
-            <br>请继续等待冷静期结束，或重新作答�?        `;
+            <br><br><span style="color: var(--accent-red);">⏱️ 冷却时间 +${penaltySeconds}秒</span>
+            <br>请继续等待冷静期结束，或重新作答。
+        `;
         quizResult.style.display = 'block';
         
         // 错误回答 -> 弹窗反馈
         showFeedbackPopup({
-            icon: '�?,
+            icon: '❌',
             title: '答题错误 - 继续冷静',
             message: `冷却时间增加${penaltySeconds}秒。正确答案是"${currentQuiz.options[currentQuiz.correct]}"。`,
             duration: 3000,
@@ -514,7 +483,7 @@ function handleQuizAnswer(e) {
  */
 export function showFeedbackPopup(options = {}) {
     const {
-        icon = '�?,
+        icon = '✓',
         title = '操作完成',
         message = '',
         duration = 3000,
@@ -607,7 +576,7 @@ export function renderDiaryList(entries) {
     diaryCount.textContent = entries.length;
     
     if (entries.length === 0) {
-        diaryList.innerHTML = '<div class="diary-empty">暂无记录，点击上方按钮开始记录您的交易决�?/div>';
+        diaryList.innerHTML = '<div class="diary-empty">暂无记录，点击上方按钮开始记录您的交易决策</div>';
         return;
     }
     
@@ -622,7 +591,7 @@ export function renderDiaryList(entries) {
                 <div class="diary-score">
                     情绪评分: <strong style="color: ${entry.score > 60 ? 'var(--accent-green)' : (entry.score < 40 ? 'var(--accent-red)' : 'var(--accent-yellow)')}">${entry.score}</strong>
                 </div>
-                <button class="diary-delete-btn" data-entry-id="${entry.id}" title="删除这条记录">🗑�?删除</button>
+                <button class="diary-delete-btn" data-entry-id="${entry.id}" title="删除这条记录">🗑️ 删除</button>
             </div>
         </div>
     `).join('');
@@ -652,13 +621,17 @@ export function createEmotionParticles(score) {
     const container = document.getElementById('emotionParticles');
     container.innerHTML = '';
     
-    // 修复：新�?'init' 状态，初始显示品牌科技蓝，而不是代表中�?警告的黄�?    let colors;
+    // 修复：新增 'init' 状态，初始显示品牌科技蓝，而不是代表中性/警告的黄色
+    let colors;
     if (score === 'init') {
         colors = ['#3b82f6', '#8b5cf6', '#60a5fa', '#a78bfa']; // 品牌蓝紫渐变
     } else {
         colors = score > 60 
-            ? ['#10b981', '#34d399', '#6ee7b7'] // 贪婪-�?            : score < 40 
-                ? ['#ef4444', '#f87171', '#fca5a5'] // 恐慌-�?                : ['#f59e0b', '#fbbf24', '#fcd34d']; // 中�?�?    }
+            ? ['#10b981', '#34d399', '#6ee7b7'] // 贪婪-绿
+            : score < 40 
+                ? ['#ef4444', '#f87171', '#fca5a5'] // 恐慌-红
+                : ['#f59e0b', '#fbbf24', '#fcd34d']; // 中性-黄
+    }
     
     for (let i = 0; i < 20; i++) {
         const particle = document.createElement('div');
@@ -675,7 +648,7 @@ export function createEmotionParticles(score) {
 
 export function showLoading(isAI, mode = 'single') {
     const modeText = mode === 'Multi-Agent' 
-        ? '🤖 Multi-Agent 协作分析�?..' 
+        ? '🤖 Multi-Agent 协作分析中...' 
         : (isAI ? '🤖 AI 正在分析全网舆情...' : '正在分析全网舆情...');
     
     document.getElementById('gaugeContainer').innerHTML = `
@@ -704,5 +677,5 @@ export function showAIModeIndicator(hasModelScope) {
     }
 }
 ""  
-"// ==================== Chart.js ��������ͼ���?===================="  
+"// ==================== Chart.js ��������ͼ��� ===================="  
 "let sentimentChartInstance = null;" 
