@@ -69,13 +69,8 @@ function initTheme() {
     const savedTheme = localStorage.getItem('theme') || 'dark';
     const themeToggle = document.getElementById('themeToggle');
 
-    if (savedTheme === 'light') {
-        document.documentElement.setAttribute('data-theme', 'light');
-        themeToggle.textContent = '☀️';
-    } else {
-        document.documentElement.removeAttribute('data-theme');
-        themeToggle.textContent = '🌙';
-    }
+    // 主题已在 HTML 中初始化，这里只更新按钮图标
+    themeToggle.textContent = savedTheme === 'light' ? '☀️' : '🌙';
 }
 
 function setupEventListeners() {
@@ -904,7 +899,7 @@ async function analyzeText() {
     }
 }
 
-// 批量分析
+// 批量分析（带并发控制和进度显示）
 async function analyzeBatch() {
     const input = document.getElementById('batchInput');
     const lines = input.value.split('\n').filter(l => l.trim());
@@ -923,17 +918,28 @@ async function analyzeBatch() {
         // 显示加载状态
         UI.showLoading(false, '批量');
 
-        // 调用批量分析
+        // 调用批量分析（并发 3 个）
         const results = await Logic.analyzeBatchCompanies(companies, (progress) => {
-            // 更新加载状态
+            // 更新进度显示
             const gaugeContainer = document.getElementById('gaugeContainer');
+            const percent = Math.round((progress.current / progress.total) * 100);
+            
             gaugeContainer.innerHTML = `
-                <div class="loading">
-                    <div class="spinner"></div>
-                    <span>正在分析 ${progress.company} (${progress.current}/${progress.total})...</span>
+                <div class="batch-progress">
+                    <div class="progress-header">
+                        <span class="progress-company">🏢 ${progress.company}</span>
+                        <span class="progress-count">${progress.current}/${progress.total}</span>
+                    </div>
+                    <div class="progress-bar-bg">
+                        <div class="progress-bar-fill" style="width: ${percent}%"></div>
+                    </div>
+                    <div class="progress-status">
+                        <span class="status-text">正在分析...</span>
+                        <span class="status-percent">${percent}%</span>
+                    </div>
                 </div>
             `;
-        });
+        }, 3); // 并发 3 个
 
         // 存储结果到全局变量
         window.lastBatchResults = results;
@@ -941,10 +947,11 @@ async function analyzeBatch() {
         // 显示批量分析模态框
         showBatchResultsModal(results);
 
+        const successCount = results.filter(r => r.success).length;
         UI.showFeedbackPopup({
             type: 'success',
             title: '批量分析完成',
-            message: `已分析${results.filter(r => r.success).length}/${results.length}个公司`,
+            message: `已分析${successCount}/${results.length}个公司`,
             durationMs: 3000
         });
 

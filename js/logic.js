@@ -788,58 +788,91 @@ export function extractKeywords(text) {
 }
 
 /**
- * 批量分析公司列表
+ * 批量分析公司列表（带并发控制）
  * @param {string[]} companies - 公司列表
  * @param {Function} onProgress - 进度回调函数
+ * @param {number} concurrency - 最大并发数，默认 3
  * @returns {Promise<Array>} 分析结果数组
  */
-export async function analyzeBatchCompanies(companies, onProgress) {
+export async function analyzeBatchCompanies(companies, onProgress, concurrency = 3) {
     const results = [];
     const total = companies.length;
-    
-    for (let i = 0; i < total; i++) {
-        const company = companies[i].trim();
-        if (!company) continue;
-        
-        try {
+    let completed = 0;
+
+    // 过滤空字符串
+    const validCompanies = companies.filter(c => c.trim()).map(c => c.trim());
+
+    // 并发控制函数
+    async function runWithConcurrency(items, processor, maxConcurrent) {
+        const executing = [];
+        const results = [];
+
+        for (let i = 0; i < items.length; i++) {
+            const item = items[i];
+            
             // 通知进度
             if (onProgress) {
                 onProgress({
                     current: i + 1,
-                    total,
-                    company,
-                    status: 'analyzing'
+                    total: items.length,
+                    company: item,
+                    status: 'analyzing',
+                    completed,
+                    totalCompleted: completed
                 });
             }
-            
-            // 分析公司
+
+            // 创建 Promise
+            const promise = processor(item, i).then(result => {
+                results[i] = result;
+                completed++;
+                executing.splice(executing.indexOf(promise), 1);
+                return result;
+            });
+
+            executing.push(promise);
+
+            // 等待有空闲位置
+            if (executing.length >= maxConcurrent) {
+                await Promise.race(executing);
+            }
+        }
+
+        // 等待所有完成
+        await Promise.all(executing);
+        return results;
+    }
+
+    // 处理单个公司分析
+    async function analyzeCompany(company, index) {
+        try {
             const scoreData = genScore(company);
             const score = scoreData.score;
-            
+
             // 记录到历史数据
             recordSentimentScore(company, score);
-            
-            results.push({
+
+            return {
                 success: true,
                 company,
                 score,
                 sentiment: score > 60 ? '贪婪' : (score < 40 ? '恐惧' : '中性'),
-                profile: scoreData.profile
-            });
-            
+                profile: scoreData.profile,
+                index
+            };
         } catch (error) {
-            results.push({
+            return {
                 success: false,
                 company,
-                error: error.message
-            });
-        }
-        
-        // 添加延迟避免请求过快
-        if (i < total - 1) {
-            await new Promise(resolve => setTimeout(resolve, 500));
+                error: error.message,
+                index
+            };
         }
     }
-    
-    return results;
+
+    // 执行并发分析
+    const analyzedResults = await runWithConcurrency(validCompanies, analyzeCompany, concurrency);
+
+    // 按原始顺序排序并返回
+    return analyzedResults.sort((a, b) => a.index - b.index);
 }
