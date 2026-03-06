@@ -59,49 +59,6 @@ async function init() {
     UI.showAIModeIndicator(hasAI);
 
     setupEventListeners();
-
-    setupRealtimeWS();
-}
-
-// WebSocket realtime connection to backend
-let ws;
-function setupRealtimeWS() {
-    try {
-        const base = AI_CONFIG.URL || window.location.origin;
-        const wsUrl = base.replace(/^http/, 'ws') + '/ws';
-        ws = new WebSocket(wsUrl);
-
-        ws.addEventListener('open', () => console.log('[WS] connected'));
-        ws.addEventListener('close', () => {
-            console.log('[WS] closed, retry in 3s');
-            setTimeout(setupRealtimeWS, 3000);
-        });
-        ws.addEventListener('message', (evt) => {
-            try {
-                const msg = JSON.parse(evt.data);
-                if (msg.type === 'realtime_update') {
-                    // If currently viewing this company, update UI
-                    if (Logic.state.currentCompany && Logic.state.currentCompany === msg.company) {
-                        Logic.state.currentScore = msg.score;
-                        UI.updateGauge(msg.score, msg.company);
-                        UI.createEmotionParticles(msg.score);
-                        
-                        // 更新实时情绪趋势图
-                        const historyData = Logic.getSentimentHistory(msg.company);
-                        Chart.updateSentimentTrendChart(historyData);
-                    }
-                    // update history / source displays
-                    UI.updateHistory();
-                    UI.updateSources();
-                }
-                if (msg.type === 'profile_update') {
-                    // notify user and optionally refresh UI
-                    console.log('[WS] profile updated', msg.key);
-                    // could trigger a re-analysis if needed
-                }
-            } catch (e) { console.error('[WS] parse error', e); }
-        });
-    } catch (e) { console.error('[WS] setup error', e); }
 }
 
 function initTheme() {

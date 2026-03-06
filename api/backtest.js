@@ -1,10 +1,12 @@
 // Vercel Serverless Function: 历史回测数据接口
 // 使用 Yahoo Finance API 获取真实历史股价数据
-module.exports = async function handler(req, res) {
-  // CORS headers
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+// 使用共享 utils 模块
+
+import { setSecureCorsHeaders } from './utils.js';
+
+export default async function handler(req, res) {
+  // 使用安全的 CORS 配置
+  setSecureCorsHeaders(res);
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
@@ -24,10 +26,9 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    // 使用 Yahoo Finance API 获取历史数据
     const yahooSymbol = convertToYahooSymbol(symbol);
     const endDate = Math.floor(Date.now() / 1000);
-    const startDate = endDate - (365 * 24 * 60 * 60); // 获取 1 年数据
+    const startDate = endDate - (365 * 24 * 60 * 60);
 
     const url = `https://query1.finance.yahoo.com/v8/finance/chart/${yahooSymbol}?period1=${startDate}&period2=${endDate}&interval=1d`;
 
@@ -54,7 +55,6 @@ module.exports = async function handler(req, res) {
     const quotes = result.indicators.quote[0];
     const timestamps = result.timestamp;
 
-    // 处理数据
     const priceData = [];
     for (let i = 0; i < timestamps.length; i++) {
       if (quotes.close[i] !== null) {
@@ -69,7 +69,6 @@ module.exports = async function handler(req, res) {
       }
     }
 
-    // 生成回测统计数据
     const backtestStats = calculateBacktestStats(priceData);
 
     res.status(200).json({
@@ -77,13 +76,13 @@ module.exports = async function handler(req, res) {
       symbol: yahooSymbol,
       originalSymbol: symbol,
       dataPoints: priceData.length,
-      priceData: priceData.slice(-90), // 只返回最近 90 天数据
+      priceData: priceData.slice(-90),
       backtestStats
     });
 
   } catch (error) {
     console.error('Backtest API Error:', error);
-    
+
     // 如果 Yahoo Finance 失败，返回模拟数据
     res.status(200).json({
       success: true,
@@ -95,35 +94,30 @@ module.exports = async function handler(req, res) {
       backtestStats: generateSimulatedBacktestStats()
     });
   }
-};
+}
 
-// 将 A 股/美股代码转换为 Yahoo Finance 格式
 function convertToYahooSymbol(symbol) {
   if (!symbol) return '';
-  
+
   const s = symbol.toUpperCase().trim();
-  
-  // 已经是 Yahoo 格式
+
   if (s.endsWith('.SS') || s.endsWith('.SZ') || s.endsWith('.US')) {
     return s;
   }
-  
-  // 常见美股代码
+
   const usStocks = ['AAPL', 'GOOGL', 'MSFT', 'AMZN', 'META', 'NVDA', 'TSLA', 'NFLX', 'AMD', 'INTC'];
   if (usStocks.includes(s)) {
     return s;
   }
-  
-  // A 股代码转换
+
   if (/^\d{6}$/.test(s)) {
     if (s.startsWith('6') || s.startsWith('9')) {
-      return s + '.SS'; // 上交所
+      return s + '.SS';
     } else {
-      return s + '.SZ'; // 深交所
+      return s + '.SZ';
     }
   }
-  
-  // 常见 A 股名称转代码（简化版）
+
   const chinaStocks = {
     '茅台': '600519.SS',
     '比亚迪': '002594.SZ',
@@ -132,18 +126,16 @@ function convertToYahooSymbol(symbol) {
     '银行': '601398.SS',
     '石油': '601857.SS'
   };
-  
+
   for (const [name, code] of Object.entries(chinaStocks)) {
     if (s.includes(name)) {
       return code;
     }
   }
-  
-  // 默认返回美股代码
+
   return s;
 }
 
-// 计算回测统计数据
 function calculateBacktestStats(priceData) {
   if (priceData.length < 60) {
     return generateSimulatedBacktestStats();
@@ -155,37 +147,30 @@ function calculateBacktestStats(priceData) {
     neutralSentiment: { profitRate: 0, avgReturn: 0, samples: 0 }
   };
 
-  // 基于价格波动生成"情绪分数"
   for (let i = 30; i < priceData.length - 30; i++) {
     const pastPrices = priceData.slice(i - 30, i);
     const futurePrices = priceData.slice(i, i + 30);
-    
-    // 计算过去 30 天的涨跌幅作为"情绪"代理
+
     const pastReturn = (pastPrices[pastPrices.length - 1].close - pastPrices[0].close) / pastPrices[0].close * 100;
-    
-    // 计算未来 30 天的涨跌幅
     const futureReturn = (futurePrices[futurePrices.length - 1].close - futurePrices[0].close) / futurePrices[0].close * 100;
-    
-    // 根据过去表现分类
+
     let category;
     if (pastReturn > 10) {
-      category = 'highSentiment'; // 高涨情绪
+      category = 'highSentiment';
     } else if (pastReturn < -10) {
-      category = 'lowSentiment'; // 低落情绪
+      category = 'lowSentiment';
     } else {
-      category = 'neutralSentiment'; // 中性情绪
+      category = 'neutralSentiment';
     }
 
     stats[category].samples++;
-    
-    // 统计盈利概率和平均收益
+
     if (futureReturn > 0) {
       stats[category].profitRate += 1;
     }
     stats[category].avgReturn += futureReturn;
   }
 
-  // 计算平均值
   for (const category of ['highSentiment', 'lowSentiment', 'neutralSentiment']) {
     const samples = stats[category].samples;
     if (samples > 0) {
@@ -200,7 +185,6 @@ function calculateBacktestStats(priceData) {
   return stats;
 }
 
-// 生成模拟价格数据（备用）
 function generateSimulatedPriceData(symbol) {
   const data = [];
   const now = new Date();
@@ -211,11 +195,10 @@ function generateSimulatedPriceData(symbol) {
   for (let i = 90; i >= 0; i--) {
     const date = new Date(now);
     date.setDate(date.getDate() - i);
-    
-    // 随机波动 + 趋势
+
     const change = (Math.random() - 0.5) * volatility + trend;
     price = price * (1 + change);
-    
+
     data.push({
       date: date.toISOString().split('T')[0],
       open: price * (1 + (Math.random() - 0.5) * 0.01),
@@ -229,7 +212,6 @@ function generateSimulatedPriceData(symbol) {
   return data;
 }
 
-// 生成模拟回测统计（备用）
 function generateSimulatedBacktestStats() {
   return {
     highSentiment: {
