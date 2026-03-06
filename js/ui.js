@@ -216,8 +216,17 @@ export function showDecisionResult(diagnosis, action, currentCompany, currentSco
                 <div class="decision-quote">${diagnosis.quote}</div>
             </div>
         </div>
+
+        <div class="decision-card decision-recorded">
+            <h3 class="decision-card-title">✅ 决策已自动记录</h3>
+            <div class="decision-card-content">
+                <p style="font-size: 0.9rem; color: var(--text-secondary);">
+                    本次决策已自动保存到交易决策日记，您可以在下方直接查看记录，或点击编辑补充决策原因。
+                </p>
+            </div>
+        </div>
     `;
-    
+
     overlay.classList.add('active');
 
     // 冷静期触发时机由上层流程控制（先冷却再展示结果）

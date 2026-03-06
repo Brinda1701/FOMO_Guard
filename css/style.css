@@ -1619,6 +1619,12 @@ html[data-theme="light"] .modal-content::before {
 .decision-safe { border-left: 4px solid var(--accent-green); }
 .decision-neutral { border-left: 4px solid var(--accent-yellow); }
 
+/* 决策已自动记录卡片 */
+.decision-recorded {
+    border-left: 4px solid var(--accent-blue);
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.05), rgba(139, 92, 246, 0.03));
+}
+
 .decision-quote {
     font-style: italic;
     padding: 15px 20px;
