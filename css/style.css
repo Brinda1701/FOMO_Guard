@@ -86,12 +86,12 @@ body::before {
     transition: all 0.4s ease;
 }
 
-.container { 
-    max-width: 1400px; 
-    margin: 0 auto; 
-    padding: 20px;
+.container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 15px 20px 30px;
     position: relative;
-    z-index: 10; /* 修复：提升层级，防止被背景粒子遮挡导致无法点击 */
+    z-index: 10;
 }
 
 .header { 
@@ -444,41 +444,41 @@ body::before {
     font-weight: 500;
 }
 
-.history-chart { 
-    height: 130px; 
-    display: flex; 
-    align-items: flex-end; 
-    gap: 8px; 
-    padding: 18px 0; 
-    border-top: 1px solid var(--border-color); 
+.history-chart {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    padding: 18px 0;
+    border-top: 1px solid var(--border-color);
     margin-top: 22px;
+    min-height: 130px;
 }
 
-.history-bar { 
-    flex: 1; 
-    border-radius: 6px 6px 0 0; 
-    min-height: 12px; 
-    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1); 
-    cursor: pointer; 
+.history-bar {
+    flex: 1;
+    border-radius: 6px 6px 0 0;
+    min-height: 12px;
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
     position: relative;
     box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.1);
 }
 
-.history-bar:hover { 
+.history-bar:hover {
     transform: scaleY(1.1);
     filter: brightness(1.15);
 }
 
-.history-bar:hover::after { 
-    content: attr(data-value); 
-    position: absolute; 
-    bottom: 100%; 
-    left: 50%; 
-    transform: translateX(-50%); 
-    background: var(--bg-secondary); 
-    padding: 6px 12px; 
-    border-radius: 8px; 
-    font-size: 0.8rem; 
+.history-bar:hover::after {
+    content: attr(data-value);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--bg-secondary);
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 0.8rem;
     white-space: nowrap;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
     border: 1px solid var(--border-color);
@@ -488,7 +488,7 @@ body::before {
 .history-bar.fear { background: linear-gradient(to top, #dc2626, #ef4444, #f87171); }
 .history-bar.neutral { background: linear-gradient(to top, #d97706, #f59e0b, #fbbf24); }
 .history-bar.greed { background: linear-gradient(to top, #059669, #10b981, #34d399); }
-.summary-content { min-height: 200px; }
+.summary-content { min-height: 80px; }
 
 .insight-item { 
     background: var(--bg-secondary); 
@@ -749,14 +749,14 @@ body::before {
 .tips-accordion {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 8px;
     position: relative;
     z-index: 1;
 }
 
 .tip-accordion-item {
     background: var(--bg-secondary);
-    border-radius: 12px;
+    border-radius: 10px;
     border: 1px solid var(--border-color);
     overflow: hidden;
     transition: all 0.3s ease;
@@ -774,8 +774,8 @@ body::before {
 .tip-accordion-header {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 14px 18px;
+    gap: 10px;
+    padding: 10px 14px;
     cursor: pointer;
     list-style: none;
     transition: background 0.2s ease;
@@ -790,19 +790,19 @@ body::before {
 }
 
 .tip-icon {
-    font-size: 1.5rem;
+    font-size: 1.3rem;
     flex-shrink: 0;
 }
 
 .tip-title {
     flex: 1;
-    font-size: 1rem;
+    font-size: 0.95rem;
     font-weight: 600;
     color: var(--text-primary);
 }
 
 .tip-chevron {
-    font-size: 1.2rem;
+    font-size: 1.1rem;
     color: var(--text-secondary);
     transition: transform 0.3s ease;
 }
@@ -812,7 +812,7 @@ body::before {
 }
 
 .tip-accordion-content {
-    padding: 0 18px 16px 52px;
+    padding: 0 14px 12px 44px;
     animation: slideDown 0.3s ease;
 }
 
@@ -911,14 +911,14 @@ body::before {
     filter: drop-shadow(0 2px 4px rgba(59, 130, 246, 0.3));
 }
 
-.footer { 
-    text-align: center; 
-    padding: 35px; 
-    margin-top: 40px; 
-    border-top: 1px solid var(--border-color); 
-    color: var(--text-secondary); 
-    font-size: 0.92rem;
-    background: linear-gradient(to top, rgba(0, 0, 0, 0.1), transparent);
+.footer {
+    text-align: center;
+    padding: 20px;
+    margin-top: 20px;
+    border-top: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.05), transparent);
 }
 
 .footer p {
@@ -1717,10 +1717,12 @@ html[data-theme="light"] .modal-content::before {
 
 /* 内联日记区域 */
 .inline-diary-section {
-    margin-top: 20px;
-    padding-top: 20px;
+    margin-top: 15px;
+    padding-top: 15px;
     border-top: 1px solid var(--border-color);
     animation: slideDown 0.3s ease;
+    max-height: 400px;
+    overflow-y: auto;
 }
 
 @keyframes slideDown {
@@ -1785,7 +1787,7 @@ html[data-theme="light"] .modal-content::before {
 }
 
 .diary-list {
-    max-height: 300px;
+    max-height: 250px;
     overflow-y: auto;
 }
 
@@ -2078,7 +2080,7 @@ html[data-theme="light"] .modal-content::before {
     display: flex;
     align-items: flex-end;
     justify-content: space-around;
-    height: 150px;
+    min-height: 150px;
     padding: 15px 0;
     border-bottom: 2px solid var(--border-color);
     margin-bottom: 10px;
