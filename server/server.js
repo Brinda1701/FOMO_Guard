@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const fetch = require('node-fetch');
+const cheerio = require('cheerio');
 const utils = require('./utils');
 
 const app = express();
@@ -33,6 +34,65 @@ const PORT = process.env.PORT || 3000;
 const MODELSCOPE_API_KEY = process.env.MODELSCOPE_API_KEY;
 const MODELSCOPE_API_URL = process.env.MODELSCOPE_API_URL || 'https://api-inference.modelscope.cn/v1/';
 const MODEL_NAME = process.env.MODEL_NAME || 'deepseek-ai/DeepSeek-R1';
+
+// 真实的 User-Agent 列表（轮询使用）
+const USER_AGENTS = [
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Firefox/121.0',
+  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+  'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+];
+
+// 反爬特征词
+const ANTI_BOT_PATTERNS = [
+  '验证码', '验证您的访问', '请稍候', '正在检查', 'access check',
+  'captcha', 'verify', 'cloudflare', '请完成验证', '安全验证',
+  '人类验证', '访问受限', '需要登录', '请先登录'
+];
+
+// 支持的网站配置
+const SITE_CONFIGS = {
+  'xueqiu.com': {
+    name: '雪球',
+    selectors: {
+      title: 'h1.article__title, .article__title',
+      content: '.article__content, .detail__stock-info',
+      publishTime: '.article__time, .publish-time'
+    }
+  },
+  'eastmoney.com': {
+    name: '东方财富',
+    selectors: {
+      title: '.btitle, #title',
+      content: '.btext, .article-content, #Content_body',
+      publishTime: '.time, .date'
+    }
+  },
+  'guba.eastmoney.com': {
+    name: '东方财富股吧',
+    selectors: {
+      title: '.article-title, #title',
+      content: '#post_content_1, .article-content',
+      publishTime: '.article-time'
+    }
+  },
+  'sina.com.cn': {
+    name: '新浪财经',
+    selectors: {
+      title: 'h1.main-title, .main-title',
+      content: '.article, #artibody, .content',
+      publishTime: '.date, .time-source'
+    }
+  },
+  'wallstreetcn.com': {
+    name: '华尔街见闻',
+    selectors: {
+      title: '.article__title, h1',
+      content: '.article__content, .article-content',
+      publishTime: '.article__time'
+    }
+  }
+};
 
 // 健康检查
 app.get('/api/health', (req, res) => {
@@ -251,7 +311,7 @@ app.post('/api/batch-analyze', async (req, res) => {
   }
 });
 
-// ==================== URL 爬取接口 ====================
+// ==================== URL 爬取接口（使用 Cheerio） ====================
 app.post('/api/scrape-url', async (req, res) => {
   try {
     const { url } = req.body;
@@ -267,74 +327,256 @@ app.post('/api/scrape-url', async (req, res) => {
       return res.status(400).json({ success: false, error: '无效的 URL 格式' });
     }
 
-    // 检查支持的网站
-    const supportedDomains = ['xueqiu.com', 'eastmoney.com', 'guba.eastmoney.com', 'sina.com.cn', 'finance.sina.com.cn', 'wallstreetcn.com'];
+    // 查找匹配的站点配置
     const domain = parsedUrl.hostname.replace('www.', '');
-    const isSupported = supportedDomains.some(d => domain.includes(d));
+    const siteConfig = findSiteConfig(domain);
 
-    if (!isSupported) {
+    if (!siteConfig) {
+      const supportedList = Object.values(SITE_CONFIGS).map(s => s.name).join('、');
       return res.status(400).json({
         success: false,
-        error: `暂不支持该网站，目前支持：${supportedDomains.join('、')}`
+        error: `暂不支持该网站，目前支持：${supportedList}`
       });
     }
 
-    // 识别来源
-    let source = '未知';
-    if (domain.includes('xueqiu')) source = '雪球';
-    else if (domain.includes('eastmoney') || domain.includes('guba')) source = '东方财富';
-    else if (domain.includes('sina') || domain.includes('finance')) source = '新浪财经';
-    else if (domain.includes('wallstreetcn')) source = '华尔街见闻';
+    // 爬取网页内容
+    const html = await fetchUrlContent(url);
 
-    // 爬取网页
-    if (!MODELSCOPE_API_KEY) {
-      // 模拟模式
-      return res.status(200).json({
-        success: true,
-        url,
-        source,
-        title: `${source}新闻 - ${parsedUrl.pathname}`,
-        content: '模拟内容：该新闻分析了市场动态和行业发展趋势，整体情绪偏向正面。',
-        publishTime: new Date().toISOString()
-      });
-    }
-
-    const response = await fetch(url, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-      }
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error: ${response.status}`);
-    }
-
-    const html = await response.text();
-
-    // 提取标题
-    const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
-    const title = titleMatch ? titleMatch[1].trim().replace(/_-.*$/, '').replace(/-.*$/, '') : '';
+    // 使用 Cheerio 解析
+    const $ = cheerio.load(html);
 
     // 提取内容
-    const content = utils.stripHtml(html).substring(0, 5000);
+    const extracted = extractContentWithCheerio($, siteConfig, html);
+
+    // 反爬检测
+    const antiBotResult = detectAntiBot(extracted.content);
+    if (antiBotResult.detected) {
+      return res.status(400).json({
+        success: false,
+        error: '该网页可能需要登录或存在反爬防护，无法自动抓取。请复制新闻文本使用「文本分析」模式',
+        reason: antiBotResult.reason,
+        suggestion: '请复制新闻文本使用「文本分析」模式'
+      });
+    }
+
+    // 内容长度检测（SPA 或动态加载检测）
+    if (extracted.content.length < 100) {
+      return res.status(400).json({
+        success: false,
+        error: '该网页可能需要登录或存在反爬防护，无法自动抓取。请复制新闻文本使用「文本分析」模式',
+        reason: `提取到的内容过少（仅${extracted.content.length}字），可能是 SPA 页面或需要 JavaScript 渲染`,
+        suggestion: '请复制新闻文本使用「文本分析」模式',
+        extractedTitle: extracted.title
+      });
+    }
 
     res.status(200).json({
       success: true,
       url,
-      source,
-      title,
-      content,
-      publishTime: new Date().toISOString()
+      source: siteConfig.name,
+      title: extracted.title,
+      content: extracted.content,
+      publishTime: extracted.publishTime,
+      textLength: extracted.content.length
     });
 
   } catch (error) {
     console.error('[Scrape URL] Error:', error);
+    
+    if (error.message.includes('fetch') || error.message.includes('network')) {
+      return res.status(503).json({
+        success: false,
+        error: '无法访问该网页，可能是网络问题或网站已屏蔽访问。请复制新闻文本使用「文本分析」模式'
+      });
+    }
+    
     res.status(500).json({ success: false, error: error.message });
   }
 });
+
+// 查找匹配的站点配置
+function findSiteConfig(domain) {
+  for (const [key, config] of Object.entries(SITE_CONFIGS)) {
+    if (domain.includes(key)) {
+      return config;
+    }
+  }
+  return null;
+}
+
+// 爬取网页内容（带重试和 UA 轮询）
+async function fetchUrlContent(url, maxRetries = 2) {
+  let lastError;
+  
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      const userAgent = USER_AGENTS[attempt % USER_AGENTS.length];
+      
+      const response = await fetch(url, {
+        headers: {
+          'User-Agent': userAgent,
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+          'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        },
+        redirect: 'follow',
+        timeout: 10000
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error: ${response.status} ${response.statusText}`);
+      }
+
+      const html = await response.text();
+      
+      if (html.includes('404') && html.includes('Not Found')) {
+        throw new Error('页面不存在 (404)');
+      }
+      
+      return html;
+      
+    } catch (error) {
+      lastError = error;
+      console.warn(`[Fetch attempt ${attempt + 1}] failed:`, error.message);
+      
+      if (attempt < maxRetries) {
+        await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1)));
+      }
+    }
+  }
+  
+  throw lastError;
+}
+
+// 使用 Cheerio 提取内容
+function extractContentWithCheerio($, siteConfig, html) {
+  let title = '';
+  let content = '';
+  let publishTime = '';
+
+  const selectors = siteConfig.selectors;
+
+  // 提取标题
+  if (selectors.title) {
+    const titleEl = $(selectors.title).first();
+    if (titleEl.length > 0) {
+      title = titleEl.text().trim();
+    }
+  }
+  
+  if (!title) {
+    title = $('title').first().text().trim();
+  }
+  
+  title = cleanTitle(title);
+
+  // 提取发布时间
+  if (selectors.publishTime) {
+    const timeEl = $(selectors.publishTime).first();
+    if (timeEl.length > 0) {
+      publishTime = timeEl.text().trim();
+    }
+  }
+
+  // 提取正文内容
+  if (selectors.content) {
+    const contentEls = $(selectors.content);
+    if (contentEls.length > 0) {
+      content = contentEls.map((_, el) => {
+        const el$ = cheerio.load($(el).html() || '', null, false);
+        return el$('p, div, span').map((i, p) => $(p).text().trim()).get().join('\n\n');
+      }).get().join('\n\n');
+    }
+  }
+
+  // 如果特定选择器失败，尝试通用方法
+  if (!content || content.length < 50) {
+    content = extractGenericContent($);
+  }
+
+  content = cleanContent(content);
+
+  return { title, content, publishTime };
+}
+
+// 通用内容提取
+function extractGenericContent($) {
+  const mainContent = $('main').text();
+  if (mainContent.trim().length > 100) {
+    return mainContent;
+  }
+
+  const articleContent = $('article').text();
+  if (articleContent.trim().length > 100) {
+    return articleContent;
+  }
+
+  const paragraphs = [];
+  $('p').each((_, p) => {
+    const text = $(p).text().trim();
+    if (text.length > 20) {
+      paragraphs.push(text);
+    }
+    if (paragraphs.length >= 20) {
+      return false;
+    }
+  });
+
+  return paragraphs.join('\n\n');
+}
+
+// 清理标题
+function cleanTitle(title) {
+  if (!title) return '';
+  
+  const patterns = [
+    /_-.*$/,
+    /-.*(?:财经 | 股票 | 资讯 | 新闻 | 网 | 吧 | 雪球 | 东方财富 | 新浪 | 华尔街 | 同花顺 | 财新 | 第一财经).*$/i,
+    /\|.*$/,
+    /::.*$/
+  ];
+  
+  let cleaned = title;
+  for (const pattern of patterns) {
+    cleaned = cleaned.replace(pattern, '');
+  }
+  
+  return cleaned.trim();
+}
+
+// 清理内容
+function cleanContent(content) {
+  if (!content) return '';
+  
+  const paragraphs = content.split('\n')
+    .map(p => p.trim())
+    .filter(p => p.length > 10);
+  
+  const uniqueParagraphs = [...new Set(paragraphs)];
+  
+  return uniqueParagraphs.join('\n\n');
+}
+
+// 反爬检测
+function detectAntiBot(content) {
+  const lowerContent = content.toLowerCase();
+  
+  for (const pattern of ANTI_BOT_PATTERNS) {
+    if (lowerContent.includes(pattern.toLowerCase())) {
+      return {
+        detected: true,
+        reason: `检测到反爬特征词："${pattern}"`
+      };
+    }
+  }
+  
+  return { detected: false };
+}
 
 app.listen(PORT, () => {
   console.log(`FOMOGuard 后端运行在 http://localhost:${PORT}`);
   console.log(`Multi-Agent 编排器：${!!MODELSCOPE_API_KEY ? '已启用 (AI 模式)' : '模拟模式'}`);
   console.log(`CORS 配置：${allowedOrigin || '默认 (localhost only)'}`);
+  console.log(`网页抓取：已启用 Cheerio 解析器`);
 });

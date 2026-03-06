@@ -11,6 +11,9 @@
   },
   "keywords": ["investment", "psychology", "fomo", "trading"],
   "license": "MIT",
+  "dependencies": {
+    "cheerio": "^1.0.0-rc.12"
+  },
   "devDependencies": {
     "vercel": "^39.0.0"
   }
