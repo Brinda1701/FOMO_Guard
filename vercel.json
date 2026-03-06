@@ -3,6 +3,11 @@
   "version": 2,
   "buildCommand": "",
   "outputDirectory": ".",
+  "env": {
+    "MODELSCOPE_API_KEY": "@modelscope-api-key",
+    "MODELSCOPE_API_URL": "https://api-inference.modelscope.cn/v1/",
+    "MODEL_NAME": "qwen-max"
+  },
   "rewrites": [
     { "source": "/api/health", "destination": "/api/health.js" },
     { "source": "/api/analyze", "destination": "/api/analyze.js" },
@@ -13,9 +18,9 @@
     {
       "source": "/api/(.*)",
       "headers": [
-        { "key": "Access-Control-Allow-Origin", "value": "*" },
+        { "key": "Access-Control-Allow-Origin", "value": "http://localhost:3000,http://127.0.0.1:3000" },
         { "key": "Access-Control-Allow-Methods", "value": "GET, POST, OPTIONS" },
-        { "key": "Access-Control-Allow-Headers", "value": "Content-Type" }
+        { "key": "Access-Control-Allow-Headers", "value": "Content-Type, Authorization" }
       ]
     }
   ]
