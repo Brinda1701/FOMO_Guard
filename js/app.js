@@ -30,9 +30,6 @@ function renderInlineDiaryList() {
     }
 
     diaryList.innerHTML = entries.slice().reverse().map(entry => {
-        const isAutoSaved = entry.autoSaved || (entry.note && entry.note.includes('[自动记录]'));
-        const editBtn = isAutoSaved ? `<button class="diary-edit-btn" data-entry-id="${entry.id}" title="补充决策原因">✏️ 编辑</button>` : '';
-        
         return `
         <div class="diary-entry ${entry.type}">
             <div class="diary-meta">
@@ -44,10 +41,7 @@ function renderInlineDiaryList() {
                 <div class="diary-score">
                     情绪评分：<strong style="color: ${entry.score > 60 ? 'var(--accent-green)' : (entry.score < 40 ? 'var(--accent-red)' : 'var(--accent-yellow)')}">${entry.score}</strong>
                 </div>
-                <div class="diary-actions">
-                    ${editBtn}
-                    <button class="diary-delete-btn" data-entry-id="${entry.id}" title="删除这条记录">🗑️ 删除</button>
-                </div>
+                <button class="diary-delete-btn" data-entry-id="${entry.id}" title="删除这条记录">🗑️ 删除</button>
             </div>
         </div>
     `;
@@ -122,46 +116,6 @@ function initTheme() {
         themeToggle.textContent = '🌙';
     }
 }
-
-// 快速保存决策记录（无需填写表单）
-function quickSaveDiary() {
-    const company = Logic.state.currentCompany;
-    const score = Logic.state.currentScore;
-    const type = Logic.state.lastAction || 'hold';
-    
-    if (!company) {
-        UI.showFeedbackPopup({
-            type: 'warning',
-            title: '请先分析标的',
-            message: '请先分析一家公司后再记录决策',
-            durationMs: 2000
-        });
-        return;
-    }
-    
-    const entry = {
-        id: Date.now(),
-        date: new Date().toLocaleDateString('zh-CN'),
-        company: company,
-        type: type,
-        note: '决策类型：' + (type === 'buy' ? '买入' : (type === 'sell' ? '卖出' : '观望')) + '，情绪分数：' + score,
-        score: score
-    };
-    
-    Logic.addDiaryEntry(entry);
-    renderInlineDiaryList();
-    
-    UI.showFeedbackPopup({
-        type: 'success',
-        title: '记录成功',
-        message: '决策已保存到日记',
-        durationMs: 1500
-    });
-}
-
-// 导出全局函数供决策结果界面调用
-window.quickSaveDiaryFromDecision = quickSaveDiary;
-
 
 function setupEventListeners() {
     // 主题切换
@@ -258,11 +212,11 @@ function setupEventListeners() {
         document.getElementById('diaryScoreDisplay').textContent = this.value;
     });
 
-    // 内联日记添加按钮
+    // 内联日记添加按钮 - 直接保存决策记录
     const inlineAddDiaryBtn = document.getElementById('inlineAddDiaryBtn');
     if (inlineAddDiaryBtn) {
         inlineAddDiaryBtn.addEventListener('click', () => {
-            UI.openDiaryModal(Logic.state.currentCompany, Logic.state.currentScore);
+            quickSaveDiary();
         });
     }
 
@@ -289,23 +243,6 @@ function setupEventListeners() {
                     durationMs: 1800
                 });
             }
-        });
-    }
-
-    // 日记编辑按钮（补充决策原因）
-    const diaryListEl = document.getElementById('inlineDiaryList');
-    if (diaryListEl) {
-        diaryListEl.addEventListener('click', (event) => {
-            const editBtn = event.target.closest('.diary-edit-btn');
-            if (!editBtn) return;
-
-            const entryId = Number(editBtn.dataset.entryId);
-            if (!entryId) return;
-
-            const entry = Logic.getDiaryEntries().find(e => e.id === entryId);
-            if (!entry) return;
-
-            openEditDiaryModal(entry);
         });
     }
 
@@ -770,6 +707,9 @@ function showAgentConsensus(summary) {
 function handleImpulseCheck(action) {
     if (!Logic.state.currentCompany) { alert('请先分析一家标的'); return; }
 
+    // 保存当前操作类型
+    Logic.state.lastAction = action;
+
     const result = Logic.evaluateImpulse(action, Logic.state.currentCompany, Logic.state.currentScore);
 
     const showDecisionOverlay = () => {
@@ -780,8 +720,6 @@ function handleImpulseCheck(action) {
             Logic.state.currentScore,
             false
         );
-        // 自动记录决策
-        autoSaveDiary(action, Logic.state.currentCompany, Logic.state.currentScore);
     };
 
     if (result.shouldCooldown) {
@@ -799,109 +737,72 @@ function handleImpulseCheck(action) {
     showDecisionOverlay();
 }
 
-// 自动保存决策记录（决策原因可后续补充）
-function autoSaveDiary(action, company, score) {
+// 快速保存决策记录（无需填写表单）
+function quickSaveDiary() {
+    const company = Logic.state.currentCompany;
+    const score = Logic.state.currentScore;
+    const type = Logic.state.lastAction || 'hold';
+    
+    if (!company) {
+        UI.showFeedbackPopup({
+            type: 'warning',
+            title: '请先分析标的',
+            message: '请先分析一家公司后再记录决策',
+            durationMs: 2000
+        });
+        return;
+    }
+    
     const entry = {
         id: Date.now(),
         date: new Date().toLocaleDateString('zh-CN'),
         company: company,
-        type: action,
-        note: `[自动记录] 决策类型：${action === 'buy' ? '买入' : (action === 'sell' ? '卖出' : '观望')}，情绪分数：${score}。\n\n（点击编辑可补充决策原因）`,
-        score: score,
-        autoSaved: true
+        type: type,
+        note: '决策类型：' + (type === 'buy' ? '买入' : (type === 'sell' ? '卖出' : '观望')) + '，情绪分数：' + score,
+        score: score
+    };
+    
+    Logic.addDiaryEntry(entry);
+    renderInlineDiaryList();
+    
+    UI.showFeedbackPopup({
+        type: 'success',
+        title: '记录成功',
+        message: '决策已保存到日记',
+        durationMs: 1500
+    });
+}
+
+// 导出全局函数供决策结果界面调用
+window.quickSaveDiaryFromDecision = quickSaveDiary;
+
+// 保存日记流程（简化版，直接保存）
+function handleSaveDiary() {
+    const modal = document.getElementById('diaryModal');
+    const company = Logic.state.currentCompany || '未知标的';
+    const score = Logic.state.currentScore || 50;
+    const type = modal.dataset.selectedType || 'hold';
+    const note = modal.dataset.note || '';
+
+    const entry = {
+        id: Date.now(),
+        date: new Date().toLocaleDateString('zh-CN'),
+        company: company,
+        type: type,
+        note: note,
+        score: parseInt(score)
     };
 
     Logic.addDiaryEntry(entry);
-    console.log('[Diary] 决策已自动记录:', entry);
-}
+    renderInlineDiaryList();
+    UI.closeDiaryModal();
 
-// 打开编辑日记模态框
-function openEditDiaryModal(entry) {
-    const modal = document.getElementById('diaryModal');
-    if (!modal) return;
-
-    // 填充现有数据
-    document.getElementById('diaryCompany').value = entry.company;
-    // 如果是自动记录的，清除自动记录标记文本
-    let cleanNote = entry.note;
-    if (entry.note && entry.note.includes('[自动记录]')) {
-        cleanNote = cleanNote.replace(/\[自动记录\] 决策类型：.*?\n\n（点击编辑可补充决策原因）/, '');
-    }
-    document.getElementById('diaryNote').value = cleanNote;
-    document.getElementById('diaryScore').value = entry.score;
-    document.getElementById('diaryScoreDisplay').textContent = entry.score;
-    
-    // 设置编辑模式标记
-    modal.dataset.editMode = 'true';
-    modal.dataset.editId = entry.id;
-    
-    // 设置决策类型
-    document.querySelectorAll('.diary-type-btn').forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.type === entry.type);
+    UI.showFeedbackPopup({
+        type: 'success',
+        title: '保存成功',
+        message: '决策记录已保存。',
+        durationMs: 1500
     });
-    
-    modal.style.display = 'flex';
-}
-
-// 保存日记流程（支持新增和编辑）
-function handleSaveDiary() {
-    const modal = document.getElementById('diaryModal');
-    const company = document.getElementById('diaryCompany').value.trim();
-    const note = document.getElementById('diaryNote').value.trim();
-    const score = document.getElementById('diaryScore').value;
-    const type = modal.dataset.selectedType || 'hold';
-
-    if (!company) { alert('请输入标的名称'); return; }
-    if (!note) { alert('请输入决策心理记录'); return; }
-
-    // 检查是否是编辑模式
-    if (modal.dataset.editMode === 'true') {
-        // 编辑模式：更新现有记录
-        const editId = Number(modal.dataset.editId);
-        const updatedEntry = {
-            id: editId,
-            date: new Date().toLocaleDateString('zh-CN'),
-            company: company,
-            type: type,
-            note: note,
-            score: parseInt(score)
-        };
-        Logic.updateDiaryEntry(updatedEntry);
-        
-        // 清除编辑模式标记
-        delete modal.dataset.editMode;
-        delete modal.dataset.editId;
-        
-        UI.closeDiaryModal();
-        renderInlineDiaryList();
-        UI.showFeedbackPopup({
-            type: 'success',
-            title: '更新成功',
-            message: '决策记录已更新。',
-            durationMs: 1800
-        });
-    } else {
-        // 新增模式
-        const entry = {
-            id: Date.now(),
-            date: new Date().toLocaleDateString('zh-CN'),
-            company: company,
-            type: type,
-            note: note,
-            score: parseInt(score)
-        };
-
-        Logic.addDiaryEntry(entry);
-        renderInlineDiaryList();
-        UI.closeDiaryModal();
-
-        UI.showFeedbackPopup({
-            type: 'success',
-            title: '保存成功',
-            message: '决策记录已保存。',
-            durationMs: 1800
-        });
-    }
 }
 
 // ==================== 新增分析功能 ====================

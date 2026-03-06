@@ -623,6 +623,18 @@ export function renderDiaryList(entries) {
 
 export function openDiaryModal(currentCompany, currentScore) {
     const modal = document.getElementById('diaryModal');
+    
+    // 设置决策类型（与最近的操作一致）
+    const lastAction = window.Logic?.state?.lastAction || 'hold';
+    modal.dataset.selectedType = lastAction;
+    document.querySelectorAll('.diary-type-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.type === lastAction);
+    });
+    
+    // 设置备注
+    const actionText = lastAction === 'buy' ? '买入' : (lastAction === 'sell' ? '卖出' : '观望');
+    modal.dataset.note = '决策类型：' + actionText + '，情绪分数：' + currentScore;
+    
     modal.style.display = 'flex';
     if (currentCompany) {
         document.getElementById('diaryCompany').value = currentCompany;
