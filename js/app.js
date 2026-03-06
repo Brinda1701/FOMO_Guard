@@ -55,12 +55,15 @@ async function init() {
     UI.createEmotionParticles('init');
     renderInlineDiaryList();
 
-    const hasAI = await Logic.checkAIBackend();
-    UI.showAIModeIndicator(hasAI);
+    const backendStatus = await Logic.checkAIBackend();
     
-    // 如果没有 AI，显示模拟模式警告
-    if (!hasAI) {
+    // 只在没有 AI 时才显示警告（K 线数据不受影响）
+    if (!backendStatus.hasAI) {
+        UI.showAIModeIndicator(false);
         UI.showSimulatedModeWarning();
+    } else {
+        UI.showAIModeIndicator(true);
+        UI.hideSimulatedModeWarning();
     }
 
     setupEventListeners();

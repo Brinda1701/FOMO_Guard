@@ -52,23 +52,32 @@ export function genScore(company, dayOffset = 0) {
     return { score: finalScore, profile: profile };
 }
 
-// 检查是否可以使用 AI 后端
+// 检查后端状态
 export async function checkAIBackend() {
     try {
-        const response = await fetch(`${AI_CONFIG.URL}/api/health`, { 
+        const response = await fetch(`${AI_CONFIG.URL}/api/health`, {
             method: 'GET',
             timeout: AI_CONFIG.TIMEOUT
         });
         if (response.ok) {
             const data = await response.json();
             state.useAIBackend = true;
-            return data.modelscope_available;
+            // 返回完整状态对象
+            return {
+                hasAI: data.modelscope_available || false,
+                hasMarketData: data.features?.market_data ?? true,
+                hasBacktest: data.features?.backtest ?? true
+            };
         }
     } catch (e) {
         console.log('[AI] 后端不可用，使用前端模式');
     }
     state.useAIBackend = false;
-    return false;
+    return {
+        hasAI: false,
+        hasMarketData: true,  // Mock 数据始终可用
+        hasBacktest: true
+    };
 }
 
 // 请求AI分析（如果可用）

@@ -97,7 +97,16 @@ const SITE_CONFIGS = {
 
 // 健康检查
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', modelscope_available: !!MODELSCOPE_API_KEY });
+  res.json({
+    status: 'ok',
+    version: '1.0.0',
+    features: {
+      ai_analysis: !!MODELSCOPE_API_KEY,  // AI 分析需要 API Key
+      market_data: true,                   // K 线数据始终可用（Mock）
+      backtest: true                       // 回测分析始终可用
+    },
+    modelscope_available: !!MODELSCOPE_API_KEY
+  });
 });
 
 // 分析接口
