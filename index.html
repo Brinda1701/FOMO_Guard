@@ -143,7 +143,7 @@
                 <div class="inline-diary-section" id="inlineDiarySection">
                     <div class="diary-header">
                         <span style="font-size: 0.9rem; color: var(--text-secondary);">📔 交易决策日记 <span style="color: var(--text-primary); font-weight: 600;">(共 <span id="inlineDiaryCount">0</span> 条记录)</span></span>
-                        <button class="diary-btn" id="inlineAddDiaryBtn">+ 记录本次决策</button>
+                        <button class="diary-btn" id="inlineAddDiaryBtn">📝 记录决策</button>
                     </div>
                     <div class="diary-list" id="inlineDiaryList">
                         <div class="diary-empty">暂无记录，点击上方按钮开始记录您的交易决策</div>
@@ -223,8 +223,8 @@
                 </div>
             </div>
 
-            <!-- 第二行：AI 分析与数据源 -->
-            <div class="card">
+            <!-- 第二行：AI 分析与数据源（左右布局） -->
+            <div class="card" style="grid-column: span 1;">
                 <h2 class="card-title"><span class="icon">🤖</span>AI 舆论去噪总结</h2>
                 <div class="summary-content" id="summaryContent">
                     <div class="placeholder">
@@ -232,9 +232,34 @@
                         <p>AI 将为您过滤噪音，提炼核心观点</p>
                     </div>
                 </div>
+                <!-- 历史情绪验证（分析后显示） -->
+                <div id="validationSection" style="display:none; margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border-color);">
+                    <h3 class="card-title" style="font-size: 1rem; margin-bottom: 15px;"><span class="icon">📈</span>历史情绪验证 - 数据回测分析</h3>
+                    <p style="color: var(--text-secondary); font-size: 0.8rem; margin-bottom: 15px;">
+                        <span style="color: var(--accent-blue); font-weight: 600;">📊 回测说明：</span>
+                        基于历史数据，统计在相似情绪水平下，后续不同时间段的盈利概率和平均收益表现
+                    </p>
+                    <div class="history-validation">
+                        <div class="validation-stats-row" id="validationSummary"></div>
+                        <div class="validation-chart-container">
+                            <h4 style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 12px; text-align: center;">📉 不同持有期盈利/亏损概率对比</h4>
+                            <div class="validation-chart" id="validationChart"></div>
+                            <div class="validation-chart-legend">
+                                <div class="legend-item">
+                                    <span class="legend-color legend-profit"></span>
+                                    <span class="legend-text">盈利概率</span>
+                                </div>
+                                <div class="legend-item">
+                                    <span class="legend-color legend-loss"></span>
+                                    <span class="legend-text">亏损概率</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            <div class="card">
+            <div class="card" style="grid-column: span 1;">
                 <h2 class="card-title"><span class="icon">📡</span>多源数据监控</h2>
                 <div class="source-stats">
                     <div class="source-item"><div class="source-icon">📱</div><div class="source-name">微博</div><div class="source-count" id="weiboCount">--</div></div>
@@ -255,32 +280,6 @@
                 </div>
                 <div class="history-chart" id="historyChart">
                     <div style="color: var(--text-secondary); width: 100%; text-align: center;">历史情绪趋势将在分析后显示</div>
-                </div>
-            </div>
-
-            <!-- 第三行：历史验证（分析后显示） -->
-            <div class="card full-width" id="validationCard" style="display:none;">
-                <h2 class="card-title"><span class="icon">📈</span>历史情绪验证 - 数据回测分析</h2>
-                <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 20px;">
-                    <span style="color: var(--accent-blue); font-weight: 600;">📊 回测说明：</span>
-                    基于历史数据，统计在相似情绪水平下，后续不同时间段的盈利概率和平均收益表现
-                </p>
-                <div class="history-validation">
-                    <div class="validation-stats-row" id="validationSummary"></div>
-                    <div class="validation-chart-container">
-                        <h4 style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 15px; text-align: center;">📉 不同持有期盈利/亏损概率对比</h4>
-                        <div class="validation-chart" id="validationChart"></div>
-                        <div class="validation-chart-legend">
-                            <div class="legend-item">
-                                <span class="legend-color legend-profit"></span>
-                                <span class="legend-text">盈利概率</span>
-                            </div>
-                            <div class="legend-item">
-                                <span class="legend-color legend-loss"></span>
-                                <span class="legend-text">亏损概率</span>
-                            </div>
-                        </div>
-                    </div>
                 </div>
             </div>
 

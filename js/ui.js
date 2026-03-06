@@ -109,7 +109,7 @@ export function renderAIInsights(score, company, profile, aiData = null) {
 }
 
 export async function updateValidationChart(score, company) {
-    const validationCard = document.getElementById('validationCard');
+    const validationSection = document.getElementById('validationSection');
     const validationChart = document.getElementById('validationChart');
     const validationSummary = document.getElementById('validationSummary');
     
@@ -164,8 +164,8 @@ export async function updateValidationChart(score, company) {
         </div>
     `;
 
-    validationCard.style.display = 'block';
-    setTimeout(() => { validationCard.classList.add('visible'); }, 10);
+    validationSection.style.display = 'block';
+    setTimeout(() => { validationSection.classList.add('visible'); }, 10);
 }
 
 // --- 沉浸式界面 ---
