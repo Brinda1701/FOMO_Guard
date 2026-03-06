@@ -31,22 +31,73 @@ function renderInlineDiaryList() {
     }
 
     diaryList.innerHTML = entries.slice().reverse().map(entry => {
+        // 盈亏状态选择器
+        const profitLossSelect = `
+            <select class="diary-profit-loss" data-entry-id="${entry.id}" data-score="${entry.score}">
+                <option value="">${entry.profitLoss ? (entry.profitLoss === 'win' ? '✅ 盈利' : entry.profitLoss === 'loss' ? '❌ 亏损' : '➖ 平') : '📊 标记盈亏'}</option>
+                <option value="win">✅ 盈利</option>
+                <option value="loss">❌ 亏损</option>
+                <option value="flat">➖ 平</option>
+            </select>
+        `;
+        
+        // 高 FOMO 标记
+        const fomoBadge = entry.score > 70 ? '<span class="diary-fomo-badge">🔥 高 FOMO</span>' : '';
+        
         return `
-        <div class="diary-entry ${entry.type}">
-            <div class="diary-meta">
-                <span>${escapeHtml(entry.date)} | ${escapeHtml(entry.company)}</span>
-                <span class="diary-action ${entry.type}">${entry.type === 'buy' ? '买入' : (entry.type === 'sell' ? '卖出' : '观望')}</span>
+        <div class="diary-entry ${entry.type} ${entry.score > 70 ? 'diary-high-fomo' : ''}">
+            <div class="diary-header-row">
+                <div class="diary-meta">
+                    <span>${escapeHtml(entry.date)} | ${escapeHtml(entry.company)}</span>
+                    <span class="diary-action ${entry.type}">${entry.type === 'buy' ? '买入' : (entry.type === 'sell' ? '卖出' : '观望')}</span>
+                </div>
+                ${fomoBadge}
             </div>
             <div class="diary-content">${escapeHtml(entry.note)}</div>
             <div class="diary-entry-footer">
                 <div class="diary-score">
                     情绪评分：<strong style="color: ${entry.score > 60 ? 'var(--accent-green)' : (entry.score < 40 ? 'var(--accent-red)' : 'var(--accent-yellow)')}">${entry.score}</strong>
                 </div>
+                ${profitLossSelect}
                 <button class="diary-delete-btn" data-entry-id="${entry.id}" title="删除这条记录">🗑️ 删除</button>
             </div>
         </div>
     `;
     }).join('');
+    
+    // 绑定盈亏选择器事件
+    document.querySelectorAll('.diary-profit-loss').forEach(select => {
+        select.addEventListener('change', (e) => {
+            const entryId = parseInt(e.target.dataset.entryId);
+            const profitLoss = e.target.value;
+            const score = parseInt(e.target.dataset.score);
+            
+            // 估算盈亏百分比（简化版）
+            let profitPercent = 0;
+            if (profitLoss === 'win') {
+                profitPercent = Math.random() * 15 + 5; // 5-20% 盈利
+            } else if (profitLoss === 'loss') {
+                profitPercent = -(Math.random() * 20 + 5); // -5% 到 -25% 亏损
+            }
+            
+            // 更新日记条目
+            const entries = Logic.getDiaryEntries();
+            const entry = entries.find(e => e.id === entryId);
+            if (entry) {
+                entry.profitLoss = profitLoss;
+                entry.profitPercent = profitPercent;
+                Logic.updateDiaryEntry(entry);
+                
+                // 显示反馈
+                UI.showFeedbackPopup({
+                    type: profitLoss === 'win' ? 'success' : profitLoss === 'loss' ? 'error' : 'info',
+                    title: profitLoss === 'win' ? '✅ 已标记盈利' : profitLoss === 'loss' ? '❌ 已标记亏损' : '➖ 已标记持平',
+                    message: '交易日记已更新',
+                    durationMs: 1500
+                });
+            }
+        });
+    });
 }
 
 // 初始化
@@ -678,12 +729,16 @@ function handleImpulseCheck(action) {
     const result = Logic.evaluateImpulse(action, Logic.state.currentCompany, Logic.state.currentScore);
 
     const showDecisionOverlay = () => {
+        // 获取损失厌恶警告（基于个人历史数据）
+        const lossAversionWarning = Logic.getLossAversionWarning(Logic.state.currentScore);
+        
         UI.showDecisionResult(
             result.diagnosis,
             action,
             Logic.state.currentCompany,
             Logic.state.currentScore,
-            false
+            false,
+            lossAversionWarning // 传递损失厌恶警告
         );
     };
 

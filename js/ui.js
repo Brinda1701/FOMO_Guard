@@ -226,21 +226,59 @@ export async function updateValidationChart(score, company) {
 }
 
 // --- 沉浸式界面 ---
-export function showDecisionResult(diagnosis, action, currentCompany, currentScore, shouldCooldown) {
+export function showDecisionResult(diagnosis, action, currentCompany, currentScore, shouldCooldown, lossAversionWarning = null) {
     const overlay = document.getElementById('decisionOverlay');
     const icon = document.getElementById('decisionIcon');
     const title = document.getElementById('decisionTitle');
     const subtitle = document.getElementById('decisionSubtitle');
     const cards = document.getElementById('decisionCards');
-    
+
     icon.textContent = diagnosis.icon;
     title.textContent = diagnosis.title;
     title.className = `decision-title ${diagnosis.type}`;
-    
+
     const actionText = action === 'buy' ? '买入' : (action === 'sell' ? '卖出' : '观望');
     subtitle.textContent = `${currentCompany} | ${actionText}决策 | 情绪指数 ${currentScore}`;
-    
+
+    // 生成损失厌恶警告 HTML（如果有）
+    let lossAversionHTML = '';
+    if (lossAversionWarning && lossAversionWarning.show) {
+        const warningClass = lossAversionWarning.type === 'danger' ? 'loss-aversion-danger' : 
+                            (lossAversionWarning.type === 'warning' ? 'loss-aversion-warning' : 'loss-aversion-info');
+        const statsHTML = lossAversionWarning.stats ? `
+            <div class="loss-aversion-stats">
+                <div class="loss-stat">
+                    <span class="loss-stat-value">${lossAversionWarning.stats.highFomoCount}次</span>
+                    <span class="loss-stat-label">历史决策</span>
+                </div>
+                <div class="loss-stat">
+                    <span class="loss-stat-value loss-stat-red">${lossAversionWarning.stats.winRate}%</span>
+                    <span class="loss-stat-label">胜率</span>
+                </div>
+                ${lossAversionWarning.stats.avgLoss ? `
+                <div class="loss-stat">
+                    <span class="loss-stat-value loss-stat-red">-${lossAversionWarning.stats.avgLoss}%</span>
+                    <span class="loss-stat-label">平均亏损</span>
+                </div>
+                ` : ''}
+            </div>
+        ` : '';
+        
+        lossAversionHTML = `
+            <div class="loss-aversion-banner ${warningClass}">
+                <div class="loss-aversion-header">
+                    <span class="loss-aversion-icon">${lossAversionWarning.title.split(' ')[0]}</span>
+                    <span class="loss-aversion-title">${lossAversionWarning.title.replace(/^[^\s]+\s*/, '')}</span>
+                </div>
+                <p class="loss-aversion-message">${lossAversionWarning.message}</p>
+                ${statsHTML}
+            </div>
+        `;
+    }
+
     cards.innerHTML = `
+        ${lossAversionHTML}
+        
         <div class="decision-card decision-${diagnosis.type}">
             <h3 class="decision-card-title">🎯 诊断结论</h3>
             <div class="decision-card-content">
@@ -248,7 +286,7 @@ export function showDecisionResult(diagnosis, action, currentCompany, currentSco
                 <p>${diagnosis.detail}</p>
             </div>
         </div>
-        
+
         <div class="decision-card">
             <h3 class="decision-card-title">📊 历史数据参考</h3>
             <div class="decision-stats">
@@ -266,7 +304,7 @@ export function showDecisionResult(diagnosis, action, currentCompany, currentSco
                 </div>
             </div>
         </div>
-        
+
         <div class="decision-card">
             <h3 class="decision-card-title">💡 投资智慧</h3>
             <div class="decision-card-content">
@@ -288,7 +326,7 @@ export function showDecisionResult(diagnosis, action, currentCompany, currentSco
     `;
 
     overlay.classList.add('active');
-    
+
     // 绑定快速保存按钮事件
     setTimeout(() => {
         const quickSaveBtn = document.getElementById('decisionQuickSaveBtn');

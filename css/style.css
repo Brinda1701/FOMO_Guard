@@ -1797,6 +1797,102 @@ html[data-theme="light"] .modal-content::before {
     font-size: 1.1rem;
 }
 
+/* ==================== 决策结果面板增强 ==================== */
+
+/* 损失厌恶警告横幅 */
+.loss-aversion-banner {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(245, 158, 11, 0.1));
+    border: 2px solid var(--accent-red);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+    animation: lossAversionPulse 2s ease-in-out infinite;
+}
+
+@keyframes lossAversionPulse {
+    0%, 100% { box-shadow: 0 0 15px rgba(239, 68, 68, 0.3); }
+    50% { box-shadow: 0 0 30px rgba(239, 68, 68, 0.6); }
+}
+
+.loss-aversion-banner.loss-aversion-warning {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(245, 158, 11, 0.05));
+    border-color: var(--accent-yellow);
+    animation: none;
+}
+
+.loss-aversion-banner.loss-aversion-info {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(59, 130, 246, 0.05));
+    border-color: var(--accent-blue);
+    animation: none;
+}
+
+.loss-aversion-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.loss-aversion-icon {
+    font-size: 2rem;
+    filter: drop-shadow(0 0 10px rgba(239, 68, 68, 0.5));
+}
+
+.loss-aversion-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--accent-red);
+    letter-spacing: 0.05em;
+}
+
+.loss-aversion-message {
+    font-size: 0.95rem;
+    line-height: 1.7;
+    color: var(--text-primary);
+    margin-bottom: 15px;
+    font-weight: 500;
+}
+
+.loss-aversion-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+    padding-top: 15px;
+    border-top: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.loss-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+}
+
+.loss-stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--accent-red);
+}
+
+.loss-stat-value.loss-stat-red {
+    color: #ef4444;
+    text-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+}
+
+.loss-stat-label {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+@media (max-width: 768px) {
+    .loss-aversion-stats {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+}
+
 .decision-card {
     background: var(--surface-card-bg);
     border: 1px solid var(--border-color);
@@ -2272,12 +2368,34 @@ html[data-theme="light"] .modal-content::before {
 .diary-entry.sell { border-left-color: var(--accent-red); }
 .diary-entry.hold { border-left-color: var(--accent-yellow); }
 
+/* 高 FOMO 标记日记 */
+.diary-entry.diary-high-fomo {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.08), rgba(245, 158, 11, 0.05));
+    border-left-color: var(--accent-red);
+}
+
+.diary-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.diary-fomo-badge {
+    font-size: 0.7rem;
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(245, 158, 11, 0.2));
+    color: #ef4444;
+    padding: 3px 8px;
+    border-radius: 10px;
+    font-weight: 600;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
 .diary-meta {
     display: flex;
     justify-content: space-between;
     font-size: 0.8rem;
     color: var(--text-secondary);
-    margin-bottom: 8px;
 }
 
 .diary-action {
@@ -2302,11 +2420,29 @@ html[data-theme="light"] .modal-content::before {
     align-items: center;
     justify-content: space-between;
     gap: 10px;
+    flex-wrap: wrap;
 }
 
 .diary-score {
     font-size: 0.8rem;
     color: var(--text-secondary);
+}
+
+/* 盈亏状态选择器 */
+.diary-profit-loss {
+    font-size: 0.75rem;
+    padding: 5px 10px;
+    border-radius: 8px;
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    background: rgba(17, 24, 39, 0.6);
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.diary-profit-loss:hover {
+    border-color: var(--accent-blue);
+    background: rgba(59, 130, 246, 0.1);
 }
 
 .diary-actions {

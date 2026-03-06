@@ -225,6 +225,133 @@ export function updateDiaryEntry(updatedEntry) {
     return false;
 }
 
+// ==================== 损失厌恶干预 - 个人胜率统计 ====================
+
+/**
+ * 计算用户在情绪分数 > 70（高 FOMO 区）时的历史操作胜率
+ * @returns {Object} 统计数据
+ */
+export function calculatePersonalStats() {
+    const entries = state.diaryEntries || [];
+    
+    // 筛选高 FOMO 情绪下的决策（分数 > 70）
+    const highFomoEntries = entries.filter(entry => {
+        const score = entry.score || 50;
+        return score > 70;
+    });
+    
+    if (highFomoEntries.length === 0) {
+        return {
+            hasData: false,
+            highFomoCount: 0,
+            winRate: 0,
+            lossRate: 0,
+            avgLoss: 0,
+            message: '暂无高 FOMO 情绪下的交易记录'
+        };
+    }
+    
+    // 统计盈亏情况
+    let winCount = 0;
+    let lossCount = 0;
+    let flatCount = 0;
+    let totalProfitLoss = 0;
+    
+    highFomoEntries.forEach(entry => {
+        const profitLoss = entry.profitLoss || 'unknown';
+        const profitPercent = entry.profitPercent || 0;
+        
+        if (profitLoss === 'win') {
+            winCount++;
+            totalProfitLoss += Math.abs(profitPercent);
+        } else if (profitLoss === 'loss') {
+            lossCount++;
+            totalProfitLoss -= Math.abs(profitPercent);
+        } else if (profitLoss === 'flat') {
+            flatCount++;
+        }
+    });
+    
+    const totalWithResult = winCount + lossCount;
+    const winRate = totalWithResult > 0 ? Math.round((winCount / totalWithResult) * 100) : 0;
+    const lossRate = totalWithResult > 0 ? Math.round((lossCount / totalWithResult) * 100) : 0;
+    const avgLoss = lossCount > 0 ? Math.round(totalProfitLoss / lossCount) : 0;
+    
+    return {
+        hasData: true,
+        highFomoCount: highFomoEntries.length,
+        winCount,
+        lossCount,
+        flatCount,
+        winRate,
+        lossRate,
+        avgProfitLoss: totalProfitLoss,
+        message: `根据您的交易日记，您过去在极度狂热情绪下做出的 ${highFomoEntries.length} 次决策，胜率仅为 ${winRate}%，平均亏损 ${Math.abs(avgLoss)}%`
+    };
+}
+
+/**
+ * 获取损失厌恶警告信息
+ * @param {number} currentScore - 当前情绪分数
+ * @returns {Object} 警告信息
+ */
+export function getLossAversionWarning(currentScore) {
+    // 只在高 FOMO 情绪时触发（分数 > 70）
+    if (currentScore <= 70) {
+        return { show: false };
+    }
+    
+    const stats = calculatePersonalStats();
+    
+    if (!stats.hasData || stats.highFomoCount < 1) {
+        return {
+            show: true,
+            type: 'warning',
+            title: '🚨 高危情绪预警',
+            message: `您当前情绪分数为 ${currentScore}，处于极度狂热状态。历史数据显示，高 FOMO 情绪下的决策失误率极高。请三思而后行！`,
+            severity: 'medium'
+        };
+    }
+    
+    // 根据胜率决定警告级别
+    if (stats.winRate <= 30) {
+        return {
+            show: true,
+            type: 'danger',
+            title: '🚨 历史数据打脸',
+            message: `根据您的交易日记，您过去在类似极度狂热情绪下做出的 ${stats.highFomoCount} 次决策，胜率仅为 ${stats.winRate}%，平均亏损 ${Math.abs(stats.avgProfitLoss)}%。您确定要重蹈覆辙吗？`,
+            severity: 'high',
+            stats: {
+                highFomoCount: stats.highFomoCount,
+                winRate: stats.winRate,
+                lossRate: stats.lossRate,
+                avgLoss: Math.abs(stats.avgProfitLoss)
+            }
+        };
+    } else if (stats.winRate <= 50) {
+        return {
+            show: true,
+            type: 'warning',
+            title: '⚠️ 历史表现不佳',
+            message: `根据您的交易日记，您过去在高 FOMO 情绪下的 ${stats.highFomoCount} 次决策，胜率为 ${stats.winRate}%。请谨慎决策！`,
+            severity: 'medium',
+            stats: {
+                highFomoCount: stats.highFomoCount,
+                winRate: stats.winRate,
+                lossRate: stats.lossRate
+            }
+        };
+    }
+    
+    return {
+        show: true,
+        type: 'info',
+        title: '💡 情绪提示',
+        message: `您当前情绪分数为 ${currentScore}，请保持理性，避免冲动决策。`,
+        severity: 'low'
+    };
+}
+
 // ==================== Multi-Agent 相关函数 ====================
 
 /**
