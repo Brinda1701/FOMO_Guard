@@ -218,28 +218,6 @@ function setupEventListeners() {
         document.getElementById('diaryScoreDisplay').textContent = this.value;
     });
 
-    // 显示/隐藏内联日记区域
-    const showDiaryBtn = document.getElementById('showDiaryBtn');
-    const closeDiaryBtn = document.getElementById('closeDiaryBtn');
-    const inlineDiarySection = document.getElementById('inlineDiarySection');
-    
-    if (showDiaryBtn) {
-        showDiaryBtn.addEventListener('click', () => {
-            inlineDiarySection.style.display = 'block';
-            renderInlineDiaryList();
-            // 滚动到日记区域
-            setTimeout(() => {
-                inlineDiarySection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }, 100);
-        });
-    }
-    
-    if (closeDiaryBtn && inlineDiarySection) {
-        closeDiaryBtn.addEventListener('click', () => {
-            inlineDiarySection.style.display = 'none';
-        });
-    }
-    
     // 内联日记添加按钮
     const inlineAddDiaryBtn = document.getElementById('inlineAddDiaryBtn');
     if (inlineAddDiaryBtn) {

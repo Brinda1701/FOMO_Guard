@@ -137,21 +137,13 @@
                         <button class="trade-btn hold" data-action="hold">观望</button>
                     </div>
                     <div class="alert-box" id="alertBox"></div>
-                    
-                    <!-- 决策记录入口 -->
-                    <div class="diary-entry-trigger">
-                        <button class="diary-trigger-btn" id="showDiaryBtn">
-                            📔 查看/记录决策日记
-                        </button>
-                    </div>
                 </div>
-                
-                <!-- 内联决策日记区域（默认隐藏） -->
-                <div class="inline-diary-section" id="inlineDiarySection" style="display: none;">
+
+                <!-- 决策记录区域（直接显示） -->
+                <div class="inline-diary-section" id="inlineDiarySection">
                     <div class="diary-header">
-                        <span style="font-size: 0.9rem; color: var(--text-secondary);">共 <span id="inlineDiaryCount">0</span> 条记录</span>
+                        <span style="font-size: 0.9rem; color: var(--text-secondary);">📔 交易决策日记 <span style="color: var(--text-primary); font-weight: 600;">(共 <span id="inlineDiaryCount">0</span> 条记录)</span></span>
                         <button class="diary-btn" id="inlineAddDiaryBtn">+ 记录本次决策</button>
-                        <button class="diary-close-btn" id="closeDiaryBtn">✕ 关闭</button>
                     </div>
                     <div class="diary-list" id="inlineDiaryList">
                         <div class="diary-empty">暂无记录，点击上方按钮开始记录您的交易决策</div>
@@ -269,10 +261,26 @@
             <!-- 第三行：历史验证（分析后显示） -->
             <div class="card full-width" id="validationCard" style="display:none;">
                 <h2 class="card-title"><span class="icon">📈</span>历史情绪验证 - 数据回测分析</h2>
-                <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 15px;">当市场处于相似情绪水平时，后续 30 天的历史表现统计：</p>
+                <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 20px;">
+                    <span style="color: var(--accent-blue); font-weight: 600;">📊 回测说明：</span>
+                    基于历史数据，统计在相似情绪水平下，后续不同时间段的盈利概率和平均收益表现
+                </p>
                 <div class="history-validation">
-                    <div class="validation-chart" id="validationChart"></div>
-                    <div class="validation-summary" id="validationSummary"></div>
+                    <div class="validation-stats-row" id="validationSummary"></div>
+                    <div class="validation-chart-container">
+                        <h4 style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 15px; text-align: center;">📉 不同持有期盈利/亏损概率对比</h4>
+                        <div class="validation-chart" id="validationChart"></div>
+                        <div class="validation-chart-legend">
+                            <div class="legend-item">
+                                <span class="legend-color legend-profit"></span>
+                                <span class="legend-text">盈利概率</span>
+                            </div>
+                            <div class="legend-item">
+                                <span class="legend-color legend-loss"></span>
+                                <span class="legend-text">亏损概率</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
