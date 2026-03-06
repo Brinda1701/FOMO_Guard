@@ -162,8 +162,11 @@ export function updateValidationChart(score, company) {
             <div class="validation-stat-label">当前情绪等级</div>
         </div>
     `;
-    
+
     validationCard.style.display = 'block';
+    setTimeout(() => {
+        validationCard.classList.add('visible');
+    }, 10);
 }
 
 // --- 沉浸式界面 ---

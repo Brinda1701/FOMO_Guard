@@ -239,7 +239,10 @@ export function showAgentVisualization() {
     const card = document.getElementById('agentVisualizationCard');
     if (card) {
         card.style.display = 'block';
-        card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        // 使用 setTimeout 确保 display:block 已经应用后再添加 active 类
+        setTimeout(() => {
+            card.classList.add('visible');
+        }, 10);
     }
 }
 
@@ -249,7 +252,13 @@ export function showAgentVisualization() {
 export function hideAgentVisualization() {
     const card = document.getElementById('agentVisualizationCard');
     if (card) {
-        card.style.display = 'none';
+        card.classList.remove('visible');
+        // 等待过渡完成后隐藏
+        setTimeout(() => {
+            if (!card.classList.contains('visible')) {
+                card.style.display = 'none';
+            }
+        }, 400);
     }
 }
 
