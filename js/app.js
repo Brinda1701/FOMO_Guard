@@ -632,16 +632,6 @@ function renderMultiAgentInsights(summary, company, profile) {
     summaryContent.innerHTML = insightsHtml;
 }
 
-// 显示 Agent 进度面板
-function showAgentProgressPanel() {
-    const panel = document.getElementById('agentProgressPanel');
-    if (panel) {
-        panel.style.display = 'block';
-        // 重置所有进度
-        resetAgentProgressUI();
-    }
-}
-
 // 隐藏 Agent 进度面板
 function hideAgentProgressPanel() {
     const panel = document.getElementById('agentProgressPanel');
