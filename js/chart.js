@@ -104,7 +104,7 @@ export function initSentimentTrendChart(historyData = []) {
                     ticks: {
                         color: '#94a3b8',
                         callback: function(value) {
-                            return value + '%';
+                            return value ;
                         }
                     }
                 }
