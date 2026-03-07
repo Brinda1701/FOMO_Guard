@@ -13,9 +13,9 @@ export const AI_CONFIG = {
 export const AGENT_CONFIG = {
     agents: ['sentiment', 'technical', 'psychology'],
     names: {
-        sentiment: '情绪分析 Agent',
-        technical: '技术分析 Agent',
-        psychology: '心理诊断 Agent'
+        sentiment: '市场舆情 Agent',
+        technical: '盘面量价 Agent',
+        psychology: '行为心理 Agent'
     },
     icons: {
         sentiment: '😊',

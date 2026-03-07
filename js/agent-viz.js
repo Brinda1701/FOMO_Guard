@@ -19,7 +19,7 @@ export function initAgentRadarChart(scores = { sentiment: 50, technical: 50, psy
     agentRadarChartInstance = new Chart(ctx, {
         type: 'radar',
         data: {
-            labels: ['情绪分析', '技术分析', '心理诊断'],
+            labels: ['市场舆情', '盘面量价', '行为心理'],
             datasets: [{
                 label: 'Agent 评分',
                 data: [
