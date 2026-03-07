@@ -540,7 +540,6 @@ export function renderGlobalEvidence(evidenceArray) {
 
     // 显示证据区域
     section.style.display = 'block';
-    section.classList.add('visible');
     
     console.log('[renderGlobalEvidence] 渲染完成');
 }

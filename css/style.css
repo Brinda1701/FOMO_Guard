@@ -4313,9 +4313,9 @@ html[data-theme="light"] .modal-danger #breatheText {
     background: linear-gradient(135deg, rgba(59, 130, 246, 0.05), rgba(139, 92, 246, 0.03));
     border-radius: 16px;
     border: 1px solid rgba(59, 130, 246, 0.2);
-    animation: fadeInUp 0.5s ease forwards;
-    opacity: 0;
-    display: block !important; /* 强制显示，防止被隐藏 */
+    /* 默认就是可见状态 */
+    opacity: 1;
+    display: block;
 }
 
 .global-evidence-section[style*="display:none"] {
@@ -4368,9 +4368,9 @@ html[data-theme="light"] .modal-danger #breatheText {
     background: var(--bg-card);
     border-radius: 25px;
     border: 1px solid var(--border-color);
-    animation: pillSlideIn 0.4s ease forwards;
-    opacity: 0;
-    transform: translateY(10px) scale(0.95);
+    /* 默认就是可见状态，不依赖动画 */
+    opacity: 1;
+    transform: translateY(0) scale(1);
     max-width: 100%;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     transition: all 0.3s ease;
@@ -4380,13 +4380,6 @@ html[data-theme="light"] .modal-danger #breatheText {
 .evidence-pill:hover {
     transform: translateY(-3px) scale(1.02);
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
-}
-
-@keyframes pillSlideIn {
-    to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-    }
 }
 
 .evidence-pill-sentiment {
