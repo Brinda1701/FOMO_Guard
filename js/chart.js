@@ -31,8 +31,6 @@ export function initSentimentTrendChart(historyData = []) {
                     const chart = context.chart;
                     const {ctx: chartCtx, chartArea} = chart;
                     if (!chartArea) return null;
-                    
-                    // 根据分数动态渐变
                     const gradient = chartCtx.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
                     gradient.addColorStop(0, 'rgba(16, 185, 129, 0.2)');
                     gradient.addColorStop(0.4, 'rgba(245, 158, 11, 0.1)');
@@ -104,14 +102,13 @@ export function initSentimentTrendChart(historyData = []) {
                     ticks: {
                         color: '#94a3b8',
                         callback: function(value) {
-                            return value ;
+                            return value; // 修改：直接返回分数值，不添加百分号
                         }
                     }
                 }
             }
         }
     });
-
     return sentimentChartInstance;
 }
 
@@ -124,20 +121,14 @@ export function updateSentimentTrendChart(historyData) {
         initSentimentTrendChart(historyData);
         return;
     }
-
-    // 更新数据
     sentimentChartInstance.data.labels = historyData.map(d => d.time);
     sentimentChartInstance.data.datasets[0].data = historyData.map(d => d.score);
-    
-    // 更新线条颜色（根据最新分数）
     const latestScore = historyData.length > 0 ? historyData[historyData.length - 1].score : 50;
-    let lineColor = '#3b82f6'; // 默认蓝色
-    if (latestScore > 70) lineColor = '#10b981'; // 贪婪 - 绿色
-    if (latestScore < 30) lineColor = '#ef4444'; // 恐惧 - 红色
-    
+    let lineColor = '#3b82f6';
+    if (latestScore > 70) lineColor = '#10b981';
+    if (latestScore < 30) lineColor = '#ef4444';
     sentimentChartInstance.data.datasets[0].borderColor = lineColor;
     sentimentChartInstance.data.datasets[0].pointBackgroundColor = lineColor;
-    
     sentimentChartInstance.update('none');
 }
 
