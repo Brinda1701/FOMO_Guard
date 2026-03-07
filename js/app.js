@@ -535,10 +535,11 @@ function handleMultiAgentSummary(summary, company) {
     // === 渐进式渲染：只更新最终决策建议和证据链 ===
     updateFinalDecisionFromSummary(summary, company);
 
-    // 渲染情绪证据链
+    // 渲染情绪证据链（兼容模式：优先 keyEvidence，其次 signals）
     const breakdown = summary.breakdown || {};
-    const sentimentEvidence = breakdown.sentiment?.keyEvidence || [];
-    updateSentimentEvidence(sentimentEvidence, breakdown.sentiment?.score || 50);
+    const sentimentData = breakdown.sentiment || {};
+    const sentimentEvidence = sentimentData.keyEvidence || sentimentData.signals || [];
+    updateSentimentEvidence(sentimentEvidence, sentimentData.score || 50);
 
     const trends = Logic.generateTrendData(company, profile);
     UI.updateHotTrends(trends);

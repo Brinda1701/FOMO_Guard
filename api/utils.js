@@ -111,7 +111,7 @@ function buildAgentPrompt(agent, company, action, marketData = null) {
 1. 分析社交媒体、新闻、论坛上的舆论情绪
 2. 评估市场热度是否过高或过低
 3. 给出情绪分数（0-100，越高表示越贪婪/乐观）
-4. **提取 3-5 个关键证据短语**
+4. **提取 3-5 个关键证据短语**（必须从原文中截取的具体短语或句子）
 
 当前操作意向：${safeAction}
 
@@ -121,15 +121,22 @@ function buildAgentPrompt(agent, company, action, marketData = null) {
   "confidence": 数字 (0-1),
   "summary": "情绪分析总结（必须引用具体情绪化表述）",
   "signals": ["正面信号 1", "负面信号 1", ...],
-  "key_evidence": [
-    {"text": "具体短语或原话", "sentiment": "positive/negative/emotional", "impact": "high/medium/low", "source": "来源类型"}
+  "keyEvidence": [
+    {"text": "具体短语或原话截取", "sentiment": "positive/negative/emotional", "impact": "high/medium/low", "source": "来源类型"}
   ]
 }
 
+【重要】keyEvidence 字段说明：
+- text: 必须是从分析文本中直接截取的具体短语或句子（例如："净利润同比下滑 20%"、"某大 V 宣称即将涨停"）
+- sentiment: 该证据的情绪倾向（positive=正面，negative=负面，emotional=情绪化表述）
+- impact: 该证据的影响程度（high=高影响，medium=中影响，low=低影响）
+- source: 证据来源（例如：社交媒体、新闻、论坛、研报等）
+
 【示例】
-key_evidence: [
+keyEvidence: [
   {"text": "某大 V 宣称即将涨停", "sentiment": "emotional", "impact": "high", "source": "社交媒体"},
-  {"text": "财报净利润同比下滑 20%", "sentiment": "negative", "impact": "high", "source": "新闻"}
+  {"text": "财报净利润同比下滑 20%", "sentiment": "negative", "impact": "high", "source": "新闻"},
+  {"text": "成交量连续 3 日放大", "sentiment": "positive", "impact": "medium", "source": "行情数据"}
 ]
 `,
 
@@ -254,11 +261,34 @@ function parseAgentResult(agent, aiResult) {
     score = Math.max(0, Math.min(100, Number(score)));
     const isFallback = aiResult.fallback === true || !aiResult.summary;
 
-    const keyEvidence = Array.isArray(aiResult.key_evidence)
-      ? aiResult.key_evidence.map(e => ({
-          text: e.text || '', sentiment: e.sentiment || 'neutral',
-          impact: e.impact || 'medium', source: e.source || '未知'
-        })) : [];
+    // 兼容 keyEvidence（驼峰）和 key_evidence（下划线）两种格式
+    // 如果都没有，则从 signals 中提取作为兜底
+    let keyEvidence = [];
+    if (Array.isArray(aiResult.keyEvidence)) {
+      // 驼峰格式（新标准）
+      keyEvidence = aiResult.keyEvidence.map(e => ({
+        text: e.text || '',
+        sentiment: e.sentiment || 'neutral',
+        impact: e.impact || 'medium',
+        source: e.source || '未知'
+      }));
+    } else if (Array.isArray(aiResult.key_evidence)) {
+      // 下划线格式（旧标准，兼容大模型可能返回的格式）
+      keyEvidence = aiResult.key_evidence.map(e => ({
+        text: e.text || '',
+        sentiment: e.sentiment || 'neutral',
+        impact: e.impact || 'medium',
+        source: e.source || '未知'
+      }));
+    } else if (Array.isArray(aiResult.signals)) {
+      // 兜底：如果 AI 只返回了 signals，转换为 keyEvidence 格式
+      keyEvidence = aiResult.signals.slice(0, 5).map(signal => ({
+        text: signal,
+        sentiment: 'neutral',
+        impact: 'medium',
+        source: 'AI 分析'
+      }));
+    }
 
     return {
       score,
