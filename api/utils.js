@@ -210,9 +210,16 @@ function formatMarketDataForPrompt(marketData) {
 }
 
 /**
- * 调用 AI 模型
+ * 延迟函数
  */
-async function callAIModel(prompt, apiKey, apiUrl, modelName) {
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+/**
+ * 调用 AI 模型（带重试机制）
+ */
+async function callAIModel(prompt, apiKey, apiUrl, modelName, retryCount = 0) {
   const fetch = await import('node-fetch');
   
   const requestBody = {
@@ -228,33 +235,61 @@ async function callAIModel(prompt, apiKey, apiUrl, modelName) {
   
   console.log('[callAIModel] 请求 URL:', `${apiUrl}chat/completions`);
   console.log('[callAIModel] 请求模型:', modelName);
-  console.log('[callAIModel] 请求体:', JSON.stringify(requestBody).substring(0, 200) + '...');
+  console.log('[callAIModel] 重试次数:', retryCount);
   
-  const response = await fetch.default(`${apiUrl}chat/completions`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`
-    },
-    body: JSON.stringify(requestBody)
-  });
+  try {
+    const response = await fetch.default(`${apiUrl}chat/completions`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify(requestBody)
+    });
 
-  console.log('[callAIModel] 响应状态:', response.status);
-  
-  if (!response.ok) {
-    const errorText = await response.text();
-    console.error('[callAIModel] API 错误:', response.status, errorText);
-    throw new Error(`AI API error: ${response.status} - ${errorText.substring(0, 200)}`);
-  }
+    console.log('[callAIModel] 响应状态:', response.status);
+    
+    // 429 限流错误 - 指数退避重试
+    if (response.status === 429) {
+      const errorText = await response.text();
+      console.error('[callAIModel] 触发限流:', errorText);
+      
+      if (retryCount < 3) {
+        // 指数退避：1s, 2s, 4s
+        const delayMs = Math.pow(2, retryCount) * 1000;
+        console.log(`[callAIModel] 等待 ${delayMs}ms 后重试...`);
+        await sleep(delayMs);
+        return callAIModel(prompt, apiKey, apiUrl, modelName, retryCount + 1);
+      }
+      
+      throw new Error('AI API 限流：请求过于频繁，请稍后重试');
+    }
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('[callAIModel] API 错误:', response.status, errorText);
+      throw new Error(`AI API error: ${response.status} - ${errorText.substring(0, 200)}`);
+    }
 
-  const data = await response.json();
-  console.log('[callAIModel] 响应数据:', JSON.stringify(data).substring(0, 300) + '...');
-  
-  if (!data.choices || !data.choices[0] || !data.choices[0].message) {
-    throw new Error('AI API 返回格式异常：缺少 choices 或 message 字段');
+    const data = await response.json();
+    console.log('[callAIModel] 响应数据:', JSON.stringify(data).substring(0, 300) + '...');
+    
+    if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+      throw new Error('AI API 返回格式异常：缺少 choices 或 message 字段');
+    }
+    
+    return parseJSONFromContent(data.choices[0].message.content);
+    
+  } catch (error) {
+    // 网络错误也尝试重试
+    if (retryCount < 3 && (error.message.includes('ECONNRESET') || error.message.includes('timeout'))) {
+      const delayMs = Math.pow(2, retryCount) * 1000;
+      console.log(`[callAIModel] 网络错误，等待 ${delayMs}ms 后重试...`);
+      await sleep(delayMs);
+      return callAIModel(prompt, apiKey, apiUrl, modelName, retryCount + 1);
+    }
+    throw error;
   }
-  
-  return parseJSONFromContent(data.choices[0].message.content);
 }
 
 /**

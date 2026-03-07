@@ -69,19 +69,27 @@ async function runMultiAgentAnalysis(req, res, company, action, apiKey, apiUrl, 
     console.warn('[Orchestrator] 获取市场数据失败:', error.message);
   }
 
-  const agentPromises = agents.map(async (agent) => {
+  // 串行执行三个 Agent，避免触发 API 限流
+  for (const agent of agents) {
     try {
+      console.log(`[Orchestrator] 开始执行 ${agent} Agent...`);
+      
       const prompt = buildAgentPrompt(agent, company, action, agent === 'technical' ? marketData : null);
       const agentResult = await callAIModel(prompt, apiKey, apiUrl, modelName);
       results[agent] = parseAgentResult(agent, agentResult);
-      return { agent, success: true, data: results[agent] };
+      
+      console.log(`[Orchestrator] ${agent} Agent 完成`);
+      
+      // 每个 Agent 之间延迟 500ms，避免请求过于频繁
+      if (agent !== 'psychology') {
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
     } catch (error) {
       console.error(`[Agent ${agent}] Error:`, error);
-      return { agent, success: false, error: error.message };
+      results[agent] = { score: 50, error: error.message };
     }
-  });
+  }
 
-  await Promise.all(agentPromises);
   res.status(200).json(fuseAgentResults(company, action, results));
 }
 
@@ -122,8 +130,8 @@ async function streamMultiAgentAnalysis(req, res, company, action, apiKey, apiUr
     console.warn('[Orchestrator] 获取市场数据失败:', error.message);
   }
 
-  // 并发执行三个 Agent 任务，每个任务独立推送 SSE 事件
-  const agentPromises = agents.map(async (agent) => {
+  // 串行执行三个 Agent 任务，避免触发 API 限流
+  for (const agent of agents) {
     try {
       // 推送开始事件
       sendSSEEvent(res, 'agent_start', {
@@ -148,7 +156,7 @@ async function streamMultiAgentAnalysis(req, res, company, action, apiKey, apiUr
         timestamp: Date.now()
       });
 
-      // 异步调用 AI 模型（不阻塞其他 Agent）
+      // 调用 AI 模型
       const agentResult = await callAIModel(prompt, apiKey, apiUrl, modelName);
 
       // 推送进度事件
@@ -180,7 +188,12 @@ async function streamMultiAgentAnalysis(req, res, company, action, apiKey, apiUr
         timestamp: Date.now()
       });
 
-      return { agent, success: true, data: parsedResult };
+      console.log(`[Orchestrator] ${agent} Agent 完成`);
+      
+      // 每个 Agent 之间延迟 500ms，避免请求过于频繁
+      if (agent !== 'psychology') {
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
     } catch (error) {
       console.error(`[Agent ${agent}] Error:`, error);
       sendSSEEvent(res, 'agent_error', {
@@ -190,14 +203,10 @@ async function streamMultiAgentAnalysis(req, res, company, action, apiKey, apiUr
         timestamp: Date.now()
       });
       results[agent] = { score: 50, error: error.message };
-      return { agent, success: false, error: error.message };
     }
-  });
+  }
 
   try {
-    // 等待所有 Agent 完成
-    await Promise.all(agentPromises);
-
     // 汇总结果并推送最终 summary
     const finalResult = fuseAgentResults(company, action, results);
     sendSSEEvent(res, 'summary', finalResult);
