@@ -4197,10 +4197,6 @@ html[data-theme="light"] .modal-danger #breatheText {
     overflow: visible;
 }
 
-.global-evidence-section[style*="display:none"] {
-    display: none !important;
-}
-
 .global-evidence-section.visible {
     opacity: 1;
 }

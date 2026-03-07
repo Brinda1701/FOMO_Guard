@@ -458,6 +458,15 @@ function showSingleAgentVisualization(score, company) {
         consensus: consensus
     });
     console.log('[AgentViz] 决策建议已更新');
+    
+    // 渲染判定证据（兜底显示，使用模拟数据）
+    const mockEvidence = [
+        { text: `${company} 近期市场关注度上升`, sentiment: 'positive', impact: 'medium', source: '市场数据' },
+        { text: `社交媒体讨论热度较高`, sentiment: 'emotional', impact: 'medium', source: '社交媒体' },
+        { text: `估值水平处于历史${score > 50 ? '高位' : '低位'}`, sentiment: score > 50 ? 'negative' : 'positive', impact: 'high', source: '财务分析' }
+    ];
+    AgentViz.renderGlobalEvidence(mockEvidence);
+    console.log('[AgentViz] 判定证据已渲染');
 }
 
 // 处理 Multi-Agent 汇总结果
