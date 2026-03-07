@@ -88,25 +88,22 @@ export function updateGauge(score, company) {
 
 export function updateHistory() {
     const historyChart = document.getElementById('historyChart');
+    if (!historyChart) return;
+    
     const historyData = Array.from({ length: 7 }, () => Math.floor(Math.random() * 80) + 10);
     const days = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
 
-    // 只更新条形图部分，保留图表说明
+    // 只更新条形图部分，保留标题和图表说明
     const barsHTML = historyData.map((v, i) => {
         const barClass = v < 40 ? 'fear' : (v > 60 ? 'greed' : 'neutral');
-        return `<div class="history-bar ${barClass}" style="height: ${v}px" data-value="${days[i]}: ${v}"></div>`;
+        return `<div class="history-bar ${barClass}" style="height: ${v}px; flex: 1; max-width: 40px;" data-value="${days[i]}: ${v}"></div>`;
     }).join('');
-    
-    historyChart.innerHTML = `
-        <div style="display: flex; gap: 8px; justify-content: space-around; align-items: flex-end; height: 100px; margin-bottom: 12px;">
-            ${barsHTML}
-        </div>
-        <!-- 图表说明 -->
-        <div class="chart-help-text" style="padding: 10px; background: rgba(59, 130, 246, 0.05); border-radius: 8px; font-size: 0.8rem; color: var(--text-secondary);">
-            <span style="color: var(--accent-blue); font-weight: 600;">📊 图表说明：</span>
-            显示最近 10 次分析的情绪分数变化趋势，帮助您了解市场情绪的波动情况。绿色区域 (>70) 表示贪婪，黄色区域 (30-70) 表示中性，红色区域 (<30) 表示恐惧。
-        </div>
-    `;
+
+    // 更新图表区域（保留标题）
+    const chartContent = historyChart.querySelector('div[style*="display: flex"]');
+    if (chartContent) {
+        chartContent.innerHTML = barsHTML;
+    }
 }
 
 export function updateSources() {
@@ -525,6 +522,13 @@ function initCopywall(isDanger, modal) {
         setTimeout(() => inputEl.classList.remove('error'), 400);
     };
 
+    // 移除旧的事件监听器（防止重复绑定）
+    const newUnlockBtn = unlockBtn.cloneNode(true);
+    unlockBtn.parentNode.replaceChild(newUnlockBtn, unlockBtn);
+    
+    // 重新获取引用
+    const finalUnlockBtn = document.getElementById('unlockBtn');
+
     // 监听输入，实时比对
     inputEl.oninput = () => {
         const userInput = inputEl.value.trim();
@@ -537,9 +541,9 @@ function initCopywall(isDanger, modal) {
         // 检查是否完全匹配
         if (matchPercent >= 100 && userInput === declaration) {
             // 激活解锁按钮
-            unlockBtn.disabled = false;
-            unlockBtn.classList.remove('modal-btn-disabled');
-            unlockBtn.textContent = '🔓 解除隔离';
+            finalUnlockBtn.disabled = false;
+            finalUnlockBtn.classList.remove('modal-btn-disabled');
+            finalUnlockBtn.textContent = '🔓 解除隔离';
             inputEl.disabled = true;
 
             showFeedbackPopup({
@@ -551,9 +555,15 @@ function initCopywall(isDanger, modal) {
         }
     };
 
-    // 解锁按钮点击事件
-    unlockBtn.onclick = () => {
-        if (!unlockBtn.disabled) {
+    // 解锁按钮点击事件（只绑定一次）
+    finalUnlockBtn.onclick = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        if (!finalUnlockBtn.disabled) {
+            // 先禁用按钮，防止重复点击
+            finalUnlockBtn.disabled = true;
+            
             modal.style.display = 'none';
             if (cooldownUnlockCallback) {
                 const callback = cooldownUnlockCallback;
