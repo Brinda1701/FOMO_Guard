@@ -96,7 +96,7 @@ export function updateHistory() {
     // 只更新条形图部分，保留标题和图表说明
     const barsHTML = historyData.map((v, i) => {
         const barClass = v < 40 ? 'fear' : (v > 60 ? 'greed' : 'neutral');
-        return `<div class="history-bar ${barClass}" style="height: ${v}px; flex: 1; max-width: 40px;" data-value="${days[i]}: ${v}"></div>`;
+        return `<div class="history-bar ${barClass}" style="height: ${v}px; flex: 1; margin: 0 2px;" data-value="${days[i]}: ${v}"></div>`;
     }).join('');
 
     // 更新图表区域（保留标题）

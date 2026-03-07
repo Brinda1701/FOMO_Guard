@@ -3547,6 +3547,7 @@ html[data-theme="light"] .modal-danger #breatheText {
     flex-direction: column;
     gap: 18px;
     margin-top: 10px;
+    width: 100%;
 }
 
 .agent-score-card-vertical {
@@ -3560,6 +3561,7 @@ html[data-theme="light"] .modal-danger #breatheText {
     gap: 20px;
     align-items: center;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    width: 100%;
 }
 
 .agent-score-card-vertical:hover {
