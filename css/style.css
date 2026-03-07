@@ -4315,6 +4315,11 @@ html[data-theme="light"] .modal-danger #breatheText {
     border: 1px solid rgba(59, 130, 246, 0.2);
     animation: fadeInUp 0.5s ease forwards;
     opacity: 0;
+    display: block !important; /* 强制显示，防止被隐藏 */
+}
+
+.global-evidence-section[style*="display:none"] {
+    display: none !important;
 }
 
 .global-evidence-section.visible {
@@ -4369,6 +4374,7 @@ html[data-theme="light"] .modal-danger #breatheText {
     max-width: 100%;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     transition: all 0.3s ease;
+    word-break: break-word;
 }
 
 .evidence-pill:hover {
@@ -4393,14 +4399,23 @@ html[data-theme="light"] .modal-danger #breatheText {
     color: var(--text-secondary);
     line-height: 1.5;
     word-break: break-word;
-    flex: 1;
-    min-width: 150px;
+    max-width: 300px;
 }
 
 .evidence-pill-impact {
     font-size: 0.75rem;
     flex-shrink: 0;
     opacity: 0.8;
+}
+
+.evidence-pill-source {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    opacity: 0.6;
+    flex-shrink: 0;
+    margin-left: 4px;
+    padding-left: 8px;
+    border-left: 1px solid var(--border-color);
 }
 
 /* 证据胶囊 - 正面 */
