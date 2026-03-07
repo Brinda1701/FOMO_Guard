@@ -1380,7 +1380,7 @@ window.showSkeleton = showSkeleton;
 window.hideSkeleton = hideSkeleton;
 window.showAllSkeletons = showAllSkeletons;
 window.hideAllSkeletons = hideAllSkeletons;
-window.showAgentVisualization = showAgentVisualization;
+window.showAgentVisualization = AgentViz.showAgentVisualization;
 
 // 启动应用
 init();
