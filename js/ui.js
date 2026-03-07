@@ -13,7 +13,7 @@ let quizAttemptCount = 0;
 let quizCorrectCount = 0;
 let feedbackTimer = null;
 
-// --- 模拟模式警告 ---
+// --- AI 模式状态提示 ---
 export function showSimulatedModeWarning() {
     // 检查是否已存在警告
     let warningEl = document.getElementById('simulatedModeWarning');
@@ -26,8 +26,8 @@ export function showSimulatedModeWarning() {
     warningEl = document.createElement('div');
     warningEl.id = 'simulatedModeWarning';
     warningEl.style.cssText = `
-        background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(239, 68, 68, 0.1));
-        border: 2px solid var(--accent-yellow);
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(150, 20, 20, 0.1));
+        border: 2px solid var(--accent-red);
         border-radius: 12px;
         padding: 15px 20px;
         margin: 15px 0;
@@ -37,11 +37,11 @@ export function showSimulatedModeWarning() {
         animation: pulseWarning 2s infinite;
     `;
     warningEl.innerHTML = `
-        <span style="font-size: 1.5rem;">⚠️</span>
+        <span style="font-size: 1.5rem;">🔴</span>
         <div>
-            <strong style="color: var(--accent-yellow); font-size: 1rem;">当前未配置 AI 模型 Key，处于本地模拟演示模式</strong>
+            <strong style="color: var(--accent-red); font-size: 1rem;">AI API Key 未配置 - 无法使用分析功能</strong>
             <p style="margin: 5px 0 0; font-size: 0.85rem; color: var(--text-secondary);">
-                分析结果均为随机生成，仅供参考，不构成投资建议。请在 .env 文件中配置 MODELSCOPE_API_KEY 以启用真实 AI 分析。
+                请在 Vercel 环境变量中设置 MODELSCOPE_API_KEY，否则无法调用 AI 大模型进行分析。
             </p>
         </div>
     `;
@@ -56,8 +56,8 @@ export function showSimulatedModeWarning() {
     const style = document.createElement('style');
     style.textContent = `
         @keyframes pulseWarning {
-            0%, 100% { box-shadow: 0 0 10px rgba(245, 158, 11, 0.3); }
-            50% { box-shadow: 0 0 20px rgba(245, 158, 11, 0.5); }
+            0%, 100% { box-shadow: 0 0 10px rgba(239, 68, 68, 0.3); }
+            50% { box-shadow: 0 0 20px rgba(239, 68, 68, 0.5); }
         }
     `;
     document.head.appendChild(style);

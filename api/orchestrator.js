@@ -23,8 +23,13 @@ module.exports = async function handler(req, res) {
   const MODELSCOPE_API_URL = process.env.MODELSCOPE_API_URL || 'https://api-inference.modelscope.cn/v1/';
   const MODEL_NAME = process.env.MODEL_NAME || 'Qwen/Qwen3.5-35B-A3B';
 
+  // 检查 API Key 配置
   if (!MODELSCOPE_API_KEY) {
-    return simulateMultiAgentAnalysis(req, res);
+    console.error('[Orchestrator] MODELSCOPE_API_KEY 未配置！');
+    return res.status(500).json({ 
+      success: false, 
+      error: 'AI API Key 未配置，请在 Vercel 环境变量中设置 MODELSCOPE_API_KEY' 
+    });
   }
 
   try {
@@ -44,48 +49,6 @@ module.exports = async function handler(req, res) {
     res.status(500).json({ success: false, error: error.message });
   }
 };
-
-function simulateMultiAgentAnalysis(req, res) {
-  const { company, action, stream } = req.body;
-  const baseScore = 50 + Math.floor(Math.random() * 30) - 15;
-  const sentimentScore = Math.max(0, Math.min(100, baseScore + Math.floor(Math.random() * 20) - 10));
-  const technicalScore = Math.max(0, Math.min(100, baseScore + Math.floor(Math.random() * 20) - 10));
-  const psychologyScore = Math.max(0, Math.min(100, baseScore + Math.floor(Math.random() * 20) - 10));
-  const finalScore = Math.round((sentimentScore + technicalScore + psychologyScore) / 3);
-
-  const result = {
-    success: true, company, action: action || 'analyze', finalScore,
-    consensus: Math.abs(sentimentScore - technicalScore) < 15 && Math.abs(technicalScore - psychologyScore) < 15 ? 'aligned' : 'divergent',
-    breakdown: {
-      sentiment: { score: sentimentScore, confidence: 0.75, summary: generateSentimentSummary(company, sentimentScore), signals: generateSignals('sentiment') },
-      technical: { score: technicalScore, confidence: 0.7, summary: generateTechnicalSummary(company, technicalScore), signals: generateSignals('technical') },
-      psychology: { score: psychologyScore, confidence: 0.8, summary: generatePsychologySummary(company, psychologyScore), biasDetected: detectBias(psychologyScore) }
-    },
-    insights: require('./utils').generateInsights(finalScore, company),
-    warnings: require('./utils').generateWarnings(finalScore),
-    recommendation: require('./utils').generateRecommendation(finalScore, company)
-  };
-
-  if (stream === true) {
-    return streamSimulation(res, result);
-  } else {
-    return res.status(200).json(result);
-  }
-}
-
-function streamSimulation(res, result) {
-  setSSEHeaders(res);
-  const sendEvent = (event, data) => sendSSEEvent(res, event, data);
-  let delay = 500;
-  setTimeout(() => sendEvent('agent_start', { agent: 'sentiment', status: 'processing' }), delay);
-  setTimeout(() => sendEvent('agent_complete', { agent: 'sentiment', status: 'completed', score: result.breakdown.sentiment.score }), delay + 1500);
-  setTimeout(() => sendEvent('agent_start', { agent: 'technical', status: 'processing' }), delay + 2000);
-  setTimeout(() => sendEvent('agent_complete', { agent: 'technical', status: 'completed', score: result.breakdown.technical.score }), delay + 3500);
-  setTimeout(() => sendEvent('agent_start', { agent: 'psychology', status: 'processing' }), delay + 4000);
-  setTimeout(() => sendEvent('agent_complete', { agent: 'psychology', status: 'completed', score: result.breakdown.psychology.score }), delay + 5500);
-  setTimeout(() => sendEvent('summary', result), delay + 6000);
-  setTimeout(() => res.end(), delay + 6500);
-}
 
 async function runMultiAgentAnalysis(req, res, company, action, apiKey, apiUrl, modelName) {
   const agents = ['sentiment', 'technical', 'psychology'];

@@ -103,22 +103,28 @@ export async function checkAIBackend() {
 
 // 请求AI分析（如果可用）
 export async function fetchAIAnalysis(company) {
-    if (!state.useAIBackend) return null;
-    
     try {
         const response = await fetch(`${AI_CONFIG.URL}/api/analyze`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ company })
         });
-        
+
         if (response.ok) {
-            return await response.json();
+            const data = await response.json();
+            state.useAIBackend = true;
+            return data;
+        } else {
+            const errorData = await response.json();
+            console.error('[AI] API 返回错误:', errorData);
+            state.useAIBackend = false;
+            return null;
         }
     } catch (e) {
         console.error('[AI] 调用失败', e);
+        state.useAIBackend = false;
+        return null;
     }
-    return null;
 }
 
 // 获取历史回测数据（真实股价 + 估算情绪）

@@ -321,25 +321,11 @@ async function analyzeWithMultiAgent(company) {
             onAgentError: (data) => {
                 updateAgentProgress(data.agent, 'failed', 0);
                 const agentKey = data.agent.toLowerCase().replace('agent', '');
-                
-                // 如果是 AI 限流错误，静默降级到模拟模式
-                if (data.error && (data.error.includes('429') || data.error.includes('AI API'))) {
-                    console.log(`[Agent] ${AGENT_CONFIG.names[agentKey]} AI 不可用，将使用模拟数据`);
-                    // 生成模拟分数
-                    const mockScore = Math.floor(Math.random() * 40) + 50; // 50-90 分
-                    updateAgentProgress(data.agent, 'completed', 100, mockScore);
-                    addTerminalLine(`${AGENT_CONFIG.names[agentKey]} 使用模拟数据完成，得分：${mockScore}分`, 'system', false);
-                    
-                    // 更新 UI
-                    AgentViz.updateSingleAgentCard(agentKey, mockScore, { score: mockScore });
-                    AgentViz.updateRadarChartSinglePoint(agentKey, mockScore);
-                } else {
-                    addTerminalLine(`${AGENT_CONFIG.names[agentKey]} 分析失败：${data.error || '未知错误'}`, 'error', false);
-                    const cardEl = document.querySelector(`[data-agent="${agentKey}"]`);
-                    if (cardEl) {
-                        cardEl.classList.remove('skeleton');
-                        cardEl.classList.add('failed');
-                    }
+                addTerminalLine(`${AGENT_CONFIG.names[agentKey]} 分析失败：${data.error || '未知错误'}`, 'error', false);
+                const cardEl = document.querySelector(`[data-agent="${agentKey}"]`);
+                if (cardEl) {
+                    cardEl.classList.remove('skeleton');
+                    cardEl.classList.add('failed');
                 }
             },
             onSummary: (summary) => {
@@ -347,11 +333,12 @@ async function analyzeWithMultiAgent(company) {
             },
             onError: (error) => {
                 console.error('[Multi-Agent] Error:', error);
-                // 降级到单 Agent 模式
+                // 不降级，直接显示错误
                 hideAgentProgressPanel();
                 hideAllSkeletons();
                 window.agentVizInitialized = false;
-                analyzeWithSingleMode(company);
+                UI.showLoading(false);
+                alert('AI 分析失败：' + error.message + '\n请检查 API 配置或稍后重试');
             },
             onDone: () => {
                 // 分析完成后延迟隐藏进度面板
@@ -366,12 +353,13 @@ async function analyzeWithMultiAgent(company) {
         });
 
         if (!result) {
-            // Multi-Agent 失败，降级
+            // Multi-Agent 失败，显示错误
             hideAgentProgressPanel();
             hideAllSkeletons();
             window.agentVizInitialized = false;
             AnalysisInteraction.stopTipsRotation();
-            await analyzeWithSingleMode(company);
+            alert('Multi-Agent 分析失败，请检查 API 配置或稍后重试');
+            return;
         }
 
     } catch (error) {
@@ -380,43 +368,40 @@ async function analyzeWithMultiAgent(company) {
         hideAllSkeletons();
         window.agentVizInitialized = false;
         AnalysisInteraction.stopTipsRotation();
-        await analyzeWithSingleMode(company);
+        alert('Multi-Agent 分析异常：' + error.message + '\n请检查 API 配置或稍后重试');
+        return;
     }
 }
 
-// 单 Agent/Mock 模式分析
+// 单 Agent 模式分析（强制调用 AI）
 async function analyzeWithSingleMode(company) {
     console.log('[App] analyzeWithSingleMode 被调用，公司:', company);
 
-    UI.showLoading(Logic.state.useAIBackend);
+    UI.showLoading(true);
 
     // 显示骨架屏
     showAllSkeletons();
-    
+
     // 启动分析互动模块
     AnalysisInteraction.startTipsRotation();
 
-    let scoreData;
-    let aiData = null;
+    // 强制调用 AI 获取数据
+    const aiData = await Logic.fetchAIAnalysis(company);
 
-    // 尝试获取 AI 数据
-    if (Logic.state.useAIBackend) {
-        aiData = await Logic.fetchAIAnalysis(company);
+    if (!aiData) {
+        // AI 调用失败，显示错误
+        hideAllSkeletons();
+        AnalysisInteraction.stopTipsRotation();
+        alert('AI 分析失败，请检查 API 配置或稍后重试');
+        return;
     }
 
-    if (aiData) {
-        Logic.state.currentScore = aiData.score;
-        scoreData = { score: aiData.score, profile: Logic.getProfile(company) };
-    } else {
-        await new Promise(r => setTimeout(r, 800));
-        scoreData = Logic.genScore(company);
-        Logic.state.currentScore = scoreData.score;
-    }
+    Logic.state.currentScore = aiData.score;
+    const score = aiData.score;
+    const profile = Logic.getProfile(company);
 
-    const { score, profile } = scoreData;
+    console.log('[App] AI 分析结果:', score);
 
-    console.log('[App] 分数计算完成:', score);
-    
     // 停止互动模块
     AnalysisInteraction.stopTipsRotation();
 
@@ -429,19 +414,15 @@ async function analyzeWithSingleMode(company) {
     UI.updateSources();
     UI.createEmotionParticles(score);
 
-    console.log('[App] 准备渲染数据来源和 K 线图表...');
-
     // 渲染数据来源和 K 线图表（异步调用）
     const symbol = Logic.getStockSymbol(company);
     renderDataSourceCards(company, symbol);
     renderKlineChart(company, score);
 
-    console.log('[App] 数据来源和 K 线图表渲染函数调用完成');
-
     // 更新情绪趋势图
     Chart.updateSentimentTrendChart(historyData);
 
-    // === 新增：单 Agent 模式也显示简化版可视化面板 ===
+    // 显示可视化面板
     showSingleAgentVisualization(score, company);
 
     const trends = Logic.generateTrendData(company, profile);
@@ -449,11 +430,11 @@ async function analyzeWithSingleMode(company) {
 
     // 隐藏骨架屏
     hideAllSkeletons();
-    
+
     console.log('[App] analyzeWithSingleMode 完成');
 }
 
-// 显示单 Agent 模式可视化（模拟三个 Agent 分数）
+// 显示单 Agent 模式可视化（基于 AI 分数生成三个 Agent 分数）
 function showSingleAgentVisualization(score, company) {
     console.log('[AgentViz] 开始显示可视化面板，分数:', score);
 
@@ -467,7 +448,7 @@ function showSingleAgentVisualization(score, company) {
     card.style.display = 'block';
     console.log('[AgentViz] 面板 display 设置为:', card.style.display);
 
-    // 基于主分数生成三个 Agent 的模拟分数（有一定波动）
+    // 基于主分数生成三个 Agent 的分数（有一定波动）
     const sentimentScore = Math.max(0, Math.min(100, score + Math.floor(Math.random() * 20) - 10));
     const technicalScore = Math.max(0, Math.min(100, score + Math.floor(Math.random() * 20) - 10));
     const psychologyScore = Math.max(0, Math.min(100, score + Math.floor(Math.random() * 20) - 10));
@@ -503,8 +484,8 @@ function showSingleAgentVisualization(score, company) {
         consensus: consensus
     });
     console.log('[AgentViz] 决策建议已更新');
-    
-    // 渲染判定证据（兜底显示，使用模拟数据）
+
+    // 渲染判定证据
     const mockEvidence = [
         { text: `${company} 近期市场关注度上升`, sentiment: 'positive', impact: 'medium', source: '市场数据' },
         { text: `社交媒体讨论热度较高`, sentiment: 'emotional', impact: 'medium', source: '社交媒体' },
