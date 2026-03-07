@@ -294,7 +294,7 @@ body::before {
     box-shadow: 0 8px 32px var(--shadow-color);
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
-    overflow: hidden;
+    overflow: visible; /* 改为 visible，允许内容溢出显示 */
 }
 
 .card::before {
@@ -4313,9 +4313,13 @@ html[data-theme="light"] .modal-danger #breatheText {
     background: linear-gradient(135deg, rgba(59, 130, 246, 0.05), rgba(139, 92, 246, 0.03));
     border-radius: 16px;
     border: 1px solid rgba(59, 130, 246, 0.2);
-    /* 默认就是可见状态 */
+    /* 默认可见状态 */
     opacity: 1;
     display: block;
+    /* 确保不被父元素 overflow 裁剪 */
+    position: relative;
+    z-index: 10;
+    overflow: visible;
 }
 
 .global-evidence-section[style*="display:none"] {
