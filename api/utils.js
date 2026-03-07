@@ -312,8 +312,13 @@ function parseAgentResult(agent, aiResult) {
     // 记录原始分数
     console.log(`[parseAgentResult] ${agent} - AI 返回原始数据:`, JSON.stringify(aiResult).substring(0, 300));
     console.log(`[parseAgentResult] ${agent} - 原始 score 值:`, score, '类型:', typeof score);
+    console.log(`[parseAgentResult] ${agent} - AI 置信度:`, aiResult.confidence);
     
-    if (typeof score !== 'number' || isNaN(score)) {
+    // 如果 AI 返回 confidence=0 或空 summary，说明分析失败，使用中性分数
+    if (aiResult.confidence === 0 || !aiResult.summary || aiResult.summary.trim() === '') {
+      console.log(`[parseAgentResult] ${agent} - AI 分析失败（confidence=0 或 summary 为空），使用中性分数 50`);
+      score = 50;
+    } else if (typeof score !== 'number' || isNaN(score)) {
       score = aiResult.sentiment_score || aiResult.technical_score || 50;
       console.log(`[parseAgentResult] ${agent} - score 不是数字，使用备用字段:`, score);
     }
