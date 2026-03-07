@@ -3,7 +3,6 @@ import * as UI from './ui.js';
 import * as Chart from './chart.js';
 import * as AgentViz from './agent-viz.js';
 import { AI_CONFIG, AGENT_CONFIG } from './config.js';
-import { renderAIInsightsEnhanced } from './ai-insights.js';
 import { LoginUI, Guide } from './login-guide.js';
 
 // 渲染日记列表（独立区域 - 已移除）
@@ -392,7 +391,7 @@ async function analyzeWithSingleMode(company) {
     UI.updateGauge(score, company);
     UI.updateHistory();
     UI.updateSources();
-    renderAIInsightsEnhanced(score, company, profile, aiData);
+    UI.renderAIInsights(score, company, profile, aiData);
     UI.updateValidationChart(score, company);
     UI.createEmotionParticles(score);
 
