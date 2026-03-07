@@ -3498,31 +3498,34 @@ html[data-theme="light"] .modal-danger #breatheText {
 
 .agent-viz-container {
     display: grid;
-    grid-template-columns: 1fr 1.5fr;
-    gap: 20px;
+    grid-template-columns: 1.2fr 1.8fr;
+    gap: 25px;
     margin-bottom: 20px;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1100px) {
     .agent-viz-container {
         grid-template-columns: 1fr;
     }
 }
 
-/* 雷达图 */
+/* 雷达图 - 左侧大盘 */
 .agent-radar-chart {
     background: var(--bg-secondary);
-    border-radius: 12px;
-    padding: 15px;
+    border-radius: 16px;
+    padding: 20px;
     display: flex;
     align-items: center;
     justify-content: center;
     border: 1px solid var(--border-color);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    position: sticky;
+    top: 20px;
 }
 
 .agent-radar-chart canvas {
     max-width: 100%;
-    max-height: 250px;
+    max-height: 320px;
 }
 
 /* Agent 分数对比卡片 */
@@ -3542,23 +3545,30 @@ html[data-theme="light"] .modal-danger #breatheText {
 .agent-scores-comparison-vertical {
     display: flex;
     flex-direction: column;
-    gap: 15px;
-    margin-top: 20px;
+    gap: 18px;
+    margin-top: 10px;
 }
 
 .agent-score-card-vertical {
     background: var(--bg-card);
-    border-radius: 12px;
-    padding: 18px;
+    border-radius: 14px;
+    padding: 20px;
     border: 1px solid var(--border-color);
     transition: all 0.3s ease;
     display: grid;
-    grid-template-columns: 1fr 200px;
+    grid-template-columns: 1.5fr 1fr;
     gap: 20px;
     align-items: center;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
 }
 
-@media (max-width: 768px) {
+.agent-score-card-vertical:hover {
+    border-color: var(--accent-blue);
+    transform: translateX(5px);
+    box-shadow: 0 4px 20px rgba(59, 130, 246, 0.15);
+}
+
+@media (max-width: 900px) {
     .agent-score-card-vertical {
         grid-template-columns: 1fr;
         gap: 15px;
@@ -3594,7 +3604,67 @@ html[data-theme="light"] .modal-danger #breatheText {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
+    padding: 15px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 12px;
+}
+
+.agent-score-value {
+    font-size: 2.2rem;
+    font-weight: 700;
+    transition: all 0.3s ease;
+}
+
+.agent-score-value.greed {
+    color: #10b981;
+    text-shadow: 0 0 20px rgba(16, 185, 129, 0.4);
+}
+
+.agent-score-value.neutral {
+    color: #f59e0b;
+    text-shadow: 0 0 20px rgba(245, 158, 11, 0.4);
+}
+
+.agent-score-value.fear {
+    color: #ef4444;
+    text-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
+}
+
+.agent-score-label {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.agent-score-bar {
+    width: 100%;
+    height: 8px;
+    background: rgba(148, 163, 184, 0.2);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.agent-score-fill {
+    height: 100%;
+    width: 0%;
+    border-radius: 4px;
+    transition: width 0.8s ease-out;
+}
+
+.agent-score-fill.greed {
+    background: linear-gradient(90deg, #10b981, #34d399);
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+}
+
+.agent-score-fill.neutral {
+    background: linear-gradient(90deg, #f59e0b, #fbbf24);
+    box-shadow: 0 0 10px rgba(245, 158, 11, 0.5);
+}
+
+.agent-score-fill.fear {
+    background: linear-gradient(90deg, #ef4444, #f87171);
+    box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
 }
 
 .agent-score-card {
