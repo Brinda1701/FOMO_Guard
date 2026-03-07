@@ -98,9 +98,14 @@ export function updateHistory() {
 }
 
 export function updateSources() {
-    document.getElementById('weiboCount').textContent = (Math.floor(Math.random() * 15) + 5) + 'k';
-    document.getElementById('xueqiuCount').textContent = (Math.floor(Math.random() * 8) + 3) + 'k';
-    document.getElementById('eastmoneyCount').textContent = (Math.floor(Math.random() * 20) + 10) + 'k';
+    // 检查元素是否存在（source-stats 区域已被移除）
+    const weiboCount = document.getElementById('weiboCount');
+    const xueqiuCount = document.getElementById('xueqiuCount');
+    const eastmoneyCount = document.getElementById('eastmoneyCount');
+    
+    if (weiboCount) weiboCount.textContent = (Math.floor(Math.random() * 15) + 5) + 'k';
+    if (xueqiuCount) xueqiuCount.textContent = (Math.floor(Math.random() * 8) + 3) + 'k';
+    if (eastmoneyCount) eastmoneyCount.textContent = (Math.floor(Math.random() * 20) + 10) + 'k';
 }
 
 export function updateHotTrends(trends) {
