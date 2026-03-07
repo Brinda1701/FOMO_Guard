@@ -248,9 +248,9 @@ export function updateAgentScoreCards(scores) {
  * 获取分数对应的 CSS 类
  */
 function getScoreClass(score) {
-    if (score > 70) return 'greed';  // 贪婪：>70
-    if (score < 30) return 'fear';   // 恐惧：<30
-    return 'neutral';                // 中性：30-70
+    if (score > 60) return 'greed';  // 贪婪：>60
+    if (score < 40) return 'fear';   // 恐惧：<40
+    return 'neutral';                // 中性：40-60
 }
 
 /**

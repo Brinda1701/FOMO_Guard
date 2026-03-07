@@ -221,7 +221,7 @@ export function evaluateImpulse(action, company, score) {
     };
     
     // 阈值：<=30 视为低，>=70 视为高，30-70 视为中性
-    const level = score >= 70 ? 'high' : score <= 30 ? 'low' : 'neutral';
+    const level = score >= 60 ? 'high' : score <= 40 ? 'low' : 'neutral';
     console.log('[evaluateImpulse] 阈值判断:', { score, level, 'score>=70': score >= 70, 'score<=30': score <= 30 });
     
     const diagnosis = diagnosisLib[action][level];

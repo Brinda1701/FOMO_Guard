@@ -44,10 +44,10 @@ function renderInlineDiaryList() {
         `;
         
         // 高 FOMO 标记
-        const fomoBadge = entry.score > 70 ? '<span class="diary-fomo-badge">🔥 高 FOMO</span>' : '';
-        
+        const fomoBadge = entry.score > 60 ? '<span class="diary-fomo-badge">🔥 高 FOMO</span>' : '';
+
         return `
-        <div class="diary-entry ${entry.type} ${entry.score > 70 ? 'diary-high-fomo' : ''}">
+        <div class="diary-entry ${entry.type} ${entry.score > 60 ? 'diary-high-fomo' : ''}">
             <div class="diary-header-row">
                 <div class="diary-meta">
                     <span>${escapeHtml(entry.date)} | ${escapeHtml(entry.company)}</span>
@@ -495,8 +495,8 @@ function showSingleAgentVisualization(score, company) {
 
     // 更新最终决策建议
     const consensus = 'aligned';
-    const decisionText = score > 70 ? '当前市场情绪偏热，建议保持理性，避免追高。' :
-                         score < 30 ? '市场情绪偏冷，可能是机会，但需确认基本面。' :
+    const decisionText = score > 60 ? '当前市场情绪偏热，建议保持理性，避免追高。' :
+                         score < 40 ? '市场情绪偏冷，可能是机会，但需确认基本面。' :
                          '市场情绪中性，建议继续观察，等待更明确信号。';
 
     AgentViz.updateFinalDecision({
