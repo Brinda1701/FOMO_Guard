@@ -498,6 +498,12 @@ function handleMultiAgentSummary(summary, company) {
     UI.updateSources();
     UI.createEmotionParticles(score);
 
+    // 渲染数据来源和 K 线图表
+    console.log('[Multi-Agent] 准备渲染数据来源和 K 线图表...');
+    renderDataSourceCards(company);
+    renderKlineChart(company, score);
+    console.log('[Multi-Agent] 数据来源和 K 线图表渲染完成');
+
     // 更新情绪趋势图
     Chart.updateSentimentTrendChart(historyData);
 
@@ -508,13 +514,13 @@ function handleMultiAgentSummary(summary, company) {
     const breakdown = summary.breakdown || {};
     const sentimentData = breakdown.sentiment || {};
     const sentimentEvidence = sentimentData.keyEvidence || sentimentData.signals || [];
-    
+
     console.log('[Evidence] 渲染证据链:', sentimentEvidence);
     console.log('[Evidence] 证据来源:', {
         'keyEvidence': sentimentData.keyEvidence?.length,
         'signals': sentimentData.signals?.length
     });
-    
+
     // 使用新的全局证据渲染函数
     AgentViz.renderGlobalEvidence(sentimentEvidence);
 
