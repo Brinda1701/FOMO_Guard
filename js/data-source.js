@@ -9,8 +9,24 @@ export function renderDataSourceCards(company) {
     const dataSourceCard = document.getElementById('dataSourceCard');
     const dataSourceGrid = document.getElementById('dataSourceGrid');
     const credibilityScoreEl = document.getElementById('credibilityScore');
-    
-    if (!dataSourceCard || !dataSourceGrid) return;
+
+    console.log('[DataSource] renderDataSourceCards 被调用，公司:', company);
+    console.log('[DataSource] dataSourceCard:', dataSourceCard);
+    console.log('[DataSource] dataSourceGrid:', dataSourceGrid);
+    console.log('[DataSource] credibilityScoreEl:', credibilityScoreEl);
+
+    if (!dataSourceCard) {
+        console.error('[DataSource] 错误：找不到 dataSourceCard 元素');
+        return;
+    }
+    if (!dataSourceGrid) {
+        console.error('[DataSource] 错误：找不到 dataSourceGrid 元素');
+        return;
+    }
+    if (!credibilityScoreEl) {
+        console.error('[DataSource] 错误：找不到 credibilityScoreEl 元素');
+        return;
+    }
     
     const sources = [
         {
@@ -76,8 +92,11 @@ export function renderDataSourceCards(company) {
     // 计算可信度评分
     const credibilityScore = 85 + Math.floor(Math.random() * 10);
     credibilityScoreEl.textContent = `${credibilityScore}分`;
-    
+
     dataSourceCard.style.display = 'block';
+    
+    console.log('[DataSource] dataSourceCard display 已设置为:', dataSourceCard.style.display);
+    console.log('[DataSource] 数据来源卡片渲染完成');
 }
 
 /**
@@ -86,8 +105,25 @@ export function renderDataSourceCards(company) {
 export function renderKlineChart(company, score) {
     const klineContainer = document.getElementById('klineChartContainer');
     const klineStats = document.getElementById('klineStats');
-    
-    if (!klineContainer || !klineStats) return;
+    const klineChartCanvas = document.getElementById('klineChart');
+
+    console.log('[DataSource] renderKlineChart 被调用，公司:', company, '分数:', score);
+    console.log('[DataSource] klineContainer:', klineContainer);
+    console.log('[DataSource] klineStats:', klineStats);
+    console.log('[DataSource] klineChartCanvas:', klineChartCanvas);
+
+    if (!klineContainer) {
+        console.error('[DataSource] 错误：找不到 klineChartContainer 元素');
+        return;
+    }
+    if (!klineStats) {
+        console.error('[DataSource] 错误：找不到 klineStats 元素');
+        return;
+    }
+    if (!klineChartCanvas) {
+        console.error('[DataSource] 错误：找不到 klineChart 元素');
+        return;
+    }
     
     // 生成模拟 K 线数据
     const klineData = generateKlineData(score);
@@ -111,15 +147,25 @@ export function renderKlineChart(company, score) {
             <div class="kline-stat-value">${klineData.amount}</div>
         </div>
     `;
-    
+
     // 使用 Chart.js 绘制 K 线图
     const ctx = document.getElementById('klineChart').getContext('2d');
     
+    console.log('[DataSource] klineChart canvas context:', ctx);
+    console.log('[DataSource] Chart 对象是否存在:', typeof Chart !== 'undefined');
+
     // 销毁旧图表
     if (window.klineChartInstance) {
         window.klineChartInstance.destroy();
     }
     
+    // 检查 Chart.js 是否加载
+    if (typeof Chart === 'undefined') {
+        console.error('[DataSource] 错误：Chart.js 未加载，无法创建图表');
+        klineContainer.style.display = 'block';
+        return;
+    }
+
     window.klineChartInstance = new Chart(ctx, {
             type: 'line',
             data: {
@@ -180,8 +226,11 @@ export function renderKlineChart(company, score) {
                 }
             }
         });
-    
+
     klineContainer.style.display = 'block';
+    
+    console.log('[DataSource] klineContainer display 已设置为:', klineContainer.style.display);
+    console.log('[DataSource] K 线图表渲染完成');
 }
 
 /**

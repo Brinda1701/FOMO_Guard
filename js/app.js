@@ -361,8 +361,10 @@ async function analyzeWithMultiAgent(company) {
 
 // 单 Agent/Mock 模式分析
 async function analyzeWithSingleMode(company) {
-    UI.showLoading(Logic.state.useAIBackend);
+    console.log('[App] analyzeWithSingleMode 被调用，公司:', company);
     
+    UI.showLoading(Logic.state.useAIBackend);
+
     // 显示骨架屏
     showAllSkeletons();
 
@@ -385,6 +387,8 @@ async function analyzeWithSingleMode(company) {
 
     const { score, profile } = scoreData;
 
+    console.log('[App] 分数计算完成:', score);
+
     // 记录情绪分数到历史数据
     const historyData = Logic.recordSentimentScore(company, score);
 
@@ -394,9 +398,13 @@ async function analyzeWithSingleMode(company) {
     UI.updateSources();
     UI.createEmotionParticles(score);
 
+    console.log('[App] 准备渲染数据来源和 K 线图表...');
+    
     // 渲染数据来源和 K 线图表
     renderDataSourceCards(company);
     renderKlineChart(company, score);
+
+    console.log('[App] 数据来源和 K 线图表渲染函数调用完成');
 
     // 更新情绪趋势图
     Chart.updateSentimentTrendChart(historyData);
@@ -406,9 +414,11 @@ async function analyzeWithSingleMode(company) {
 
     const trends = Logic.generateTrendData(company, profile);
     UI.updateHotTrends(trends);
-    
+
     // 隐藏骨架屏
     hideAllSkeletons();
+    
+    console.log('[App] analyzeWithSingleMode 完成');
 }
 
 // 显示单 Agent 模式可视化（模拟三个 Agent 分数）
