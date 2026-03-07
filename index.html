@@ -21,6 +21,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js" integrity="sha512-CQBWl4fJHWbryGE+Pc7UAxWMUMNMWzWxF4SQo9CgkJIN1kx6djDQZjh3Y8SZ1d+6I+1zze6Z7kHXO7q3UyZAWw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <!-- 引入外部样式 -->
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/terminal-skeleton.css">
 </head>
 <body>
     <!-- 情绪粒子背景 -->
@@ -102,7 +103,25 @@
                         <span class="agent-progress-title">Multi-Agent 分析中</span>
                         <span class="agent-mode-badge" id="agentModeBadge">AI 协作模式</span>
                     </div>
-                    <div class="agent-progress-list">
+                    <!-- 终端风格日志输出区 -->
+                    <div class="agent-terminal" id="agentTerminal">
+                        <div class="terminal-header">
+                            <span class="terminal-title">🖥️ Agent Console</span>
+                            <div class="terminal-dots">
+                                <span class="terminal-dot red"></span>
+                                <span class="terminal-dot yellow"></span>
+                                <span class="terminal-dot green"></span>
+                            </div>
+                        </div>
+                        <div class="terminal-body" id="terminalBody">
+                            <div class="terminal-line system">
+                                <span class="terminal-prompt">$</span>
+                                <span class="terminal-text">初始化 Multi-Agent 系统...</span>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- 简化版进度条（可选显示） -->
+                    <div class="agent-progress-list" id="agentProgressBars">
                         <div class="agent-progress-item" data-agent="sentiment">
                             <div class="agent-info">
                                 <span class="agent-icon">😊</span>
@@ -134,12 +153,20 @@
                             <span class="agent-status" id="psychologyStatus">等待中</span>
                         </div>
                     </div>
-                    <div class="agent-thinking-chain" id="agentThinkingChain"></div>
                 </div>
             </div>
 
             <div class="card">
                 <h2 class="card-title"><span class="icon">⚡</span>交易决策诊断</h2>
+                <!-- 骨架屏占位符 -->
+                <div class="skeleton-container" id="decisionSkeleton" style="display:none;">
+                    <div class="skeleton-trade-btns">
+                        <div class="skeleton-btn"></div>
+                        <div class="skeleton-btn"></div>
+                        <div class="skeleton-btn"></div>
+                    </div>
+                    <div class="skeleton-alert"></div>
+                </div>
                 <div id="impulseSection">
                     <p style="color: var(--text-secondary); margin-bottom: 15px;">您计划进行什么操作？</p>
                     <div class="trade-input-section">
@@ -164,6 +191,18 @@
 
             <!-- Multi-Agent 可视化对比面板（分析后显示） -->
             <div class="card full-width" id="agentVisualizationCard" style="display:none;">
+                <!-- 骨架屏占位符 -->
+                <div class="skeleton-container" id="agentVizSkeleton" style="display:none;">
+                    <div class="skeleton-agent-viz">
+                        <div class="skeleton-radar-chart"></div>
+                        <div class="skeleton-agent-scores">
+                            <div class="skeleton-score-card"></div>
+                            <div class="skeleton-score-card"></div>
+                            <div class="skeleton-score-card"></div>
+                        </div>
+                    </div>
+                    <div class="skeleton-decision"></div>
+                </div>
                 <h2 class="card-title"><span class="icon">🎯</span>Multi-Agent 智能分析对比</h2>
                 <div class="agent-viz-container">
                     <!-- 雷达图 -->
@@ -241,6 +280,12 @@
             <!-- 第二行：AI 分析与数据源（左右布局） -->
             <div class="card" style="grid-column: span 1;">
                 <h2 class="card-title"><span class="icon">🤖</span>AI 舆论去噪总结</h2>
+                <!-- 骨架屏占位符 -->
+                <div class="skeleton-container" id="summarySkeleton" style="display:none;">
+                    <div class="skeleton-insight"></div>
+                    <div class="skeleton-insight"></div>
+                    <div class="skeleton-insight"></div>
+                </div>
                 <div class="summary-content" id="summaryContent">
                     <div class="placeholder">
                         <div class="placeholder-icon">💡</div>
@@ -276,6 +321,15 @@
 
             <div class="card" style="grid-column: span 1;">
                 <h2 class="card-title"><span class="icon">📡</span>多源数据监控</h2>
+                <!-- 骨架屏占位符 -->
+                <div class="skeleton-container" id="sourceSkeleton" style="display:none;">
+                    <div class="skeleton-source-stats">
+                        <div class="skeleton-source-item"></div>
+                        <div class="skeleton-source-item"></div>
+                        <div class="skeleton-source-item"></div>
+                    </div>
+                    <div class="skeleton-trend-chart"></div>
+                </div>
                 <div class="source-stats">
                     <div class="source-item"><div class="source-icon">📱</div><div class="source-name">微博</div><div class="source-count" id="weiboCount">--</div></div>
                     <div class="source-item"><div class="source-icon">📰</div><div class="source-name">雪球</div><div class="source-count" id="xueqiuCount">--</div></div>

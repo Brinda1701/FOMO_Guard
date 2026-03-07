@@ -319,26 +319,34 @@ async function analyzeWithMultiAgent(company) {
     // 显示 Multi-Agent 进度面板
     showAgentProgressPanel();
     UI.showLoading(true, 'Multi-Agent');
+    
+    // 显示骨架屏
+    showAllSkeletons();
 
     try {
         const result = await Logic.fetchMultiAgentAnalysis(company, 'analyze', {
             onAgentStart: (data) => {
                 updateAgentProgress(data.agent, 'processing', 10);
-                addThinkingItem(data.agent, '开始分析...');
+                // 使用终端日志输出
+                const agentKey = data.agent.toLowerCase().replace('agent', '');
+                addTerminalLine(`${AGENT_CONFIG.names[agentKey] || data.agent} 开始分析...`, agentKey, true);
             },
             onAgentProgress: (data) => {
                 updateAgentProgress(data.agent, 'processing', data.progress);
                 if (data.message) {
-                    addThinkingItem(data.agent, data.message);
+                    const agentKey = data.agent.toLowerCase().replace('agent', '');
+                    addTerminalLine(data.message, agentKey, true);
                 }
             },
             onAgentComplete: (data) => {
                 updateAgentProgress(data.agent, 'completed', 100, data.score);
-                addThinkingItem(data.agent, `分析完成，得分：${data.score}分`);
+                const agentKey = data.agent.toLowerCase().replace('agent', '');
+                addTerminalLine(`${AGENT_CONFIG.names[agentKey] || data.agent} 分析完成，得分：${data.score}分`, 'success', false);
             },
             onAgentError: (data) => {
                 updateAgentProgress(data.agent, 'failed', 0);
-                addThinkingItem(data.agent, `分析失败：${data.error || '未知错误'}`);
+                const agentKey = data.agent.toLowerCase().replace('agent', '');
+                addTerminalLine(`${AGENT_CONFIG.names[agentKey] || data.agent} 分析失败：${data.error || '未知错误'}`, 'error', false);
             },
             onSummary: (summary) => {
                 handleMultiAgentSummary(summary, company);
@@ -347,12 +355,14 @@ async function analyzeWithMultiAgent(company) {
                 console.error('[Multi-Agent] Error:', error);
                 // 降级到单 Agent 模式
                 hideAgentProgressPanel();
+                hideAllSkeletons();
                 analyzeWithSingleMode(company);
             },
             onDone: () => {
                 // 分析完成后延迟隐藏进度面板
                 setTimeout(() => {
                     hideAgentProgressPanel();
+                    hideAllSkeletons();
                 }, 2000);
             }
         });
@@ -360,12 +370,14 @@ async function analyzeWithMultiAgent(company) {
         if (!result) {
             // Multi-Agent 失败，降级
             hideAgentProgressPanel();
+            hideAllSkeletons();
             await analyzeWithSingleMode(company);
         }
 
     } catch (error) {
         console.error('[Multi-Agent] Failed:', error);
         hideAgentProgressPanel();
+        hideAllSkeletons();
         await analyzeWithSingleMode(company);
     }
 }
@@ -373,6 +385,9 @@ async function analyzeWithMultiAgent(company) {
 // 单 Agent/Mock 模式分析
 async function analyzeWithSingleMode(company) {
     UI.showLoading(Logic.state.useAIBackend);
+    
+    // 显示骨架屏
+    showAllSkeletons();
 
     let scoreData;
     let aiData = null;
@@ -412,6 +427,9 @@ async function analyzeWithSingleMode(company) {
 
     const trends = Logic.generateTrendData(company, profile);
     UI.updateHotTrends(trends);
+    
+    // 隐藏骨架屏
+    hideAllSkeletons();
 }
 
 // 显示单 Agent 模式可视化（模拟三个 Agent 分数）
@@ -491,7 +509,7 @@ function handleMultiAgentSummary(summary, company) {
 
     // === 新增：更新 Multi-Agent 可视化面板和情绪证据链 ===
     updateAgentVisualization(summary, company);
-    
+
     // 渲染情绪证据链
     const breakdown = summary.breakdown || {};
     const sentimentEvidence = breakdown.sentiment?.keyEvidence || [];
@@ -502,6 +520,9 @@ function handleMultiAgentSummary(summary, company) {
 
     // 显示 Agent 一致性结果
     showAgentConsensus(summary);
+    
+    // 隐藏骨架屏
+    hideAllSkeletons();
 }
 
 // 更新 Multi-Agent 可视化面板
@@ -1186,6 +1207,223 @@ function exportBatchResults() {
         durationMs: 2500
     });
 }
+
+// ==================== 终端日志输出（打字机特效） ====================
+
+// 终端日志队列，用于控制输出节奏
+let terminalQueue = [];
+let isProcessingTerminal = false;
+
+/**
+ * 添加终端日志行（支持打字机特效）
+ * @param {string} text - 日志内容
+ * @param {string} type - 日志类型：system, sentiment, technical, psychology, success, error
+ * @param {boolean} useTypewriter - 是否使用打字机特效
+ */
+function addTerminalLine(text, type = 'system', useTypewriter = true) {
+    const terminalBody = document.getElementById('terminalBody');
+    if (!terminalBody) return;
+
+    // 创建日志行元素
+    const line = document.createElement('div');
+    line.className = `terminal-line ${type}`;
+    
+    const prompt = document.createElement('span');
+    prompt.className = 'terminal-prompt';
+    prompt.textContent = getTerminalPrompt(type);
+    
+    const content = document.createElement('span');
+    content.className = 'terminal-text';
+    line.appendChild(prompt);
+    line.appendChild(content);
+    
+    terminalBody.appendChild(line);
+    
+    // 自动滚动到底部
+    terminalBody.scrollTop = terminalBody.scrollHeight;
+    
+    // 使用打字机特效逐字显示
+    if (useTypewriter && text) {
+        return typeWriterEffect(content, text);
+    } else {
+        content.textContent = text;
+        return Promise.resolve();
+    }
+}
+
+/**
+ * 获取终端提示符
+ */
+function getTerminalPrompt(type) {
+    const prompts = {
+        system: '$',
+        sentiment: '😊',
+        technical: '📊',
+        psychology: '🧠',
+        success: '✓',
+        error: '✗'
+    };
+    return prompts[type] || '$';
+}
+
+/**
+ * 打字机特效 - 逐字显示文本
+ * @param {HTMLElement} element - 要显示文本的元素
+ * @param {string} text - 要显示的文本
+ * @param {number} speed - 打字速度（毫秒/字）
+ */
+function typeWriterEffect(element, text, speed = 30) {
+    return new Promise((resolve) => {
+        let i = 0;
+        // 添加光标
+        const cursor = document.createElement('span');
+        cursor.className = 'typewriter-cursor';
+        element.appendChild(cursor);
+        
+        function type() {
+            if (i < text.length) {
+                // 在光标前插入字符
+                cursor.before(text.charAt(i));
+                i++;
+                
+                // 滚动到底部
+                const terminalBody = document.getElementById('terminalBody');
+                if (terminalBody) {
+                    terminalBody.scrollTop = terminalBody.scrollHeight;
+                }
+                
+                // 随机速度，模拟真实打字
+                const randomSpeed = speed * (0.5 + Math.random());
+                setTimeout(type, randomSpeed);
+            } else {
+                // 移除光标
+                if (cursor.parentNode) {
+                    cursor.parentNode.removeChild(cursor);
+                }
+                resolve();
+            }
+        }
+        
+        type();
+    });
+}
+
+/**
+ * 清空终端日志
+ */
+function clearTerminal() {
+    const terminalBody = document.getElementById('terminalBody');
+    if (terminalBody) {
+        terminalBody.innerHTML = '';
+    }
+}
+
+/**
+ * 初始化终端日志
+ */
+function initTerminal() {
+    clearTerminal();
+    addTerminalLine('初始化 Multi-Agent 系统...', 'system', false);
+}
+
+// ==================== 骨架屏控制 ====================
+
+/**
+ * 显示骨架屏
+ * @param {string} skeletonId - 骨架屏元素 ID
+ */
+function showSkeleton(skeletonId) {
+    const skeleton = document.getElementById(skeletonId);
+    if (skeleton) {
+        skeleton.style.display = 'block';
+    }
+}
+
+/**
+ * 隐藏骨架屏
+ * @param {string} skeletonId - 骨架屏元素 ID
+ */
+function hideSkeleton(skeletonId) {
+    const skeleton = document.getElementById(skeletonId);
+    if (skeleton) {
+        skeleton.style.display = 'none';
+    }
+}
+
+/**
+ * 显示所有加载骨架屏
+ */
+function showAllSkeletons() {
+    showSkeleton('decisionSkeleton');
+    showSkeleton('agentVizSkeleton');
+    showSkeleton('summarySkeleton');
+    showSkeleton('sourceSkeleton');
+}
+
+/**
+ * 隐藏所有骨架屏
+ */
+function hideAllSkeletons() {
+    hideSkeleton('decisionSkeleton');
+    hideSkeleton('agentVizSkeleton');
+    hideSkeleton('summarySkeleton');
+    hideSkeleton('sourceSkeleton');
+}
+
+// ==================== 增强的 Agent 进度显示 ====================
+
+/**
+ * 显示 Agent 进度面板（带终端初始化）
+ */
+function showAgentProgressPanel() {
+    const panel = document.getElementById('agentProgressPanel');
+    if (panel) {
+        panel.style.display = 'block';
+        // 初始化终端
+        initTerminal();
+        // 重置所有进度
+        resetAgentProgressUI();
+        // 隐藏进度条，只显示终端（可选）
+        const progressBars = document.getElementById('agentProgressBars');
+        if (progressBars) {
+            progressBars.style.display = 'none';
+        }
+    }
+}
+
+/**
+ * 更新 Agent 进度（同时更新终端日志）
+ */
+function updateAgentProgress(agentType, status, progress, score = null) {
+    const agentKey = agentType.toLowerCase().replace('agent', '');
+    const progressFill = document.getElementById(`${agentKey}Progress`);
+    const statusEl = document.getElementById(`${agentKey}Status`);
+
+    if (progressFill) {
+        progressFill.style.width = `${progress}%`;
+    }
+
+    if (statusEl) {
+        statusEl.className = `agent-status ${status}`;
+        if (status === 'completed' && score !== null) {
+            statusEl.textContent = `${score}分`;
+        } else if (status === 'processing') {
+            statusEl.textContent = '分析中...';
+        } else if (status === 'failed') {
+            statusEl.textContent = '失败';
+        } else {
+            statusEl.textContent = '等待中';
+        }
+    }
+}
+
+// 导出全局函数供其他模块使用
+window.addTerminalLine = addTerminalLine;
+window.clearTerminal = clearTerminal;
+window.showSkeleton = showSkeleton;
+window.hideSkeleton = hideSkeleton;
+window.showAllSkeletons = showAllSkeletons;
+window.hideAllSkeletons = hideAllSkeletons;
 
 // 启动应用
 init();
