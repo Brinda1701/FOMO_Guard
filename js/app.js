@@ -3,6 +3,7 @@ import * as UI from './ui.js';
 import * as Chart from './chart.js';
 import * as AgentViz from './agent-viz.js';
 import { AI_CONFIG, AGENT_CONFIG } from './config.js';
+import { LoginUI, Guide } from './login-guide.js';
 
 // 渲染日记列表（独立区域 - 已移除）
 function renderDiaryList(entries) {
@@ -101,12 +102,15 @@ function renderInlineDiaryList() {
 
 // 初始化
 async function init() {
+    // 初始化登录模块
+    LoginUI.init();
+    
     initTheme();
     UI.createEmotionParticles('init');
     renderInlineDiaryList();
 
     const backendStatus = await Logic.checkAIBackend();
-    
+
     // 只在没有 AI 时才显示警告（K 线数据不受影响）
     if (!backendStatus.hasAI) {
         UI.showAIModeIndicator(false);
