@@ -281,8 +281,16 @@ body::before {
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }
-.main-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-@media (max-width: 1000px) { .main-grid { grid-template-columns: 1fr; } }
+.main-grid { 
+    display: grid; 
+    grid-template-columns: 1fr 1fr; 
+    gap: 20px;
+}
+@media (max-width: 1000px) { 
+    .main-grid { 
+        grid-template-columns: 1fr; 
+    } 
+}
 
 .card {
     background: var(--glass-bg);
@@ -3496,49 +3504,11 @@ html[data-theme="light"] .modal-danger #breatheText {
 
 /* ==================== Multi-Agent 可视化对比面板 ==================== */
 
-.agent-viz-container {
-    display: grid;
-    grid-template-columns: 1.2fr 1.8fr;
-    gap: 25px;
-    margin-bottom: 20px;
-}
-
-@media (max-width: 1100px) {
-    .agent-viz-container {
-        grid-template-columns: 1fr;
-    }
-}
-
-/* 雷达图 - 左侧大盘 */
-.agent-radar-chart {
-    background: var(--bg-secondary);
-    border-radius: 16px;
-    padding: 20px;
+/* Agent 卡片容器 */
+.agent-cards-container {
     display: flex;
-    align-items: center;
-    justify-content: center;
-    border: 1px solid var(--border-color);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-    position: sticky;
-    top: 20px;
-}
-
-.agent-radar-chart canvas {
-    max-width: 100%;
-    max-height: 320px;
-}
-
-/* Agent 分数对比卡片 */
-.agent-scores-comparison {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 12px;
-}
-
-@media (max-width: 600px) {
-    .agent-scores-comparison {
-        grid-template-columns: 1fr;
-    }
+    flex-direction: column;
+    gap: 15px;
 }
 
 /* Agent 分数对比卡片（垂直布局，每个 Agent 占一行） */

@@ -57,8 +57,8 @@
         </section>
 
         <div class="main-grid">
-            <!-- 第一行：情绪仪表盘（主体，全宽） -->
-            <div class="card featured-card full-width">
+            <!-- 第一行：情绪仪表盘 + 三个 Agent（并排布局） -->
+            <div class="card featured-card">
                 <h2 class="card-title"><span class="icon">📊</span>全网情绪晴雨表</h2>
                 <div class="gauge-container" id="gaugeContainer">
                     <div class="placeholder">
@@ -133,6 +133,61 @@
                                 <div class="agent-progress-fill" id="psychologyProgress"></div>
                             </div>
                             <span class="agent-status" id="psychologyStatus">等待中</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 三个 Agent 卡片（与情绪晴雨表并排） -->
+            <div class="agent-cards-container" id="agentCardsContainer" style="display:none;">
+                <!-- 市场舆情 Agent -->
+                <div class="agent-score-card-vertical" data-agent="sentiment">
+                    <div class="agent-score-header-vertical">
+                        <span class="agent-score-icon">😊</span>
+                        <div class="agent-score-info">
+                            <span class="agent-score-name">市场舆情 Agent</span>
+                            <p class="agent-score-desc">扫描全网新闻、社交媒体和财经论坛，探测散户的贪婪与恐慌程度。</p>
+                        </div>
+                    </div>
+                    <div class="agent-score-gauge-vertical">
+                        <div class="agent-score-value" id="sentimentScoreValue">--</div>
+                        <div class="agent-score-label">情绪分数</div>
+                        <div class="agent-score-bar">
+                            <div class="agent-score-fill" id="sentimentScoreFill"></div>
+                        </div>
+                    </div>
+                </div>
+                <!-- 盘面量价 Agent -->
+                <div class="agent-score-card-vertical" data-agent="technical">
+                    <div class="agent-score-header-vertical">
+                        <span class="agent-score-icon">📊</span>
+                        <div class="agent-score-info">
+                            <span class="agent-score-name">盘面量价 Agent</span>
+                            <p class="agent-score-desc">分析近期 K 线走势、成交量变化和资金流向，判断超买或超卖信号。</p>
+                        </div>
+                    </div>
+                    <div class="agent-score-gauge-vertical">
+                        <div class="agent-score-value" id="technicalScoreValue">--</div>
+                        <div class="agent-score-label">技术分数</div>
+                        <div class="agent-score-bar">
+                            <div class="agent-score-fill" id="technicalScoreFill"></div>
+                        </div>
+                    </div>
+                </div>
+                <!-- 行为心理 Agent -->
+                <div class="agent-score-card-vertical" data-agent="psychology">
+                    <div class="agent-score-header-vertical">
+                        <span class="agent-score-icon">🧠</span>
+                        <div class="agent-score-info">
+                            <span class="agent-score-name">行为心理 Agent</span>
+                            <p class="agent-score-desc">诊断市场是否存在 FOMO、羊群效应、锚定效应等认知偏误。</p>
+                        </div>
+                    </div>
+                    <div class="agent-score-gauge-vertical">
+                        <div class="agent-score-value" id="psychologyScoreValue">--</div>
+                        <div class="agent-score-label">心理分数</div>
+                        <div class="agent-score-bar">
+                            <div class="agent-score-fill" id="psychologyScoreFill"></div>
                         </div>
                     </div>
                 </div>
@@ -273,9 +328,9 @@
                         <div style="color: var(--text-secondary); width: 100%; text-align: center; display: flex; align-items: center; justify-content: center;">历史情绪趋势将在分析后显示</div>
                     </div>
                     <!-- 图表说明 -->
-                    <div class="chart-help-text" style="padding: 10px; background: rgba(59, 130, 246, 0.05); border-radius: 8px; font-size: 0.8rem; color: var(--text-secondary);">
+                    <div class="chart-help-text" style="padding: 6px 12px; background: rgba(59, 130, 246, 0.05); border-radius: 6px; font-size: 0.75rem; color: var(--text-secondary); text-align: center; white-space: nowrap; overflow: hidden;">
                         <span style="color: var(--accent-blue); font-weight: 600;">📊 图表说明：</span>
-                        显示最近 7 天的情绪分数变化趋势，帮助您了解市场情绪的波动情况。绿色区域 (&gt;60) 表示贪婪，黄色区域 (40-60) 表示中性，红色区域 (&lt;40) 表示恐惧。
+                        显示最近 7 天的情绪分数变化趋势，绿色 (&gt;60) 表示贪婪，黄色 (40-60) 表示中性，红色 (&lt;40) 表示恐惧。
                     </div>
                 </div>
             </div>

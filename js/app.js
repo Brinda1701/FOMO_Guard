@@ -544,13 +544,23 @@ function handleMultiAgentSummary(summary, company) {
     Chart.updateSentimentTrendChart(historyData);
 
     // === 显示 Agent 可视化面板（三个 Agent 分数） ===
-    showAgentVisualization();
+    const agentVizCard = document.getElementById('agentVisualizationCard');
+    if (agentVizCard) {
+        agentVizCard.style.display = 'block';
+    }
 
-    // 更新 Agent 分数卡片
+    // 更新 Agent 分数卡片（从 summary 获取真实数据）
     const breakdown = summary.breakdown || {};
     const sentimentScore = breakdown.sentiment?.score || 50;
     const technicalScore = breakdown.technical?.score || 50;
     const psychologyScore = breakdown.psychology?.score || 50;
+
+    console.log('[Multi-Agent] 更新 Agent 分数:', {
+        sentiment: sentimentScore,
+        technical: technicalScore,
+        psychology: psychologyScore,
+        final: score
+    });
 
     AgentViz.updateAgentScoreCards({
         sentiment: sentimentScore,
@@ -558,14 +568,7 @@ function handleMultiAgentSummary(summary, company) {
         psychology: psychologyScore
     });
 
-    // 更新雷达图
-    AgentViz.updateAgentRadarChart({
-        sentiment: sentimentScore,
-        technical: technicalScore,
-        psychology: psychologyScore
-    });
-
-    // === 渐进式渲染：更新最终决策建议和证据链 ===
+    // 更新最终决策建议
     updateFinalDecisionFromSummary(summary, company);
 
     // 渲染情绪证据链（兼容模式：优先 keyEvidence，其次 signals）
