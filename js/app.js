@@ -3,6 +3,7 @@ import * as UI from './ui.js';
 import * as Chart from './chart.js';
 import * as AgentViz from './agent-viz.js';
 import { AI_CONFIG, AGENT_CONFIG } from './config.js';
+import { renderAIInsightsEnhanced } from './ai-insights.js';
 import { LoginUI, Guide } from './login-guide.js';
 
 // 渲染日记列表（独立区域 - 已移除）
@@ -391,7 +392,7 @@ async function analyzeWithSingleMode(company) {
     UI.updateGauge(score, company);
     UI.updateHistory();
     UI.updateSources();
-    UI.renderAIInsights(score, company, profile, aiData);
+    renderAIInsightsEnhanced(score, company, profile, aiData);
     UI.updateValidationChart(score, company);
     UI.createEmotionParticles(score);
 
@@ -693,6 +694,9 @@ function handleImpulseCheck(action) {
     // 保存当前操作类型
     Logic.state.lastAction = action;
 
+    const score = Logic.state.currentScore;
+    console.log('[handleImpulseCheck] 操作:', action, '分数:', score, '公司:', Logic.state.currentCompany);
+
     // 添加按钮选中状态
     document.querySelectorAll('.trade-btn').forEach(btn => {
         btn.classList.remove('active');
@@ -702,7 +706,8 @@ function handleImpulseCheck(action) {
         activeBtn.classList.add('active');
     }
 
-    const result = Logic.evaluateImpulse(action, Logic.state.currentCompany, Logic.state.currentScore);
+    const result = Logic.evaluateImpulse(action, Logic.state.currentCompany, score);
+    console.log('[handleImpulseCheck] 判断结果:', result);
 
     const showDecisionOverlay = () => {
         // 获取损失厌恶警告（基于个人历史数据）

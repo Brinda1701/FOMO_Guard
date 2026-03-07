@@ -119,6 +119,8 @@ export async function fetchBacktestData(symbol) {
 
 // 交易冲动评估逻辑
 export function evaluateImpulse(action, company, score) {
+    console.log('[evaluateImpulse] 输入:', { action, company, score });
+    
     const diagnosisLib = {
         'buy': {
             high: {
@@ -193,10 +195,13 @@ export function evaluateImpulse(action, company, score) {
     
     // 阈值：<=30 视为低，>=70 视为高，30-70 视为中性
     const level = score >= 70 ? 'high' : score <= 30 ? 'low' : 'neutral';
+    console.log('[evaluateImpulse] 阈值判断:', { score, level, 'score>=70': score >= 70, 'score<=30': score <= 30 });
+    
     const diagnosis = diagnosisLib[action][level];
     // 统一规则：只要本次结论属于 warning（错误/高风险决策），立即进入冷静期
     const shouldCooldown = diagnosis.type === 'warning';
-    
+    console.log('[evaluateImpulse] 结果:', { diagnosis: diagnosis.title, shouldCooldown });
+
     return { diagnosis, shouldCooldown, quote: diagnosis.quote };
 }
 

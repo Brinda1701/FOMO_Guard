@@ -275,9 +275,36 @@
                         <p>AI 将为您过滤噪音，提炼核心观点</p>
                     </div>
                 </div>
+                
+                <!-- 关键数据指标 -->
+                <div id="keyMetricsSection" style="display:none; margin-top: 20px;">
+                    <h3 class="card-title" style="font-size: 0.95rem; margin-bottom: 12px;">
+                        <span class="icon">📊</span>关键数据指标
+                    </h3>
+                    <div class="key-metrics-grid" id="keyMetricsGrid">
+                        <!-- 动态生成 -->
+                    </div>
+                </div>
+                
+                <!-- 资讯摘要 -->
+                <div id="newsDigestSection" style="display:none; margin-top: 20px;">
+                    <h3 class="card-title" style="font-size: 0.95rem; margin-bottom: 12px;">
+                        <span class="icon">📰</span>最新资讯摘要
+                        <span class="data-source-tag" style="margin-left: 8px; font-size: 0.75rem; background: rgba(59, 130, 246, 0.15); color: #60a5fa; padding: 2px 8px; border-radius: 4px;">实时</span>
+                    </h3>
+                    <div class="news-digest-list" id="newsDigestList">
+                        <!-- 动态生成 -->
+                    </div>
+                    <div class="data-source-info" style="margin-top: 10px; font-size: 0.75rem; color: var(--text-secondary);">
+                        <span style="color: var(--accent-blue);">📡 数据来源：</span>雪球、东方财富、微博、新浪财经等主流财经媒体
+                    </div>
+                </div>
+                
                 <!-- 历史情绪验证（分析后显示） -->
                 <div id="validationSection" style="display:none; margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border-color);">
-                    <h3 class="card-title" style="font-size: 1rem; margin-bottom: 15px;"><span class="icon">📈</span>历史情绪验证 - 数据回测分析</h3>
+                    <h3 class="card-title" style="font-size: 1rem; margin-bottom: 15px;">
+                        <span class="icon">📈</span>历史情绪验证 - 数据回测分析
+                    </h3>
                     <p style="color: var(--text-secondary); font-size: 0.8rem; margin-bottom: 15px;">
                         <span style="color: var(--accent-blue); font-weight: 600;">📊 回测说明：</span>
                         基于历史数据，统计在相似情绪水平下，后续不同时间段的盈利概率和平均收益表现
@@ -536,6 +563,7 @@
 
     <!-- 模块化 JS 入口 -->
     <script type="module" src="js/login-guide.js?v=20260307"></script>
+    <script type="module" src="js/ai-insights.js?v=20260307"></script>
     <script type="module" src="js/app.js?v=20260307"></script>
 </body>
 </html>
