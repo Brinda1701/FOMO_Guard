@@ -3504,13 +3504,6 @@ html[data-theme="light"] .modal-danger #breatheText {
 
 /* ==================== Multi-Agent 可视化对比面板 ==================== */
 
-/* Agent 卡片容器 */
-.agent-cards-container {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-}
-
 /* Agent 分数对比卡片（垂直布局，每个 Agent 占一行） */
 .agent-scores-comparison-vertical {
     display: flex;

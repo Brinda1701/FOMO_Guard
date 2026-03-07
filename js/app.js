@@ -547,6 +547,7 @@ function handleMultiAgentSummary(summary, company) {
     const agentVizCard = document.getElementById('agentVisualizationCard');
     if (agentVizCard) {
         agentVizCard.style.display = 'block';
+        console.log('[Multi-Agent] Agent 可视化面板已显示');
     }
 
     // 更新 Agent 分数卡片（从 summary 获取真实数据）
@@ -562,11 +563,15 @@ function handleMultiAgentSummary(summary, company) {
         final: score
     });
 
-    AgentViz.updateAgentScoreCards({
-        sentiment: sentimentScore,
-        technical: technicalScore,
-        psychology: psychologyScore
-    });
+    // 延迟更新，确保 DOM 已渲染
+    setTimeout(() => {
+        AgentViz.updateAgentScoreCards({
+            sentiment: sentimentScore,
+            technical: technicalScore,
+            psychology: psychologyScore
+        });
+        console.log('[Multi-Agent] Agent 分数卡片已更新');
+    }, 100);
 
     // 更新最终决策建议
     updateFinalDecisionFromSummary(summary, company);
