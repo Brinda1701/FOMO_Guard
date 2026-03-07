@@ -74,8 +74,8 @@ export function initSentimentTrendChart(historyData = []) {
                         label: function(context) {
                             const score = context.parsed.y;
                             let status = '中性';
-                            if (score > 60) status = '贪婪';
-                            if (score < 40) status = '恐惧';
+                            if (score > 70) status = '贪婪';
+                            if (score < 30) status = '恐惧';
                             return `情绪分数：${score} (${status})`;
                         }
                     }
@@ -132,8 +132,8 @@ export function updateSentimentTrendChart(historyData) {
     // 更新线条颜色（根据最新分数）
     const latestScore = historyData.length > 0 ? historyData[historyData.length - 1].score : 50;
     let lineColor = '#3b82f6'; // 默认蓝色
-    if (latestScore > 60) lineColor = '#10b981'; // 贪婪 - 绿色
-    if (latestScore < 40) lineColor = '#ef4444'; // 恐惧 - 红色
+    if (latestScore > 70) lineColor = '#10b981'; // 贪婪 - 绿色
+    if (latestScore < 30) lineColor = '#ef4444'; // 恐惧 - 红色
     
     sentimentChartInstance.data.datasets[0].borderColor = lineColor;
     sentimentChartInstance.data.datasets[0].pointBackgroundColor = lineColor;

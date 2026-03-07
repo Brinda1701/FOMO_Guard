@@ -446,8 +446,8 @@ function showSingleAgentVisualization(score, company) {
 
     // 更新最终决策建议
     const consensus = 'aligned';
-    const decisionText = score > 60 ? '当前市场情绪偏热，建议保持理性，避免追高。' : 
-                         score < 40 ? '市场情绪偏冷，可能是机会，但需确认基本面。' : 
+    const decisionText = score > 70 ? '当前市场情绪偏热，建议保持理性，避免追高。' :
+                         score < 30 ? '市场情绪偏冷，可能是机会，但需确认基本面。' :
                          '市场情绪中性，建议继续观察，等待更明确信号。';
 
     AgentViz.updateFinalDecision({

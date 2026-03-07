@@ -3354,6 +3354,65 @@ html[data-theme="light"] .modal-danger #breatheText {
     }
 }
 
+/* Agent 分数对比卡片（垂直布局，每个 Agent 占一行） */
+.agent-scores-comparison-vertical {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.agent-score-card-vertical {
+    background: var(--bg-card);
+    border-radius: 12px;
+    padding: 18px;
+    border: 1px solid var(--border-color);
+    transition: all 0.3s ease;
+    display: grid;
+    grid-template-columns: 1fr 200px;
+    gap: 20px;
+    align-items: center;
+}
+
+@media (max-width: 768px) {
+    .agent-score-card-vertical {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+}
+
+.agent-score-header-vertical {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.agent-score-info {
+    flex: 1;
+}
+
+.agent-score-name {
+    display: block;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 6px;
+}
+
+.agent-score-desc {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin: 0;
+}
+
+.agent-score-gauge-vertical {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
 .agent-score-card {
     background: var(--bg-card);
     border-radius: 12px;

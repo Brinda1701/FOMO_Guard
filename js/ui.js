@@ -73,13 +73,13 @@ export function hideSimulatedModeWarning() {
 // --- 基础 UI 更新 ---
 export function updateGauge(score, company) {
     const rotation = (score / 100) * 180 - 90;
-    let valueColor = score > 60 ? '#10b981' : (score < 40 ? '#ef4444' : '#f59e0b');
+    let valueColor = score > 70 ? '#10b981' : (score < 30 ? '#ef4444' : '#f59e0b');
 
     document.getElementById('gaugeContainer').innerHTML = `
         <div class="gauge-wrapper">
-            <div class="gauge-bg"></div> <div class="gauge-inner"></div> 
-            <div class="gauge-needle" style="transform: translateX(-50%) rotate(${rotation}deg);"></div> 
-            <div class="gauge-center"></div> 
+            <div class="gauge-bg"></div> <div class="gauge-inner"></div>
+            <div class="gauge-needle" style="transform: translateX(-50%) rotate(${rotation}deg);"></div>
+            <div class="gauge-center"></div>
         </div>
         <div class="gauge-value" style="color: ${valueColor}">${score}</div>
         <div class="gauge-label">${company} 情绪指数</div>
