@@ -123,35 +123,97 @@ async function streamMultiAgentAnalysis(req, res, company, action, apiKey, apiUr
   const agents = ['sentiment', 'technical', 'psychology'];
   const results = {};
 
+  // 获取市场数据（仅技术分析需要）
   let marketData = null;
   try {
     const { fetchMarketData, calculateTechnicalIndicators } = require('./market-data');
     const klineData = await fetchMarketData(company);
     const indicators = calculateTechnicalIndicators(klineData);
     marketData = { klineData, indicators };
+    console.log('[Orchestrator] 已获取市场数据:', company, klineData.length, '天');
   } catch (error) {
     console.warn('[Orchestrator] 获取市场数据失败:', error.message);
   }
 
-  for (const agent of agents) {
-    sendSSEEvent(res, 'agent_start', { agent, status: 'processing' });
+  // 并发执行三个 Agent 任务，每个任务独立推送 SSE 事件
+  const agentPromises = agents.map(async (agent) => {
     try {
-      sendSSEEvent(res, 'agent_progress', { agent, progress: 30, message: `正在分析${getAgentTaskName(agent)}...` });
-      const prompt = buildAgentPrompt(agent, company, action, agent === 'technical' ? marketData : null);
-      await new Promise(resolve => setTimeout(resolve, 500));
-      sendSSEEvent(res, 'agent_progress', { agent, progress: 70, message: '正在生成分析结果...' });
+      // 推送开始事件
+      sendSSEEvent(res, 'agent_start', { 
+        agent, 
+        status: 'processing',
+        timestamp: Date.now()
+      });
+
+      // 构建提示词
+      const prompt = buildAgentPrompt(
+        agent, 
+        company, 
+        action, 
+        agent === 'technical' ? marketData : null
+      );
+
+      // 推送进度事件
+      sendSSEEvent(res, 'agent_progress', { 
+        agent, 
+        progress: 30, 
+        message: `正在分析${getAgentTaskName(agent)}...`,
+        timestamp: Date.now()
+      });
+
+      // 异步调用 AI 模型（不阻塞其他 Agent）
       const agentResult = await callAIModel(prompt, apiKey, apiUrl, modelName);
-      results[agent] = parseAgentResult(agent, agentResult);
-      sendSSEEvent(res, 'agent_progress', { agent, progress: 90, message: '分析完成，正在汇总...' });
-      sendSSEEvent(res, 'agent_complete', { agent, status: 'completed', score: results[agent].score, data: results[agent] });
+      
+      // 推送进度事件
+      sendSSEEvent(res, 'agent_progress', { 
+        agent, 
+        progress: 70, 
+        message: '正在生成分析结果...',
+        timestamp: Date.now()
+      });
+
+      // 解析结果
+      const parsedResult = parseAgentResult(agent, agentResult);
+      results[agent] = parsedResult;
+
+      // 推送进度事件
+      sendSSEEvent(res, 'agent_progress', { 
+        agent, 
+        progress: 90, 
+        message: '分析完成，正在汇总...',
+        timestamp: Date.now()
+      });
+
+      // 推送完成事件
+      sendSSEEvent(res, 'agent_complete', { 
+        agent, 
+        status: 'completed', 
+        score: parsedResult.score, 
+        data: parsedResult,
+        timestamp: Date.now()
+      });
+
+      return { agent, success: true, data: parsedResult };
     } catch (error) {
       console.error(`[Agent ${agent}] Error:`, error);
-      sendSSEEvent(res, 'agent_error', { agent, status: 'failed', error: error.message });
+      sendSSEEvent(res, 'agent_error', { 
+        agent, 
+        status: 'failed', 
+        error: error.message,
+        timestamp: Date.now()
+      });
       results[agent] = { score: 50, error: error.message };
+      return { agent, success: false, error: error.message };
     }
-    await new Promise(resolve => setTimeout(resolve, 300));
-  }
+  });
 
-  sendSSEEvent(res, 'summary', fuseAgentResults(company, action, results));
+  // 等待所有 Agent 完成
+  await Promise.all(agentPromises);
+
+  // 汇总结果并推送最终 summary
+  const finalResult = fuseAgentResults(company, action, results);
+  sendSSEEvent(res, 'summary', finalResult);
+
+  // 结束响应
   res.end();
 }
