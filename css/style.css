@@ -4360,6 +4360,12 @@ html[data-theme="light"] .modal-danger #breatheText {
     filter: drop-shadow(0 2px 4px rgba(59, 130, 246, 0.3));
 }
 
+.global-evidence-list {
+    display: block;
+    min-height: 100px;
+    padding: 10px 0;
+}
+
 .evidence-pills-wrapper {
     display: flex;
     flex-wrap: wrap;
