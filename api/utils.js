@@ -214,28 +214,46 @@ function formatMarketDataForPrompt(marketData) {
  */
 async function callAIModel(prompt, apiKey, apiUrl, modelName) {
   const fetch = await import('node-fetch');
+  
+  const requestBody = {
+    model: modelName,
+    messages: [
+      { role: 'system', content: '你是一个专业的金融分析 AI。请严格按照用户要求的 JSON 格式返回结果。' },
+      { role: 'user', content: prompt }
+    ],
+    temperature: 0.7,
+    max_tokens: 800,
+    stream: false
+  };
+  
+  console.log('[callAIModel] 请求 URL:', `${apiUrl}chat/completions`);
+  console.log('[callAIModel] 请求模型:', modelName);
+  console.log('[callAIModel] 请求体:', JSON.stringify(requestBody).substring(0, 200) + '...');
+  
   const response = await fetch.default(`${apiUrl}chat/completions`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${apiKey}`
     },
-    body: JSON.stringify({
-      model: modelName,
-      messages: [
-        { role: 'system', content: '你是一个专业的金融分析 AI。请严格按照用户要求的 JSON 格式返回结果。' },
-        { role: 'user', content: prompt }
-      ],
-      temperature: 0.7,
-      max_tokens: 800
-    })
+    body: JSON.stringify(requestBody)
   });
 
+  console.log('[callAIModel] 响应状态:', response.status);
+  
   if (!response.ok) {
-    throw new Error(`AI API error: ${response.status}`);
+    const errorText = await response.text();
+    console.error('[callAIModel] API 错误:', response.status, errorText);
+    throw new Error(`AI API error: ${response.status} - ${errorText.substring(0, 200)}`);
   }
 
   const data = await response.json();
+  console.log('[callAIModel] 响应数据:', JSON.stringify(data).substring(0, 300) + '...');
+  
+  if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+    throw new Error('AI API 返回格式异常：缺少 choices 或 message 字段');
+  }
+  
   return parseJSONFromContent(data.choices[0].message.content);
 }
 
