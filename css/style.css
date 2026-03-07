@@ -1693,6 +1693,140 @@ html[data-theme="light"] .modal-content::before {
     .modal-timer { font-size: 4rem; }
 }
 
+/* ==================== 浅色模式弹窗样式覆盖 ==================== */
+
+/* 冷静舱模态框 - 浅色模式 */
+html[data-theme="light"] #cooldownModal .modal-content {
+    background: linear-gradient(145deg, rgba(248, 250, 252, 0.98), rgba(241, 245, 249, 0.96)) !important;
+    border: 1px solid rgba(59, 130, 246, 0.35) !important;
+    box-shadow: 0 0 40px rgba(59, 130, 246, 0.15), inset 0 0 40px rgba(59, 130, 246, 0.05) !important;
+}
+
+html[data-theme="light"] #cooldownModal .modal-overlay {
+    background: rgba(15, 23, 42, 0.45);
+    backdrop-filter: blur(8px);
+}
+
+html[data-theme="light"] #cooldownModal .modal-emoji {
+    filter: drop-shadow(0 0 20px rgba(59, 130, 246, 0.3));
+}
+
+html[data-theme="light"] #cooldownModal .modal-title {
+    background: linear-gradient(135deg, #2563eb, #7c3aed);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+html[data-theme="light"] #cooldownModal .modal-text {
+    color: var(--text-secondary);
+}
+
+/* 抄写防线区域 - 浅色模式 */
+html[data-theme="light"] .copywall-section {
+    background: rgba(59, 130, 246, 0.06);
+    border: 1px solid rgba(59, 130, 246, 0.25);
+}
+
+html[data-theme="light"] .copywall-header {
+    border-bottom-color: rgba(59, 130, 246, 0.2);
+}
+
+html[data-theme="light"] .copywall-icon {
+    filter: drop-shadow(0 0 8px rgba(59, 130, 246, 0.3));
+}
+
+html[data-theme="light"] .copywall-title {
+    color: #2563eb;
+}
+
+html[data-theme="light"] .copywall-declaration {
+    background: rgba(241, 245, 249, 0.8);
+    border-left-color: #2563eb;
+}
+
+html[data-theme="light"] .copywall-declaration.highlight {
+    border-left-color: #ef4444;
+}
+
+html[data-theme="light"] .copywall-declaration.highlight .copywall-declaration-text {
+    color: #dc2626;
+}
+
+html[data-theme="light"] .copywall-input {
+    background: rgba(255, 255, 255, 0.8);
+    border-color: rgba(59, 130, 246, 0.35);
+}
+
+html[data-theme="light"] .copywall-input:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+html[data-theme="light"] .copywall-input::placeholder {
+    color: #94a3b8;
+    opacity: 0.8;
+}
+
+html[data-theme="light"] .copywall-hint {
+    color: #64748b;
+}
+
+html[data-theme="light"] .copywall-progress .progress-bar {
+    background: rgba(59, 130, 246, 0.12);
+}
+
+/* 红色警示模态框 - 浅色模式（保持警示感但降低刺眼度） */
+html[data-theme="light"] .modal-danger {
+    background: linear-gradient(145deg, #fff5f5, #fee2e2) !important;
+    border: 2px solid #fca5a5 !important;
+    box-shadow: 0 0 40px rgba(239, 68, 68, 0.25), inset 0 0 30px rgba(239, 68, 68, 0.08) !important;
+}
+
+html[data-theme="light"] .modal-danger::before {
+    background: linear-gradient(90deg, #f87171, #dc2626) !important;
+}
+
+html[data-theme="light"] .modal-danger .modal-timer {
+    color: #dc2626 !important;
+}
+
+html[data-theme="light"] .modal-danger .modal-title,
+html[data-theme="light"] .modal-danger .modal-text,
+html[data-theme="light"] .modal-danger #breatheText,
+html[data-theme="light"] .modal-danger .phase-text,
+html[data-theme="light"] .modal-danger .countdown-time,
+html[data-theme="light"] .modal-danger .countdown-label {
+    color: #7f1d1d !important;
+}
+
+html[data-theme="light"] .modal-danger .countdown-ring-bg {
+    fill: rgba(254, 202, 202, 0.5);
+    stroke: rgba(248, 113, 113, 0.3);
+}
+
+html[data-theme="light"] .modal-danger .cooldown-phase {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.12), rgba(220, 38, 38, 0.06));
+    border-color: rgba(248, 113, 113, 0.4);
+    box-shadow: 0 4px 20px rgba(239, 68, 68, 0.15);
+}
+
+html[data-theme="light"] .modal-danger .breathing-guide {
+    background: radial-gradient(circle,
+        rgba(239, 68, 68, 0.15) 0%,
+        rgba(239, 68, 68, 0.06) 40%,
+        transparent 70%);
+    border-color: rgba(239, 68, 68, 0.35);
+    box-shadow:
+        0 0 30px rgba(239, 68, 68, 0.2),
+        inset 0 0 30px rgba(239, 68, 68, 0.08);
+}
+
+html[data-theme="light"] .modal-danger #breatheText {
+    color: #dc2626;
+    text-shadow: 0 0 15px rgba(239, 68, 68, 0.4);
+}
+
 /* 滚动条美化 */
 ::-webkit-scrollbar {
     width: 10px;
