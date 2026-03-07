@@ -21,9 +21,9 @@ module.exports = async function handler(req, res) {
 
   const MODELSCOPE_API_KEY = process.env.MODELSCOPE_API_KEY;
   const MODELSCOPE_API_URL = process.env.MODELSCOPE_API_URL || 'https://api-inference.modelscope.cn/v1/';
-  // 使用 ModelScope 推理服务可用的模型
-  // 默认：Qwen/Qwen3.5-397B-A17B (通义千问超大模型)
-  const MODEL_NAME = process.env.MODEL_NAME || 'Qwen/Qwen3.5-397B-A17B';
+  // 使用响应速度更快的模型（避免 60 秒超时）
+  // 推荐：Qwen/Qwen2.5-32B-Instruct (速度快，性能好)
+  const MODEL_NAME = process.env.MODEL_NAME || 'Qwen/Qwen2.5-32B-Instruct';
   
   console.log('[Orchestrator] 使用模型:', MODEL_NAME);
 

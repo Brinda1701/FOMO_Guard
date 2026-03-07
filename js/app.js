@@ -279,14 +279,36 @@ async function analyzeWithMultiAgent(company) {
 
     // 显示骨架屏
     showAllSkeletons();
-    
+
     // 启动分析互动模块（显示投资心理小贴士）
     AnalysisInteraction.startTipsRotation();
-    
+
     // 10 秒后有 30% 概率弹出互动问答
     setTimeout(() => {
         AnalysisInteraction.maybeShowQuiz();
     }, 10000);
+
+    // 先获取市场数据并显示 K 线和数据来源（不等待 AI 分析）
+    try {
+        console.log('[Multi-Agent] 预先获取市场数据...');
+        const symbol = Logic.getStockSymbol(company);
+        
+        // 渲染数据来源和 K 线图表
+        renderDataSourceCards(company, symbol);
+        renderKlineChart(company, 50); // 使用默认分数先显示
+        
+        console.log('[Multi-Agent] K 线和数据来源已显示');
+        
+        // 隐藏相关骨架屏
+        const klineContainer = document.getElementById('klineChartContainer');
+        if (klineContainer) klineContainer.style.display = 'block';
+        
+        const hotTrendsSection = document.getElementById('hotTrendsSection');
+        if (hotTrendsSection) hotTrendsSection.style.display = 'block';
+        
+    } catch (error) {
+        console.warn('[Multi-Agent] 预加载市场数据失败:', error);
+    }
 
     try {
         const result = await Logic.fetchMultiAgentAnalysis(company, 'analyze', {
