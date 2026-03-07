@@ -3548,7 +3548,7 @@ html[data-theme="light"] .modal-danger #breatheText {
     border: 1px solid var(--border-color);
     transition: all 0.3s ease;
     position: relative;
-    overflow: hidden;
+    overflow: visible; /* 改为 visible，让描述文案可见 */
 }
 
 .agent-score-card:hover {
@@ -3983,13 +3983,17 @@ html[data-theme="light"] .modal-danger #breatheText {
 
 .agent-score-detail {
     min-height: 60px;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px dashed var(--border-color);
 }
 
 .agent-score-detail .detail-text {
     font-size: 0.8rem;
     color: var(--text-secondary);
-    line-height: 1.5;
+    line-height: 1.6;
     text-align: center;
+    word-wrap: break-word;
 }
 
 /* 最终决策建议 */
