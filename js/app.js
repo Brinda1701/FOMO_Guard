@@ -399,9 +399,10 @@ async function analyzeWithSingleMode(company) {
     UI.createEmotionParticles(score);
 
     console.log('[App] 准备渲染数据来源和 K 线图表...');
-    
-    // 渲染数据来源和 K 线图表
-    renderDataSourceCards(company);
+
+    // 渲染数据来源和 K 线图表（异步调用）
+    const symbol = Logic.getStockSymbol(company);
+    renderDataSourceCards(company, symbol);
     renderKlineChart(company, score);
 
     console.log('[App] 数据来源和 K 线图表渲染函数调用完成');
@@ -498,9 +499,10 @@ function handleMultiAgentSummary(summary, company) {
     UI.updateSources();
     UI.createEmotionParticles(score);
 
-    // 渲染数据来源和 K 线图表
+    // 渲染数据来源和 K 线图表（异步调用）
     console.log('[Multi-Agent] 准备渲染数据来源和 K 线图表...');
-    renderDataSourceCards(company);
+    const symbol = Logic.getStockSymbol(company);
+    renderDataSourceCards(company, symbol);
     renderKlineChart(company, score);
     console.log('[Multi-Agent] 数据来源和 K 线图表渲染完成');
 

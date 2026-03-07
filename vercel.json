@@ -9,7 +9,8 @@
     { "source": "/api/analyze", "destination": "/api/analyze.js" },
     { "source": "/api/orchestrator", "destination": "/api/orchestrator.js" },
     { "source": "/api/scrape-url", "destination": "/api/scrape-url.js" },
-    { "source": "/api/backtest", "destination": "/api/backtest.js" }
+    { "source": "/api/backtest", "destination": "/api/backtest.js" },
+    { "source": "/api/multi-source", "destination": "/api/multi-source.js" }
   ],
   "headers": [
     {

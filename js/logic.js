@@ -1,6 +1,27 @@
 import { PROFILES, SECTOR_KW, AI_CONFIG, AGENT_CONFIG } from './config.js';
 import { hash, seededRandom } from './utils.js';
 
+// 股票代码映射
+const STOCK_SYMBOLS = {
+    '茅台': '600519',
+    '贵州茅台': '600519',
+    '比亚迪': '002594',
+    '特斯拉': 'TSLA',
+    '英伟达': 'NVDA',
+    '苹果': 'AAPL',
+    '阿里巴巴': 'BABA',
+    '腾讯': '0700',
+    '宁德时代': '300750',
+    '小米': '1810',
+    '京东': 'JD',
+    '美团': '3690',
+    '万科': '000002',
+    '中国平安': '601318',
+    '谷歌': 'GOOGL',
+    '微软': 'MSFT',
+    '亚马逊': 'AMZN'
+};
+
 // 应用状态
 export const state = {
     currentCompany: '',
@@ -1039,3 +1060,4 @@ export async function analyzeBatchCompanies(companies, onProgress, concurrency =
     // 按原始顺序排序并返回
     return analyzedResults.sort((a, b) => a.index - b.index);
 }
+"export function getStockSymbol(company) { if (STOCK_SYMBOLS[company]) return STOCK_SYMBOLS[company]; for (const [key, symbol] of Object.entries(STOCK_SYMBOLS)) { if (company.includes(key) || key.includes(company)) return symbol; } return company; }" 
