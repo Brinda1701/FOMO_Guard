@@ -391,7 +391,6 @@ async function analyzeWithSingleMode(company) {
     UI.updateGauge(score, company);
     UI.updateHistory();
     UI.updateSources();
-    UI.renderAIInsights(score, company, profile, aiData);
     UI.updateValidationChart(score, company);
     UI.createEmotionParticles(score);
 
@@ -485,9 +484,6 @@ function handleMultiAgentSummary(summary, company) {
     UI.updateSources();
     UI.createEmotionParticles(score);
 
-    // 渲染 Multi-Agent 增强的 AI 洞察
-    renderMultiAgentInsights(summary, company, profile);
-
     UI.updateValidationChart(score, company);
 
     // 更新情绪趋势图
@@ -536,80 +532,6 @@ function updateFinalDecisionFromSummary(summary, company) {
 // 更新 Multi-Agent 可视化面板（保留用于兼容）
 function updateAgentVisualization(summary, company) {
     updateFinalDecisionFromSummary(summary, company);
-}
-
-// 渲染 Multi-Agent 洞察
-function renderMultiAgentInsights(summary, company, profile) {
-    const summaryContent = document.getElementById('summaryContent');
-
-    let insightsHtml = `
-        <div class="agent-result-summary">
-            <div class="agent-consensus">
-                <span>Agent 共识：</span>
-                <span class="consensus-badge ${summary.consensus || 'aligned'}">
-                    ${summary.consensus === 'divergent' ? '⚠️ 存在分歧' : '✓ 一致认同'}
-                </span>
-            </div>
-            <div class="agent-scores-breakdown">
-    `;
-
-    // 显示各 Agent 分数
-    if (summary.breakdown) {
-        for (const [agent, data] of Object.entries(summary.breakdown)) {
-            const icon = AGENT_CONFIG.icons[agent] || '🤖';
-            const name = AGENT_CONFIG.names[agent] || agent;
-            insightsHtml += `
-                <div class="agent-score-item">
-                    <span>${icon}</span>
-                    <span>${name}</span>
-                    <span class="agent-score-value">${data.score}分</span>
-                </div>
-            `;
-        }
-    }
-
-    insightsHtml += '</div></div>';
-
-    // 添加洞察列表
-    if (summary.insights && summary.insights.length > 0) {
-        insightsHtml += '<div class="insights-list" style="margin-top: 15px;">';
-        for (const insight of summary.insights.slice(0, 5)) {
-            const source = insight.source ? `<span class="insight-source">[${insight.source}]</span>` : '';
-            insightsHtml += `
-                <div class="insight-item">
-                    ${source}
-                    <span class="insight-content">${insight.content}</span>
-                </div>
-            `;
-        }
-        insightsHtml += '</div>';
-    }
-
-    // 添加警告
-    if (summary.warnings && summary.warnings.length > 0) {
-        insightsHtml += '<div class="warnings-list" style="margin-top: 15px;">';
-        for (const warning of summary.warnings) {
-            const text = typeof warning === 'string' ? warning : warning.text;
-            insightsHtml += `
-                <div class="warning-item" style="color: var(--accent-yellow); padding: 8px; background: rgba(245,158,11,0.1); border-radius: 8px; margin-bottom: 8px;">
-                    ⚠️ ${text}
-                </div>
-            `;
-        }
-        insightsHtml += '</div>';
-    }
-
-    // 添加建议
-    if (summary.recommendation) {
-        insightsHtml += `
-            <div class="recommendation" style="margin-top: 15px; padding: 15px; background: var(--bg-card); border-radius: 12px; border-left: 3px solid var(--accent-purple);">
-                <strong>💡 AI 建议:</strong>
-                <p style="margin-top: 8px; color: var(--text-secondary);">${summary.recommendation.message || ''}</p>
-            </div>
-        `;
-    }
-
-    summaryContent.innerHTML = insightsHtml;
 }
 
 // 隐藏 Agent 进度面板
