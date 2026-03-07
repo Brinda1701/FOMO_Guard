@@ -392,7 +392,6 @@ async function analyzeWithSingleMode(company) {
     UI.updateGauge(score, company);
     UI.updateHistory();
     UI.updateSources();
-    UI.updateValidationChart(score, company);
     UI.createEmotionParticles(score);
 
     // 渲染数据来源和 K 线图表
@@ -488,8 +487,6 @@ function handleMultiAgentSummary(summary, company) {
     UI.updateHistory();
     UI.updateSources();
     UI.createEmotionParticles(score);
-
-    UI.updateValidationChart(score, company);
 
     // 更新情绪趋势图
     Chart.updateSentimentTrendChart(historyData);
