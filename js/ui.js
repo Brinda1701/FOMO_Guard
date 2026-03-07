@@ -169,9 +169,9 @@ export async function updateValidationChart(score, company) {
     const validationSection = document.getElementById('validationSection');
     const validationChart = document.getElementById('validationChart');
     const validationSummary = document.getElementById('validationSummary');
-    
-    const isHighSentiment = score > 60;
-    const isLowSentiment = score < 40;
+
+    const isHighSentiment = score > 70;
+    const isLowSentiment = score < 30;
     
     let profitRate, lossRate, avgReturn;
     
