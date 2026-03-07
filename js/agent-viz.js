@@ -459,3 +459,110 @@ export function destroyAgentCharts() {
         agentRadarChartInstance = null;
     }
 }
+
+/**
+ * 渲染全局判定证据（胶囊标签形式）
+ * @param {Array} evidenceArray - 证据数组
+ */
+export function renderGlobalEvidence(evidenceArray) {
+    const section = document.getElementById('globalEvidenceSection');
+    const list = document.getElementById('globalEvidenceList');
+    
+    if (!section || !list) {
+        console.warn('[renderGlobalEvidence] 全局证据容器不存在');
+        return;
+    }
+
+    // 空状态处理
+    if (!evidenceArray || evidenceArray.length === 0) {
+        list.innerHTML = `
+            <div class="global-evidence-empty">
+                <span class="global-evidence-empty-icon">📝</span>
+                <p>暂无具体证据，AI 基于整体情绪判断</p>
+            </div>
+        `;
+        section.style.display = 'block';
+        return;
+    }
+
+    // 渲染证据胶囊标签
+    const evidenceHTML = evidenceArray.map((evidence, index) => {
+        // 兼容多种字段名
+        const text = evidence.text || evidence.content || evidence.message || '';
+        const sentiment = evidence.sentiment || evidence.type || 'neutral';
+        const impact = evidence.impact || 'medium';
+        const source = evidence.source || '未知';
+
+        // 获取情感样式类
+        const sentimentClass = getSentimentClass(sentiment);
+        const sentimentIcon = getSentimentIcon(sentiment);
+        const impactStars = getImpactStars(impact);
+
+        return `
+            <div class="evidence-pill ${sentimentClass}" style="animation-delay: ${index * 0.05}s">
+                <span class="evidence-pill-sentiment">${sentimentIcon}</span>
+                <span class="evidence-pill-text">${escapeHtml(text)}</span>
+                <span class="evidence-pill-impact">${impactStars}</span>
+                <span class="evidence-pill-source">${escapeHtml(source)}</span>
+            </div>
+        `;
+    }).join('');
+
+    list.innerHTML = `
+        <div class="evidence-pills-wrapper">
+            ${evidenceHTML}
+        </div>
+        <div class="evidence-pills-legend">
+            <div class="pill-legend-item">
+                <span class="pill-legend-dot pill-legend-positive"></span>
+                <span>正面信号</span>
+            </div>
+            <div class="pill-legend-item">
+                <span class="pill-legend-dot pill-legend-negative"></span>
+                <span>负面信号</span>
+            </div>
+            <div class="pill-legend-item">
+                <span class="pill-legend-dot pill-legend-emotional"></span>
+                <span>情绪化表述</span>
+            </div>
+        </div>
+    `;
+
+    // 显示证据区域
+    section.style.display = 'block';
+    section.classList.add('visible');
+}
+
+// 辅助函数：获取情感样式类
+function getSentimentClass(sentiment) {
+    const sentimentLower = (sentiment || '').toLowerCase();
+    if (sentimentLower.includes('positive') || sentimentLower.includes('pos')) return 'pill-positive';
+    if (sentimentLower.includes('negative') || sentimentLower.includes('neg')) return 'pill-negative';
+    if (sentimentLower.includes('emotional')) return 'pill-emotional';
+    return 'pill-neutral';
+}
+
+// 辅助函数：获取情感图标
+function getSentimentIcon(sentiment) {
+    const sentimentLower = (sentiment || '').toLowerCase();
+    if (sentimentLower.includes('positive') || sentimentLower.includes('pos')) return '📈';
+    if (sentimentLower.includes('negative') || sentimentLower.includes('neg')) return '📉';
+    if (sentimentLower.includes('emotional')) return '🔥';
+    return '➖';
+}
+
+// 辅助函数：获取影响程度星星
+function getImpactStars(impact) {
+    const impactLower = (impact || '').toLowerCase();
+    if (impactLower.includes('high')) return '⭐⭐⭐';
+    if (impactLower.includes('medium')) return '⭐⭐';
+    return '⭐';
+}
+
+// 辅助函数：HTML 转义
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}

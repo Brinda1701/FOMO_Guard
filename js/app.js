@@ -1,5 +1,4 @@
 import * as Logic from './logic.js';
-import { updateSentimentEvidence } from './sentiment-evidence.js';
 import * as UI from './ui.js';
 import * as Chart from './chart.js';
 import * as AgentViz from './agent-viz.js';
@@ -539,7 +538,9 @@ function handleMultiAgentSummary(summary, company) {
     const breakdown = summary.breakdown || {};
     const sentimentData = breakdown.sentiment || {};
     const sentimentEvidence = sentimentData.keyEvidence || sentimentData.signals || [];
-    updateSentimentEvidence(sentimentEvidence, sentimentData.score || 50);
+    
+    // 使用新的全局证据渲染函数
+    AgentViz.renderGlobalEvidence(sentimentEvidence);
 
     const trends = Logic.generateTrendData(company, profile);
     UI.updateHotTrends(trends);
