@@ -76,8 +76,15 @@ async function runMultiAgentAnalysis(req, res, company, action, apiKey, apiUrl, 
       
       const prompt = buildAgentPrompt(agent, company, action, agent === 'technical' ? marketData : null);
       const agentResult = await callAIModel(prompt, apiKey, apiUrl, modelName);
+      
+      console.log(`[Orchestrator] ${agent} - AI 返回的原始结果:`, JSON.stringify(agentResult).substring(0, 200));
+      
       results[agent] = parseAgentResult(agent, agentResult);
       
+      console.log(`[Orchestrator] ${agent} - 解析后的结果:`, {
+        score: results[agent].score,
+        summary: results[agent].summary?.substring(0, 50)
+      });
       console.log(`[Orchestrator] ${agent} Agent 完成`);
       
       // 每个 Agent 之间延迟 500ms，避免请求过于频繁
@@ -89,6 +96,12 @@ async function runMultiAgentAnalysis(req, res, company, action, apiKey, apiUrl, 
       results[agent] = { score: 50, error: error.message };
     }
   }
+
+  console.log('[Orchestrator] 所有 Agent 完成，准备融合结果:', {
+    sentiment: results.sentiment?.score,
+    technical: results.technical?.score,
+    psychology: results.psychology?.score
+  });
 
   res.status(200).json(fuseAgentResults(company, action, results));
 }
