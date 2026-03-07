@@ -123,6 +123,26 @@ async function streamMultiAgentAnalysis(req, res, company, action, apiKey, apiUr
   const agents = ['sentiment', 'technical', 'psychology'];
   const results = {};
 
+  // 启动 SSE 响应
+  res.writeHead(200, {
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache',
+    'Connection': 'keep-alive',
+    'X-Accel-Buffering': 'no'
+  });
+
+  // 心跳定时器（Keep-Alive Interval）- 每 3 秒发送一次心跳防止连接超时
+  const keepAliveInterval = setInterval(() => {
+    // SSE 注释格式，前端会自动忽略但能保持 TCP 连接不断开
+    res.write(':\n\n');
+  }, 3000);
+
+  // 确保在连接关闭时清除定时器
+  req.on('close', () => {
+    console.log('[Orchestrator] 客户端断开连接，清除心跳定时器');
+    clearInterval(keepAliveInterval);
+  });
+
   // 获取市场数据（仅技术分析需要）
   let marketData = null;
   try {
@@ -139,35 +159,35 @@ async function streamMultiAgentAnalysis(req, res, company, action, apiKey, apiUr
   const agentPromises = agents.map(async (agent) => {
     try {
       // 推送开始事件
-      sendSSEEvent(res, 'agent_start', { 
-        agent, 
+      sendSSEEvent(res, 'agent_start', {
+        agent,
         status: 'processing',
         timestamp: Date.now()
       });
 
       // 构建提示词
       const prompt = buildAgentPrompt(
-        agent, 
-        company, 
-        action, 
+        agent,
+        company,
+        action,
         agent === 'technical' ? marketData : null
       );
 
       // 推送进度事件
-      sendSSEEvent(res, 'agent_progress', { 
-        agent, 
-        progress: 30, 
+      sendSSEEvent(res, 'agent_progress', {
+        agent,
+        progress: 30,
         message: `正在分析${getAgentTaskName(agent)}...`,
         timestamp: Date.now()
       });
 
       // 异步调用 AI 模型（不阻塞其他 Agent）
       const agentResult = await callAIModel(prompt, apiKey, apiUrl, modelName);
-      
+
       // 推送进度事件
-      sendSSEEvent(res, 'agent_progress', { 
-        agent, 
-        progress: 70, 
+      sendSSEEvent(res, 'agent_progress', {
+        agent,
+        progress: 70,
         message: '正在生成分析结果...',
         timestamp: Date.now()
       });
@@ -177,18 +197,18 @@ async function streamMultiAgentAnalysis(req, res, company, action, apiKey, apiUr
       results[agent] = parsedResult;
 
       // 推送进度事件
-      sendSSEEvent(res, 'agent_progress', { 
-        agent, 
-        progress: 90, 
+      sendSSEEvent(res, 'agent_progress', {
+        agent,
+        progress: 90,
         message: '分析完成，正在汇总...',
         timestamp: Date.now()
       });
 
       // 推送完成事件
-      sendSSEEvent(res, 'agent_complete', { 
-        agent, 
-        status: 'completed', 
-        score: parsedResult.score, 
+      sendSSEEvent(res, 'agent_complete', {
+        agent,
+        status: 'completed',
+        score: parsedResult.score,
         data: parsedResult,
         timestamp: Date.now()
       });
@@ -196,9 +216,9 @@ async function streamMultiAgentAnalysis(req, res, company, action, apiKey, apiUr
       return { agent, success: true, data: parsedResult };
     } catch (error) {
       console.error(`[Agent ${agent}] Error:`, error);
-      sendSSEEvent(res, 'agent_error', { 
-        agent, 
-        status: 'failed', 
+      sendSSEEvent(res, 'agent_error', {
+        agent,
+        status: 'failed',
         error: error.message,
         timestamp: Date.now()
       });
@@ -207,13 +227,25 @@ async function streamMultiAgentAnalysis(req, res, company, action, apiKey, apiUr
     }
   });
 
-  // 等待所有 Agent 完成
-  await Promise.all(agentPromises);
+  try {
+    // 等待所有 Agent 完成
+    await Promise.all(agentPromises);
 
-  // 汇总结果并推送最终 summary
-  const finalResult = fuseAgentResults(company, action, results);
-  sendSSEEvent(res, 'summary', finalResult);
+    // 汇总结果并推送最终 summary
+    const finalResult = fuseAgentResults(company, action, results);
+    sendSSEEvent(res, 'summary', finalResult);
+  } catch (error) {
+    console.error('[Orchestrator] 汇总结果时出错:', error);
+    sendSSEEvent(res, 'error', {
+      error: error.message,
+      timestamp: Date.now()
+    });
+  } finally {
+    // 清除心跳定时器
+    clearInterval(keepAliveInterval);
+    console.log('[Orchestrator] 分析完成，已清除心跳定时器');
 
-  // 结束响应
-  res.end();
+    // 结束响应
+    res.end();
+  }
 }

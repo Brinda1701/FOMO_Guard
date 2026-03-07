@@ -3,6 +3,11 @@
   "version": 2,
   "buildCommand": "echo 'Deploying static site with API routes'",
   "outputDirectory": ".",
+  "functions": {
+    "api/**/*.js": {
+      "maxDuration": 60
+    }
+  },
   "rewrites": [
     { "source": "/", "destination": "/index.html" },
     { "source": "/api/health", "destination": "/api/health.js" },
