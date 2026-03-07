@@ -2903,6 +2903,13 @@ html[data-theme="light"] .modal-danger #breatheText {
 }
 
 /* ==================== K 线图表样式 ==================== */
+.charts-grid-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-top: 15px;
+}
+
 .kline-chart-container {
     background: var(--bg-card);
     border-radius: 12px;
@@ -2912,7 +2919,20 @@ html[data-theme="light"] .modal-danger #breatheText {
 
 .kline-chart-wrapper {
     position: relative;
-    height: 250px;
+    height: 220px;
+    width: 100%;
+}
+
+.trend-chart-container {
+    background: var(--bg-card);
+    border-radius: 12px;
+    padding: 15px;
+    border: 1px solid var(--border-color);
+}
+
+.trend-chart-wrapper {
+    position: relative;
+    height: 220px;
     width: 100%;
 }
 
@@ -2957,18 +2977,28 @@ html[data-theme="light"] .modal-danger #breatheText {
     .card[style*="grid-column: span 1"] {
         grid-column: 1 / -1 !important;
     }
-    
+
     .validation-stats-row {
         grid-template-columns: 1fr;
         gap: 8px;
     }
-    
+
     .validation-stat {
         padding: 10px;
     }
-    
+
     .validation-chart-legend {
         gap: 15px;
+    }
+    
+    /* 图表并列布局在移动端恢复为垂直布局 */
+    .charts-grid-container {
+        grid-template-columns: 1fr;
+    }
+    
+    .kline-chart-wrapper,
+    .trend-chart-wrapper {
+        height: 200px;
     }
 }
 

@@ -20,9 +20,9 @@
     <!-- Chart.js 库 -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js" integrity="sha512-CQBWl4fJHWbryGE+Pc7UAxWMUMNMWzWxF4SQo9CgkJIN1kx6djDQZjh3Y8SZ1d+6I+1zze6Z7kHXO7q3UyZAWw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <!-- 引入外部样式 -->
-    <link rel="stylesheet" href="css/style.css?v=2026030706">
-    <link rel="stylesheet" href="css/terminal-skeleton.css?v=2026030706">
-    <link rel="stylesheet" href="css/login-guide.css?v=2026030706">
+    <link rel="stylesheet" href="css/style.css?v=2026030707">
+    <link rel="stylesheet" href="css/terminal-skeleton.css?v=2026030707">
+    <link rel="stylesheet" href="css/login-guide.css?v=2026030707">
     <!-- 版本缓存控制 -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
@@ -252,24 +252,27 @@
                     <h4 style="margin: 20px 0 12px; font-size: 0.95rem; color: var(--text-secondary);">🔥 实时热搜词</h4>
                     <div class="hot-trends" id="hotTrends"></div>
                 </div>
-                <!-- K 线图表 -->
-                <div class="kline-chart-container" id="klineChartContainer" style="display:none; margin-top: 20px;">
-                    <h4 style="margin: 20px 0 12px; font-size: 0.95rem; color: var(--text-secondary);">
-                        📈 K 线走势
-                        <span class="data-source-tag" style="margin-left: 8px; font-size: 0.75rem; background: rgba(59, 130, 246, 0.15); color: #60a5fa; padding: 2px 8px; border-radius: 4px;">延迟 15 分钟</span>
-                    </h4>
-                    <div class="kline-chart-wrapper" id="klineChartWrapper">
-                        <canvas id="klineChart"></canvas>
+                <!-- 图表并列容器 -->
+                <div class="charts-grid-container">
+                    <!-- K 线图表 -->
+                    <div class="kline-chart-container" id="klineChartContainer" style="display:none;">
+                        <h4 style="margin: 0 0 12px; font-size: 0.95rem; color: var(--text-secondary);">
+                            📈 K 线走势
+                            <span class="data-source-tag" style="margin-left: 8px; font-size: 0.75rem; background: rgba(59, 130, 246, 0.15); color: #60a5fa; padding: 2px 8px; border-radius: 4px;">延迟 15 分钟</span>
+                        </h4>
+                        <div class="kline-chart-wrapper" id="klineChartWrapper">
+                            <canvas id="klineChart"></canvas>
+                        </div>
+                        <div class="kline-stats" id="klineStats" style="display: flex; gap: 15px; margin-top: 12px; font-size: 0.8rem;">
+                            <!-- 动态生成 -->
+                        </div>
                     </div>
-                    <div class="kline-stats" id="klineStats" style="display: flex; gap: 15px; margin-top: 12px; font-size: 0.8rem;">
-                        <!-- 动态生成 -->
-                    </div>
-                </div>
-                <!-- 实时情绪趋势图 -->
-                <div class="trend-chart-container">
-                    <h4 style="margin: 20px 0 12px; font-size: 0.95rem; color: var(--text-secondary);">📈 实时情绪趋势</h4>
-                    <div class="trend-chart-wrapper">
-                        <canvas id="sentimentTrendChart"></canvas>
+                    <!-- 实时情绪趋势图 -->
+                    <div class="trend-chart-container">
+                        <h4 style="margin: 0 0 12px; font-size: 0.95rem; color: var(--text-secondary);">📈 实时情绪趋势</h4>
+                        <div class="trend-chart-wrapper">
+                            <canvas id="sentimentTrendChart"></canvas>
+                        </div>
                     </div>
                 </div>
                 <div class="history-chart" id="historyChart">
@@ -540,9 +543,9 @@
     <div class="highlight-overlay" id="highlightOverlay" style="display: none;"></div>
 
     <!-- 模块化 JS 入口 -->
-    <script type="module" src="js/login-guide.js?v=2026030706"></script>
-    <script type="module" src="js/data-source.js?v=2026030706"></script>
-    <script type="module" src="js/analysis-interaction.js?v=2026030706"></script>
-    <script type="module" src="js/app.js?v=2026030706"></script>
+    <script type="module" src="js/login-guide.js?v=2026030707"></script>
+    <script type="module" src="js/data-source.js?v=2026030707"></script>
+    <script type="module" src="js/analysis-interaction.js?v=2026030707"></script>
+    <script type="module" src="js/app.js?v=2026030707"></script>
 </body>
 </html>
