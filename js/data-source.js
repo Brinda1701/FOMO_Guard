@@ -27,15 +27,20 @@ export function renderDataSourceCards(company) {
         console.error('[DataSource] 错误：找不到 credibilityScoreEl 元素');
         return;
     }
-    
+
+    // 生成动态资讯短语
+    const insights = generateDataSourceInsights(company);
+
     const sources = [
         {
             name: '微博舆情',
             icon: '📱',
             status: '实时',
+            insight: insights.weibo,
             metrics: [
                 { label: '讨论数', value: '12.5K' },
-                { label: '情感倾向', value: '正面' }
+                { label: '情感倾向', value: '正面' },
+                { label: '热度趋势', value: '↑ 18%' }
             ],
             verified: true
         },
@@ -43,9 +48,11 @@ export function renderDataSourceCards(company) {
             name: '雪球',
             icon: '📰',
             status: '实时',
+            insight: insights.xueqiu,
             metrics: [
                 { label: '关注数', value: '8.2K' },
-                { label: '热度排名', value: 'Top 50' }
+                { label: '热度排名', value: 'Top 50' },
+                { label: '大 V 观点', value: '偏多' }
             ],
             verified: true
         },
@@ -53,9 +60,11 @@ export function renderDataSourceCards(company) {
             name: '东方财富',
             icon: '💬',
             status: '实时',
+            insight: insights.eastmoney,
             metrics: [
                 { label: '评论数', value: '3.1K' },
-                { label: '资金流向', value: '净流入' }
+                { label: '资金流向', value: '净流入' },
+                { label: '主力动向', value: '加仓' }
             ],
             verified: true
         },
@@ -63,19 +72,24 @@ export function renderDataSourceCards(company) {
             name: '新浪财经',
             icon: '📈',
             status: '延迟 15 分钟',
+            insight: insights.sina,
             metrics: [
                 { label: '新闻数', value: '156' },
-                { label: '公告数', value: '8' }
+                { label: '公告数', value: '8' },
+                { label: '研报评级', value: '买入' }
             ],
             verified: true
         }
     ];
-    
+
     dataSourceGrid.innerHTML = sources.map(s => `
         <div class="data-source-card ${s.verified ? 'verified' : ''}">
             <div class="data-source-header">
                 <span class="data-source-icon">${s.icon}</span>
-                <span class="data-source-name">${s.name}</span>
+                <div class="data-source-info">
+                    <span class="data-source-name">${s.name}</span>
+                    <span class="data-source-insight">${s.insight}</span>
+                </div>
                 <span class="data-source-status">${s.status}</span>
             </div>
             <div class="data-source-metrics">
@@ -240,26 +254,26 @@ function generateKlineData(score) {
     const basePrice = 50 + Math.random() * 100;
     const trend = score > 50 ? 1 : -1;
     const volatility = score > 70 || score < 30 ? 0.03 : 0.015;
-    
+
     const labels = [];
     const close = [];
     const colors = [];
-    
+
     let price = basePrice;
     for (let i = 0; i < 20; i++) {
         const date = new Date();
         date.setDate(date.getDate() - (19 - i));
         labels.push(`${date.getMonth() + 1}/${date.getDate()}`);
-        
+
         const change = (Math.random() - 0.5) * volatility * price * trend;
         price += change;
         close.push(price);
     }
-    
+
     const isUp = close[close.length - 1] > close[0];
     const mainColor = isUp ? '#10b981' : '#ef4444';
     const bgColor = isUp ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)';
-    
+
     return {
         labels,
         close,
@@ -268,6 +282,52 @@ function generateKlineData(score) {
         change: ((close[close.length - 1] - close[0]) / close[0]) * 100,
         volume: `${(Math.random() * 10 + 5).toFixed(1)}亿`,
         amount: `${(Math.random() * 50 + 20).toFixed(1)}亿`
+    };
+}
+
+/**
+ * 生成各数据源的资讯短语
+ */
+function generateDataSourceInsights(company) {
+    // 资讯短语库
+    const weiboInsights = [
+        `散户讨论热烈，${company} 成今日话题焦点`,
+        `大 V 纷纷发声，${company} 走势引关注`,
+        `热搜榜上有名，${company} 情绪持续升温`,
+        `网友热议：${company} 是否值得追高？`,
+        `微博舆情：${company} 多空分歧加大`
+    ];
+
+    const xueqiuInsights = [
+        `价值投资者聚焦 ${company} 长期价值`,
+        `雪球大 V：${company} 基本面分析`,
+        `组合配置中 ${company} 权重调整讨论`,
+        `深度研报：${company} 行业地位稳固`,
+        `投资者社区：${company} 估值水平分析`
+    ];
+
+    const eastmoneyInsights = [
+        `主力资金流向 ${company} 呈净流入态势`,
+        `龙虎榜数据：${company} 机构席位活跃`,
+        `散户情绪：${company} 持仓意愿增强`,
+        `资金面分析：${company} 获北向资金青睐`,
+        `交易热度：${company} 换手率上升`
+    ];
+
+    const sinaInsights = [
+        `新浪财经：${company} 最新公告解读`,
+        `快讯：${company} 行业动态追踪`,
+        `深度：${company} 财报关键指标分析`,
+        `市场：${company} 产业链调研更新`,
+        `聚焦：${company} 重大事项进展`
+    ];
+
+    // 随机选择资讯短语
+    return {
+        weibo: weiboInsights[Math.floor(Math.random() * weiboInsights.length)],
+        xueqiu: xueqiuInsights[Math.floor(Math.random() * xueqiuInsights.length)],
+        eastmoney: eastmoneyInsights[Math.floor(Math.random() * eastmoneyInsights.length)],
+        sina: sinaInsights[Math.floor(Math.random() * sinaInsights.length)]
     };
 }
 
