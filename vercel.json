@@ -1,9 +1,10 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "version": 2,
-  "buildCommand": "echo 'Static site, no build needed'",
+  "buildCommand": "echo 'Deploying static site with API routes'",
   "outputDirectory": ".",
   "rewrites": [
+    { "source": "/", "destination": "/index.html" },
     { "source": "/api/health", "destination": "/api/health.js" },
     { "source": "/api/analyze", "destination": "/api/analyze.js" },
     { "source": "/api/orchestrator", "destination": "/api/orchestrator.js" },
@@ -11,6 +12,14 @@
     { "source": "/api/backtest", "destination": "/api/backtest.js" }
   ],
   "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "X-Frame-Options", "value": "DENY" },
+        { "key": "X-XSS-Protection", "value": "1; mode=block" }
+      ]
+    },
     {
       "source": "/api/(.*)",
       "headers": [
@@ -21,6 +30,7 @@
     }
   ],
   "github": {
-    "silent": false
+    "silent": false,
+    "autoJobCancelation": true
   }
 }
