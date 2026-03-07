@@ -2736,13 +2736,13 @@ html[data-theme="light"] .modal-danger #breatheText {
 }
 
 .validation-bar.profit {
-    background: linear-gradient(to top, #059669, #10b981);
-    box-shadow: 0 0 8px rgba(16, 185, 129, 0.3);
+    background: linear-gradient(to top, #dc2626, #ef4444);
+    box-shadow: 0 0 8px rgba(239, 68, 68, 0.3);
 }
 
 .validation-bar.loss {
-    background: linear-gradient(to top, #dc2626, #ef4444);
-    box-shadow: 0 0 8px rgba(239, 68, 68, 0.3);
+    background: linear-gradient(to top, #059669, #10b981);
+    box-shadow: 0 0 8px rgba(16, 185, 129, 0.3);
 }
 
 .validation-bar:hover {
@@ -2779,11 +2779,11 @@ html[data-theme="light"] .modal-danger #breatheText {
 }
 
 .legend-color.legend-profit {
-    background: linear-gradient(to top, #059669, #10b981);
+    background: linear-gradient(to top, #dc2626, #ef4444);
 }
 
 .legend-color.legend-loss {
-    background: linear-gradient(to top, #dc2626, #ef4444);
+    background: linear-gradient(to top, #059669, #10b981);
 }
 
 .legend-text {
