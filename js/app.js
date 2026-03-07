@@ -693,12 +693,21 @@ function handleImpulseCheck(action) {
     // 保存当前操作类型
     Logic.state.lastAction = action;
 
+    // 添加按钮选中状态
+    document.querySelectorAll('.trade-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    const activeBtn = document.querySelector(`.trade-btn[data-action="${action}"]`);
+    if (activeBtn) {
+        activeBtn.classList.add('active');
+    }
+
     const result = Logic.evaluateImpulse(action, Logic.state.currentCompany, Logic.state.currentScore);
 
     const showDecisionOverlay = () => {
         // 获取损失厌恶警告（基于个人历史数据）
         const lossAversionWarning = Logic.getLossAversionWarning(Logic.state.currentScore);
-        
+
         UI.showDecisionResult(
             result.diagnosis,
             action,
