@@ -665,30 +665,6 @@ function resetAgentProgressUI() {
     }
 }
 
-// 更新 Agent 进度
-function updateAgentProgress(agentType, status, progress, score = null) {
-    const agentKey = agentType.toLowerCase().replace('agent', '');
-    const progressFill = document.getElementById(`${agentKey}Progress`);
-    const statusEl = document.getElementById(`${agentKey}Status`);
-
-    if (progressFill) {
-        progressFill.style.width = `${progress}%`;
-    }
-
-    if (statusEl) {
-        statusEl.className = `agent-status ${status}`;
-        if (status === 'completed' && score !== null) {
-            statusEl.textContent = `${score}分`;
-        } else if (status === 'processing') {
-            statusEl.textContent = '分析中...';
-        } else if (status === 'failed') {
-            statusEl.textContent = '失败';
-        } else {
-            statusEl.textContent = '等待中';
-        }
-    }
-}
-
 // 添加思维链条目
 function addThinkingItem(agentType, content) {
     const thinkingChain = document.getElementById('agentThinkingChain');
