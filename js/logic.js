@@ -1060,4 +1060,23 @@ export async function analyzeBatchCompanies(companies, onProgress, concurrency =
     // 按原始顺序排序并返回
     return analyzedResults.sort((a, b) => a.index - b.index);
 }
-"export function getStockSymbol(company) { if (STOCK_SYMBOLS[company]) return STOCK_SYMBOLS[company]; for (const [key, symbol] of Object.entries(STOCK_SYMBOLS)) { if (company.includes(key) || key.includes(company)) return symbol; } return company; }" 
+
+/**
+ * 获取公司股票代码
+ */
+export function getStockSymbol(company) {
+    // 直接匹配
+    if (STOCK_SYMBOLS[company]) {
+        return STOCK_SYMBOLS[company];
+    }
+    
+    // 模糊匹配
+    for (const [key, symbol] of Object.entries(STOCK_SYMBOLS)) {
+        if (company.includes(key) || key.includes(company)) {
+            return symbol;
+        }
+    }
+    
+    // 返回公司名称作为标识
+    return company;
+} 
