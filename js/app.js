@@ -130,7 +130,7 @@ function initTheme() {
 
 function setupEventListeners() {
     // 主题切换
-    document.getElementById('themeToggle').addEventListener('click', () => {
+    document.getElementById('themeToggle')?.addEventListener('click', () => {
         const themeToggle = document.getElementById('themeToggle');
         const currentTheme = document.documentElement.getAttribute('data-theme');
         if (currentTheme === 'light') {
@@ -150,8 +150,8 @@ function setupEventListeners() {
     });
 
     // 公司分析
-    document.getElementById('analyzeBtn').addEventListener('click', analyzeCompany);
-    document.getElementById('companyInput').addEventListener('keypress', e => {
+    document.getElementById('analyzeBtn')?.addEventListener('click', analyzeCompany);
+    document.getElementById('companyInput')?.addEventListener('keypress', e => {
         if (e.key === 'Enter') analyzeCompany();
     });
     document.querySelectorAll('.quick-tag').forEach(tag => {
@@ -163,26 +163,28 @@ function setupEventListeners() {
     });
 
     // URL 分析
-    document.getElementById('analyzeUrlBtn').addEventListener('click', analyzeNewsUrl);
-    document.getElementById('newsUrlInput').addEventListener('keypress', e => {
+    document.getElementById('analyzeUrlBtn')?.addEventListener('click', analyzeNewsUrl);
+    document.getElementById('newsUrlInput')?.addEventListener('keypress', e => {
         if (e.key === 'Enter') analyzeNewsUrl();
     });
 
     // 文本分析
-    document.getElementById('analyzeTextBtn').addEventListener('click', analyzeText);
-    document.getElementById('textInput').addEventListener('input', () => {
-        const count = document.getElementById('textInput').value.length;
-        document.getElementById('charCount').textContent = count;
+    document.getElementById('analyzeTextBtn')?.addEventListener('click', analyzeText);
+    document.getElementById('textInput')?.addEventListener('input', () => {
+        const count = document.getElementById('textInput')?.value.length || 0;
+        const charCountEl = document.getElementById('charCount');
+        if (charCountEl) charCountEl.textContent = count;
     });
-    document.getElementById('textInput').addEventListener('keypress', e => {
+    document.getElementById('textInput')?.addEventListener('keypress', e => {
         if (e.key === 'Enter' && e.ctrlKey) analyzeText(); // Ctrl+Enter 快捷分析
     });
 
     // 批量分析
-    document.getElementById('analyzeBatchBtn').addEventListener('click', analyzeBatch);
-    document.getElementById('batchInput').addEventListener('input', () => {
-        const lines = document.getElementById('batchInput').value.split('\n').filter(l => l.trim());
-        document.getElementById('batchCount').textContent = Math.min(lines.length, 10);
+    document.getElementById('analyzeBatchBtn')?.addEventListener('click', analyzeBatch);
+    document.getElementById('batchInput')?.addEventListener('input', () => {
+        const lines = document.getElementById('batchInput')?.value.split('\n').filter(l => l.trim()) || [];
+        const batchCountEl = document.getElementById('batchCount');
+        if (batchCountEl) batchCountEl.textContent = Math.min(lines.length, 10);
     });
 
     // 交易决策按钮
@@ -193,19 +195,19 @@ function setupEventListeners() {
     });
 
     // 决策结果界面交互
-    document.getElementById('backToMain').addEventListener('click', UI.closeDecisionOverlay);
-    document.getElementById('continueAnalyzeBtn').addEventListener('click', UI.closeDecisionOverlay);
-    document.getElementById('recordDecisionBtn').addEventListener('click', () => {
+    document.getElementById('backToMain')?.addEventListener('click', UI.closeDecisionOverlay);
+    document.getElementById('continueAnalyzeBtn')?.addEventListener('click', UI.closeDecisionOverlay);
+    document.getElementById('recordDecisionBtn')?.addEventListener('click', () => {
         UI.closeDecisionOverlay();
         UI.openDiaryModal(Logic.state.currentCompany, Logic.state.currentScore);
     });
 
     // 心理测试
-    document.getElementById('showQuizBtn').addEventListener('click', UI.showQuiz);
+    document.getElementById('showQuizBtn')?.addEventListener('click', UI.showQuiz);
 
     // 日记相关（模态框）
-    document.getElementById('cancelDiaryBtn').addEventListener('click', UI.closeDiaryModal);
-    document.getElementById('saveDiaryBtn').addEventListener('click', handleSaveDiary);
+    document.getElementById('cancelDiaryBtn')?.addEventListener('click', UI.closeDiaryModal);
+    document.getElementById('saveDiaryBtn')?.addEventListener('click', handleSaveDiary);
 
     // 日记类型选择
     let selectedDiaryType = 'hold';
@@ -214,13 +216,15 @@ function setupEventListeners() {
             document.querySelectorAll('.diary-type-btn').forEach(b => b.classList.remove('active'));
             this.classList.add('active');
             selectedDiaryType = this.dataset.type;
-            document.getElementById('diaryModal').dataset.selectedType = selectedDiaryType;
+            const diaryModal = document.getElementById('diaryModal');
+            if (diaryModal) diaryModal.dataset.selectedType = selectedDiaryType;
         });
     });
 
     // 日记滑块
-    document.getElementById('diaryScore').addEventListener('input', function() {
-        document.getElementById('diaryScoreDisplay').textContent = this.value;
+    document.getElementById('diaryScore')?.addEventListener('input', function() {
+        const scoreDisplayEl = document.getElementById('diaryScoreDisplay');
+        if (scoreDisplayEl) scoreDisplayEl.textContent = this.value;
     });
 
     // 内联日记添加按钮 - 直接保存决策记录
@@ -259,17 +263,17 @@ function setupEventListeners() {
 
     // 批量分析模态框交互
     document.getElementById('closeBatchModal')?.addEventListener('click', () => {
-        document.getElementById('batchModalOverlay').classList.remove('active');
+        document.getElementById('batchModalOverlay')?.classList.remove('active');
     });
     document.getElementById('closeBatchModalBtn')?.addEventListener('click', () => {
-        document.getElementById('batchModalOverlay').classList.remove('active');
+        document.getElementById('batchModalOverlay')?.classList.remove('active');
     });
     document.getElementById('exportBatchResults')?.addEventListener('click', exportBatchResults);
 
     // 点击模态框背景关闭
     document.getElementById('batchModalOverlay')?.addEventListener('click', (e) => {
         if (e.target === document.getElementById('batchModalOverlay')) {
-            document.getElementById('batchModalOverlay').classList.remove('active');
+            document.getElementById('batchModalOverlay')?.classList.remove('active');
         }
     });
 }
