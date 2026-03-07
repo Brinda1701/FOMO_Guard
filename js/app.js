@@ -4,6 +4,7 @@ import * as Chart from './chart.js';
 import * as AgentViz from './agent-viz.js';
 import { AI_CONFIG, AGENT_CONFIG } from './config.js';
 import { LoginUI, Guide } from './login-guide.js';
+import { renderDataSourceCards, renderKlineChart } from './data-source.js';
 
 // 渲染日记列表（独立区域 - 已移除）
 function renderDiaryList(entries) {
@@ -393,6 +394,10 @@ async function analyzeWithSingleMode(company) {
     UI.updateSources();
     UI.updateValidationChart(score, company);
     UI.createEmotionParticles(score);
+
+    // 渲染数据来源和 K 线图表
+    renderDataSourceCards(company);
+    renderKlineChart(company, score);
 
     // 更新情绪趋势图
     Chart.updateSentimentTrendChart(historyData);

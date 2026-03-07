@@ -244,6 +244,19 @@
                     <h4 style="margin: 20px 0 12px; font-size: 0.95rem; color: var(--text-secondary);">🔥 实时热搜词</h4>
                     <div class="hot-trends" id="hotTrends"></div>
                 </div>
+                <!-- K 线图表 -->
+                <div class="kline-chart-container" id="klineChartContainer" style="display:none; margin-top: 20px;">
+                    <h4 style="margin: 20px 0 12px; font-size: 0.95rem; color: var(--text-secondary);">
+                        📈 K 线走势
+                        <span class="data-source-tag" style="margin-left: 8px; font-size: 0.75rem; background: rgba(59, 130, 246, 0.15); color: #60a5fa; padding: 2px 8px; border-radius: 4px;">延迟 15 分钟</span>
+                    </h4>
+                    <div class="kline-chart-wrapper" id="klineChartWrapper">
+                        <canvas id="klineChart"></canvas>
+                    </div>
+                    <div class="kline-stats" id="klineStats" style="display: flex; gap: 15px; margin-top: 12px; font-size: 0.8rem;">
+                        <!-- 动态生成 -->
+                    </div>
+                </div>
                 <!-- 实时情绪趋势图 -->
                 <div class="trend-chart-container">
                     <h4 style="margin: 20px 0 12px; font-size: 0.95rem; color: var(--text-secondary);">📈 实时情绪趋势</h4>
@@ -258,6 +271,31 @@
                         <span style="color: var(--accent-blue); font-weight: 600;">📊 图表说明：</span>
                         显示最近 10 次分析的情绪分数变化趋势，帮助您了解市场情绪的波动情况。绿色区域 (>70) 表示贪婪，黄色区域 (30-70) 表示中性，红色区域 (<30) 表示恐惧。
                     </div>
+                </div>
+            </div>
+
+            <!-- 数据来源与可信度增强 -->
+            <div class="card full-width" id="dataSourceCard" style="display:none;">
+                <h2 class="card-title"><span class="icon">🔐</span>数据来源与可信度验证</h2>
+                <!-- 骨架屏 -->
+                <div class="skeleton-container" id="dataSourceSkeleton" style="display:none;">
+                    <div class="skeleton-source-item"></div>
+                    <div class="skeleton-source-item"></div>
+                    <div class="skeleton-source-item"></div>
+                </div>
+                <div class="data-source-grid" id="dataSourceGrid">
+                    <!-- 动态生成 -->
+                </div>
+                <div class="credibility-info" style="margin-top: 20px; padding: 15px; background: rgba(16, 185, 129, 0.05); border-radius: 12px; border-left: 3px solid #10b981;">
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                        <span style="font-size: 1.2rem;">✅</span>
+                        <span style="font-weight: 600; color: var(--text-primary);">数据可信度评分</span>
+                        <span class="credibility-score" id="credibilityScore" style="background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 700;">--</span>
+                    </div>
+                    <p style="font-size: 0.8rem; color: var(--text-secondary); line-height: 1.6;">
+                        <span style="color: var(--accent-blue); font-weight: 600;">📋 评估维度：</span>
+                        数据源多样性 × 实时性 × 情感一致性 × 历史准确度。本工具综合多个权威财经平台数据，通过 AI 交叉验证，为您提供可靠的情绪分析参考。
+                    </p>
                 </div>
             </div>
 
@@ -495,6 +533,7 @@
 
     <!-- 模块化 JS 入口 -->
     <script type="module" src="js/login-guide.js?v=20260307"></script>
+    <script type="module" src="js/data-source.js?v=20260307"></script>
     <script type="module" src="js/app.js?v=20260307"></script>
 </body>
 </html>
