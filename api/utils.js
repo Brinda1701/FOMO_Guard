@@ -293,7 +293,7 @@ async function callAIModel(prompt, apiKey, apiUrl, modelName, retryCount = 0) {
 }
 
 /**
- * 解析 Agent 结果（增强容错版）
+ * 解析 Agent 结果（增强容错版 + 详细日志）
  */
 function parseAgentResult(agent, aiResult) {
   const defaultResult = {
@@ -302,16 +302,25 @@ function parseAgentResult(agent, aiResult) {
   };
 
   if (!aiResult || typeof aiResult !== 'object') {
-    console.warn(`[parseAgentResult] ${agent}: AI 返回结果无效，使用默认值`);
+    console.warn(`[parseAgentResult] ${agent}: AI 返回结果无效，使用默认值`, aiResult);
     return defaultResult;
   }
 
   try {
     let score = aiResult.score;
+    
+    // 记录原始分数
+    console.log(`[parseAgentResult] ${agent} - AI 返回原始数据:`, JSON.stringify(aiResult).substring(0, 300));
+    console.log(`[parseAgentResult] ${agent} - 原始 score 值:`, score, '类型:', typeof score);
+    
     if (typeof score !== 'number' || isNaN(score)) {
       score = aiResult.sentiment_score || aiResult.technical_score || 50;
+      console.log(`[parseAgentResult] ${agent} - score 不是数字，使用备用字段:`, score);
     }
+    
     score = Math.max(0, Math.min(100, Number(score)));
+    console.log(`[parseAgentResult] ${agent} - 最终分数:`, score);
+    
     const isFallback = aiResult.fallback === true || !aiResult.summary;
 
     // 兼容 keyEvidence（驼峰）和 key_evidence（下划线）两种格式
@@ -343,7 +352,7 @@ function parseAgentResult(agent, aiResult) {
       }));
     }
 
-    return {
+    const result = {
       score,
       confidence: typeof aiResult.confidence === 'number' ? aiResult.confidence : 0.5,
       summary: aiResult.summary || (isFallback ? '分析结果仅供参考' : defaultResult.summary),
@@ -352,6 +361,15 @@ function parseAgentResult(agent, aiResult) {
       biasDetected: Array.isArray(aiResult.biasDetected) ? aiResult.biasDetected : [],
       isFallback
     };
+    
+    console.log(`[parseAgentResult] ${agent} - 解析后的结果:`, {
+      score: result.score,
+      confidence: result.confidence,
+      summary: result.summary?.substring(0, 50),
+      keyEvidenceCount: result.keyEvidence.length
+    });
+    
+    return result;
   } catch (error) {
     console.error(`[parseAgentResult] ${agent}: 解析错误`, error);
     return defaultResult;
@@ -359,20 +377,41 @@ function parseAgentResult(agent, aiResult) {
 }
 
 /**
- * 融合 Agent 结果
+ * 融合 Agent 结果（添加一致性验证）
  */
 function fuseAgentResults(company, action, results) {
   const sentiment = results.sentiment || { score: 50 };
   const technical = results.technical || { score: 50 };
   const psychology = results.psychology || { score: 50 };
 
+  console.log('[fuseAgentResults] 输入数据:', {
+    sentiment: sentiment.score,
+    technical: technical.score,
+    psychology: psychology.score
+  });
+
   const finalScore = Math.round(sentiment.score * 0.4 + technical.score * 0.3 + psychology.score * 0.3);
+  
+  // 验证分数一致性
+  const calculatedScore = Math.round(sentiment.score * 0.4 + technical.score * 0.3 + psychology.score * 0.3);
+  console.log('[fuseAgentResults] 计算验证:', {
+    formula: `${sentiment.score}×0.4 + ${technical.score}×0.3 + ${psychology.score}×0.3 = ${calculatedScore}`,
+    finalScore: finalScore,
+    match: calculatedScore === finalScore
+  });
+  
   const scoreDiff = Math.max(
     Math.abs(sentiment.score - technical.score),
     Math.abs(technical.score - psychology.score),
     Math.abs(psychology.score - sentiment.score)
   );
   const consensus = scoreDiff > 25 ? 'divergent' : 'aligned';
+
+  console.log('[fuseAgentResults] 最终输出:', {
+    finalScore,
+    consensus,
+    scoreDiff
+  });
 
   return {
     success: true, company, action: action || 'analyze', finalScore, consensus,

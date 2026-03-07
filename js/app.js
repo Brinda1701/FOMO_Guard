@@ -556,12 +556,22 @@ function handleMultiAgentSummary(summary, company) {
     const technicalScore = breakdown.technical?.score || 50;
     const psychologyScore = breakdown.psychology?.score || 50;
 
+    console.log('[Multi-Agent] summary 数据结构:', JSON.stringify(summary, null, 2).substring(0, 500));
     console.log('[Multi-Agent] 更新 Agent 分数:', {
         sentiment: sentimentScore,
         technical: technicalScore,
         psychology: psychologyScore,
-        final: score
+        final: score,
+        expected: `(${sentimentScore}×0.4 + ${technicalScore}×0.3 + ${psychologyScore}×0.3 = ${Math.round(sentimentScore * 0.4 + technicalScore * 0.3 + psychologyScore * 0.3)})`
     });
+
+    // 验证分数一致性
+    const calculatedFinal = Math.round(sentimentScore * 0.4 + technicalScore * 0.3 + psychologyScore * 0.3);
+    if (Math.abs(calculatedFinal - score) > 1) {
+        console.warn('[Multi-Agent] ⚠️ 分数不一致！Agent 分数计算的最终值:', calculatedFinal, '但实际最终分数是:', score);
+    } else {
+        console.log('[Multi-Agent] ✓ 分数一致性验证通过');
+    }
 
     // 延迟更新，确保 DOM 已渲染
     setTimeout(() => {
