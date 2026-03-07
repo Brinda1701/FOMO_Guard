@@ -20,9 +20,9 @@
     <!-- Chart.js 库 -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js" integrity="sha512-CQBWl4fJHWbryGE+Pc7UAxWMUMNMWzWxF4SQo9CgkJIN1kx6djDQZjh3Y8SZ1d+6I+1zze6Z7kHXO7q3UyZAWw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <!-- 引入外部样式 -->
-    <link rel="stylesheet" href="css/style.css?v=2026030705">
-    <link rel="stylesheet" href="css/terminal-skeleton.css?v=2026030705">
-    <link rel="stylesheet" href="css/login-guide.css?v=2026030705">
+    <link rel="stylesheet" href="css/style.css?v=2026030706">
+    <link rel="stylesheet" href="css/terminal-skeleton.css?v=2026030706">
+    <link rel="stylesheet" href="css/login-guide.css?v=2026030706">
     <!-- 版本缓存控制 -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
@@ -64,6 +64,19 @@
                     <div class="placeholder">
                         <div class="placeholder-icon">🔍</div>
                         <p>请输入公司名称开始分析市场情绪</p>
+                    </div>
+                </div>
+                <!-- 分析前：投资心理小贴士 -->
+                <div class="analysis-tips-container" id="analysisTipsContainer" style="display: none;">
+                    <div class="tips-header">
+                        <span class="tips-icon">💡</span>
+                        <span class="tips-title">投资心理小贴士</span>
+                    </div>
+                    <div class="tips-content" id="tipsContent">
+                        <!-- 动态内容 -->
+                    </div>
+                    <div class="tips-progress">
+                        <div class="tips-progress-bar" id="tipsProgressBar"></div>
                     </div>
                 </div>
                 <!-- Multi-Agent 进度面板 -->
@@ -527,8 +540,9 @@
     <div class="highlight-overlay" id="highlightOverlay" style="display: none;"></div>
 
     <!-- 模块化 JS 入口 -->
-    <script type="module" src="js/login-guide.js?v=2026030705"></script>
-    <script type="module" src="js/data-source.js?v=2026030705"></script>
-    <script type="module" src="js/app.js?v=2026030705"></script>
+    <script type="module" src="js/login-guide.js?v=2026030706"></script>
+    <script type="module" src="js/data-source.js?v=2026030706"></script>
+    <script type="module" src="js/analysis-interaction.js?v=2026030706"></script>
+    <script type="module" src="js/app.js?v=2026030706"></script>
 </body>
 </html>

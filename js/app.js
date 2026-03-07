@@ -5,6 +5,7 @@ import * as AgentViz from './agent-viz.js';
 import { AI_CONFIG, AGENT_CONFIG } from './config.js';
 import { LoginUI, Guide } from './login-guide.js';
 import { renderDataSourceCards, renderKlineChart } from './data-source.js';
+import * as AnalysisInteraction from './analysis-interaction.js';
 
 // 渲染日记列表（独立区域 - 已移除）
 function renderDiaryList(entries) {
@@ -278,6 +279,14 @@ async function analyzeWithMultiAgent(company) {
 
     // 显示骨架屏
     showAllSkeletons();
+    
+    // 启动分析互动模块（显示投资心理小贴士）
+    AnalysisInteraction.startTipsRotation();
+    
+    // 10 秒后有 30% 概率弹出互动问答
+    setTimeout(() => {
+        AnalysisInteraction.maybeShowQuiz();
+    }, 10000);
 
     try {
         const result = await Logic.fetchMultiAgentAnalysis(company, 'analyze', {
@@ -338,6 +347,8 @@ async function analyzeWithMultiAgent(company) {
                     hideAgentProgressPanel();
                     hideAllSkeletons();
                     window.agentVizInitialized = false;
+                    // 停止互动模块
+                    AnalysisInteraction.stopTipsRotation();
                 }, 2000);
             }
         });
@@ -347,6 +358,7 @@ async function analyzeWithMultiAgent(company) {
             hideAgentProgressPanel();
             hideAllSkeletons();
             window.agentVizInitialized = false;
+            AnalysisInteraction.stopTipsRotation();
             await analyzeWithSingleMode(company);
         }
 
@@ -355,6 +367,7 @@ async function analyzeWithMultiAgent(company) {
         hideAgentProgressPanel();
         hideAllSkeletons();
         window.agentVizInitialized = false;
+        AnalysisInteraction.stopTipsRotation();
         await analyzeWithSingleMode(company);
     }
 }
@@ -362,11 +375,14 @@ async function analyzeWithMultiAgent(company) {
 // 单 Agent/Mock 模式分析
 async function analyzeWithSingleMode(company) {
     console.log('[App] analyzeWithSingleMode 被调用，公司:', company);
-    
+
     UI.showLoading(Logic.state.useAIBackend);
 
     // 显示骨架屏
     showAllSkeletons();
+    
+    // 启动分析互动模块
+    AnalysisInteraction.startTipsRotation();
 
     let scoreData;
     let aiData = null;
@@ -388,6 +404,9 @@ async function analyzeWithSingleMode(company) {
     const { score, profile } = scoreData;
 
     console.log('[App] 分数计算完成:', score);
+    
+    // 停止互动模块
+    AnalysisInteraction.stopTipsRotation();
 
     // 记录情绪分数到历史数据
     const historyData = Logic.recordSentimentScore(company, score);
