@@ -539,6 +539,12 @@ function handleMultiAgentSummary(summary, company) {
     const sentimentData = breakdown.sentiment || {};
     const sentimentEvidence = sentimentData.keyEvidence || sentimentData.signals || [];
     
+    console.log('[Evidence] 渲染证据链:', sentimentEvidence);
+    console.log('[Evidence] 证据来源:', {
+        'keyEvidence': sentimentData.keyEvidence?.length,
+        'signals': sentimentData.signals?.length
+    });
+    
     // 使用新的全局证据渲染函数
     AgentViz.renderGlobalEvidence(sentimentEvidence);
 

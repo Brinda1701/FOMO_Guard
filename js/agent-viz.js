@@ -468,13 +468,19 @@ export function renderGlobalEvidence(evidenceArray) {
     const section = document.getElementById('globalEvidenceSection');
     const list = document.getElementById('globalEvidenceList');
     
+    console.log('[renderGlobalEvidence] 开始渲染，证据数量:', evidenceArray?.length || 0);
+    console.log('[renderGlobalEvidence] section 元素:', section);
+    console.log('[renderGlobalEvidence] list 元素:', list);
+    
     if (!section || !list) {
-        console.warn('[renderGlobalEvidence] 全局证据容器不存在');
+        console.error('[renderGlobalEvidence] 全局证据容器不存在！');
+        console.log('[renderGlobalEvidence] 请检查 HTML 中是否有 id="globalEvidenceSection" 和 id="globalEvidenceList"');
         return;
     }
 
     // 空状态处理
     if (!evidenceArray || evidenceArray.length === 0) {
+        console.log('[renderGlobalEvidence] 证据数组为空，显示空状态');
         list.innerHTML = `
             <div class="global-evidence-empty">
                 <span class="global-evidence-empty-icon">📝</span>
@@ -484,6 +490,8 @@ export function renderGlobalEvidence(evidenceArray) {
         section.style.display = 'block';
         return;
     }
+
+    console.log('[renderGlobalEvidence] 渲染', evidenceArray.length, '个证据胶囊');
 
     // 渲染证据胶囊标签
     const evidenceHTML = evidenceArray.map((evidence, index) => {
@@ -497,6 +505,8 @@ export function renderGlobalEvidence(evidenceArray) {
         const sentimentClass = getSentimentClass(sentiment);
         const sentimentIcon = getSentimentIcon(sentiment);
         const impactStars = getImpactStars(impact);
+
+        console.log('[renderGlobalEvidence] 证据', index, ':', { text, sentiment, sentimentClass, source });
 
         return `
             <div class="evidence-pill ${sentimentClass}" style="animation-delay: ${index * 0.05}s">
@@ -531,6 +541,8 @@ export function renderGlobalEvidence(evidenceArray) {
     // 显示证据区域
     section.style.display = 'block';
     section.classList.add('visible');
+    
+    console.log('[renderGlobalEvidence] 渲染完成');
 }
 
 // 辅助函数：获取情感样式类
