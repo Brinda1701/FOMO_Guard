@@ -241,9 +241,8 @@ function calculateCredibilityScore(sources) {
         if (s.metrics && s.metrics.length >= 3) score += 2;
         if (s.insight) score += 3;
     });
-    
+
     return Math.min(98, score + Math.floor(Math.random() * 10));
-}
 }
 
 /**
