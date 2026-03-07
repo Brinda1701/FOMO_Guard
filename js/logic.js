@@ -128,6 +128,13 @@ export function evaluateImpulse(action, company, score) {
                 quote: '华尔街有句名言："当擦鞋童都在谈论股票时，就是该离场的时候了。"',
                 stats: { profitProb: '25%', avgReturn: '-8.5%', riskLevel: '极高' }
             },
+            neutral: {
+                icon: '🧠', title: '情绪中性阶段', type: 'neutral',
+                message: `${company} 的情绪分数为 ${score} 分，处于正常波动区间。`, 
+                detail: '建议以基本面为主，避免被短期情绪左右决策。',
+                quote: '投资的成功，往往源于冷静与纪律，而非情绪波动。',
+                stats: { profitProb: '50%', avgReturn: '0%', riskLevel: '中等' }
+            },
             low: {
                 icon: '💎', title: '逆向投资验证', type: 'safe',
                 message: `${company} 当前情绪指数仅为 ${score} 分，市场普遍恐慌。`,
@@ -143,6 +150,13 @@ export function evaluateImpulse(action, company, score) {
                 detail: '记住：盈利是拿出来的，不是看出来的。处置效应会让人过早卖出盈利股。',
                 quote: '没有人因为获利卖出而破产，但无数人因为贪婪持有而归零。',
                 stats: { profitProb: '72%', avgReturn: '+5.2%', riskLevel: '低' }
+            },
+            neutral: {
+                icon: '🛡️', title: '情绪中性提醒', type: 'neutral',
+                message: `${company} 的情绪分数为 ${score} 分，处于正常波动区间。继续关注基本面和仓位管理。`,
+                detail: '在市场情绪平稳时，保持纪律性交易可以避免过度反应。',
+                quote: '理性的交易者不让情绪成为决策的主导。',
+                stats: { profitProb: '50%', avgReturn: '0%', riskLevel: '中等' }
             },
             low: {
                 icon: '⏰', title: '恐慌抛售警告', type: 'warning',
@@ -160,6 +174,13 @@ export function evaluateImpulse(action, company, score) {
                 quote: '投资大师查理·芒格："大钱不是买卖得来的，而是等待得来的。"',
                 stats: { profitProb: '-', avgReturn: '0%', riskLevel: '安全' }
             },
+            neutral: {
+                icon: '🧘', title: '情绪处于正常区间', type: 'neutral',
+                message: `当前 ${company} 的情绪分数为 ${score} 分，属于市场的常态波动区间，保持耐心即可。`, 
+                detail: '保持纪律性交易，避免情绪化决策。',
+                quote: '在平静时保持冷静，才能在动荡时不慌。',
+                stats: { profitProb: '-', avgReturn: '0%', riskLevel: '安全' }
+            },
             low: {
                 icon: '🔍', title: '理性观察模式', type: 'neutral',
                 message: `面对 ${company} 的低迷情绪，您选择观望而非冲动抄底。`,
@@ -170,7 +191,8 @@ export function evaluateImpulse(action, company, score) {
         }
     };
     
-    const level = score > 60 ? 'high' : 'low';
+    // 阈值：<=30 视为低，>=70 视为高，30-70 视为中性
+    const level = score >= 70 ? 'high' : score <= 30 ? 'low' : 'neutral';
     const diagnosis = diagnosisLib[action][level];
     // 统一规则：只要本次结论属于 warning（错误/高风险决策），立即进入冷静期
     const shouldCooldown = diagnosis.type === 'warning';
