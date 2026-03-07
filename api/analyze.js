@@ -18,9 +18,11 @@ module.exports = async function handler(req, res) {
   const MODELSCOPE_API_KEY = process.env.MODELSCOPE_API_KEY;
   const MODELSCOPE_API_URL = process.env.MODELSCOPE_API_URL || 'https://api-inference.modelscope.cn/v1/';
   // 使用 ModelScope 推理服务可用的模型
-  // 推荐：Qwen/Qwen2.5-Coder-32B-Instruct (免费，速度快)
-  // 备选：deepseek-ai/DeepSeek-V3, deepseek-ai/DeepSeek-R1-Distill-Qwen-32B
-  const MODEL_NAME = process.env.MODEL_NAME || 'Qwen/Qwen2.5-Coder-32B-Instruct';
+  // 如果环境变量未配置，使用默认值
+  // 注意：ModelScope 的免费模型会动态变化，请以实际测试为准
+  const MODEL_NAME = process.env.MODEL_NAME || 'Qwen/Qwen2.5-72B-Instruct';
+  
+  console.log('[Analyze] 使用模型:', MODEL_NAME);
 
   console.log('[Analyze] 请求方法:', req.method);
   console.log('[Analyze] 请求体:', JSON.stringify(req.body));
