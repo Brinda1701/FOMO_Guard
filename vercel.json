@@ -1,7 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "version": 2,
-  "buildCommand": "",
+  "buildCommand": "echo 'Static site, no build needed'",
   "outputDirectory": ".",
   "rewrites": [
     { "source": "/api/health", "destination": "/api/health.js" },
@@ -19,5 +19,8 @@
         { "key": "Access-Control-Allow-Headers", "value": "Content-Type, Authorization" }
       ]
     }
-  ]
+  ],
+  "github": {
+    "silent": false
+  }
 }
