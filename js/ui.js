@@ -90,11 +90,23 @@ export function updateHistory() {
     const historyChart = document.getElementById('historyChart');
     const historyData = Array.from({ length: 7 }, () => Math.floor(Math.random() * 80) + 10);
     const days = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
-    
-    historyChart.innerHTML = historyData.map((v, i) => {
+
+    // 只更新条形图部分，保留图表说明
+    const barsHTML = historyData.map((v, i) => {
         const barClass = v < 40 ? 'fear' : (v > 60 ? 'greed' : 'neutral');
         return `<div class="history-bar ${barClass}" style="height: ${v}px" data-value="${days[i]}: ${v}"></div>`;
     }).join('');
+    
+    historyChart.innerHTML = `
+        <div style="display: flex; gap: 8px; justify-content: space-around; align-items: flex-end; height: 100px; margin-bottom: 12px;">
+            ${barsHTML}
+        </div>
+        <!-- 图表说明 -->
+        <div class="chart-help-text" style="padding: 10px; background: rgba(59, 130, 246, 0.05); border-radius: 8px; font-size: 0.8rem; color: var(--text-secondary);">
+            <span style="color: var(--accent-blue); font-weight: 600;">📊 图表说明：</span>
+            显示最近 10 次分析的情绪分数变化趋势，帮助您了解市场情绪的波动情况。绿色区域 (>70) 表示贪婪，黄色区域 (30-70) 表示中性，红色区域 (<30) 表示恐惧。
+        </div>
+    `;
 }
 
 export function updateSources() {
