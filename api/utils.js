@@ -110,14 +110,14 @@ function buildAgentPrompt(agent, company, action, marketData = null) {
 任务：
 1. 分析社交媒体、新闻、论坛上的舆论情绪
 2. 评估市场热度是否过高或过低
-3. 给出情绪分数（0-100，越高表示越贪婪/乐观）
+3. 给出情绪分数（0-100，越高表示越贪婪/乐观，**保留一位小数**，如 67.5）
 4. **提取 3-5 个关键证据短语**（必须从原文中截取的具体短语或句子）
 
 当前操作意向：${safeAction}
 
 请返回 JSON 格式：
 {
-  "score": 数字 (0-100),
+  "score": 数字 (0-100，保留一位小数),
   "confidence": 数字 (0-1),
   "summary": "情绪分析总结（必须引用具体情绪化表述）",
   "signals": ["正面信号 1", "负面信号 1", ...],
@@ -155,7 +155,7 @@ ${marketData ? formatMarketDataForPrompt(marketData) : '暂无数据'}
 
 请返回 JSON 格式：
 {
-  "score": 数字 (0-100),
+  "score": 数字 (0-100，保留一位小数),
   "confidence": 数字 (0-1),
   "summary": "技术分析总结（必须引用具体日期和数据点）",
   "signals": ["看涨信号 1", "看跌信号 1", ...]
@@ -169,13 +169,13 @@ ${marketData ? formatMarketDataForPrompt(marketData) : '暂无数据'}
 任务：
 1. 诊断投资者可能存在的认知偏误
 2. 评估当前市场心理状态
-3. 给出心理分数（0-100）
+3. 给出心理分数（0-100，**保留一位小数**）
 
 当前操作意向：${safeAction}
 
 请返回 JSON 格式：
 {
-  "score": 数字 (0-100),
+  "score": 数字 (0-100，保留一位小数),
   "confidence": 数字 (0-1),
   "summary": "心理诊断总结",
   "biasDetected": ["偏误类型 1", "偏误类型 2", ...]

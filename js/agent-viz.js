@@ -223,9 +223,10 @@ export function updateAgentScoreCards(scores) {
         const cardEl = document.querySelector(`[data-agent="${agent.key}"]`);
 
         if (valueEl) {
-            // 数字滚动动画
-            animateValue(valueEl, parseInt(valueEl.textContent) || 0, score, 1000);
-            
+            // 数字滚动动画（支持小数）
+            const startValue = parseFloat(valueEl.textContent) || 0;
+            animateValue(valueEl, startValue, score, 1000);
+
             // 更新颜色类
             valueEl.className = `agent-score-value ${getScoreClass(score)}`;
         }
@@ -254,20 +255,23 @@ function getScoreClass(score) {
 }
 
 /**
- * 数字滚动动画
+ * 数字滚动动画（支持小数）
  */
 function animateValue(element, start, end, duration) {
     const startTime = performance.now();
-    
+    const isDecimal = !Number.isInteger(end);
+
     function update(currentTime) {
         const elapsed = currentTime - startTime;
         const progress = Math.min(elapsed / duration, 1);
-        
+
         // 缓动函数
         const easeOutQuart = 1 - Math.pow(1 - progress, 4);
+
+        const current = start + (end - start) * easeOutQuart;
         
-        const current = Math.floor(start + (end - start) * easeOutQuart);
-        element.textContent = current;
+        // 如果是小数，保留一位；否则显示整数
+        element.textContent = isDecimal ? current.toFixed(1) : Math.floor(current);
 
         if (progress < 1) {
             requestAnimationFrame(update);

@@ -470,10 +470,10 @@ function showSingleAgentVisualization(score, company) {
     card.style.display = 'block';
     console.log('[AgentViz] 面板 display 设置为:', card.style.display);
 
-    // 基于主分数生成三个 Agent 的分数（有一定波动）
-    const sentimentScore = Math.max(0, Math.min(100, score + Math.floor(Math.random() * 20) - 10));
-    const technicalScore = Math.max(0, Math.min(100, score + Math.floor(Math.random() * 20) - 10));
-    const psychologyScore = Math.max(0, Math.min(100, score + Math.floor(Math.random() * 20) - 10));
+    // 基于主分数生成三个 Agent 的分数（有一定波动，保留一位小数）
+    const sentimentScore = Math.max(0, Math.min(100, +(score + (Math.random() * 20 - 10)).toFixed(1)));
+    const technicalScore = Math.max(0, Math.min(100, +(score + (Math.random() * 20 - 10)).toFixed(1)));
+    const psychologyScore = Math.max(0, Math.min(100, +(score + (Math.random() * 20 - 10)).toFixed(1)));
 
     const scores = {
         sentiment: sentimentScore,
