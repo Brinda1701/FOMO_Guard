@@ -319,7 +319,7 @@ async function analyzeWithMultiAgent(company) {
     // 显示 Multi-Agent 进度面板
     showAgentProgressPanel();
     UI.showLoading(true, 'Multi-Agent');
-    
+
     // 显示骨架屏
     showAllSkeletons();
 
@@ -330,6 +330,12 @@ async function analyzeWithMultiAgent(company) {
                 // 使用终端日志输出
                 const agentKey = data.agent.toLowerCase().replace('agent', '');
                 addTerminalLine(`${AGENT_CONFIG.names[agentKey] || data.agent} 开始分析...`, agentKey, true);
+                
+                // 渐进式渲染：立即显示可视化面板（骨架屏状态）
+                if (data.index === 0 || !window.agentVizInitialized) {
+                    AgentViz.initAgentVisualizationSkeleton();
+                    window.agentVizInitialized = true;
+                }
             },
             onAgentProgress: (data) => {
                 updateAgentProgress(data.agent, 'processing', data.progress);
@@ -342,11 +348,22 @@ async function analyzeWithMultiAgent(company) {
                 updateAgentProgress(data.agent, 'completed', 100, data.score);
                 const agentKey = data.agent.toLowerCase().replace('agent', '');
                 addTerminalLine(`${AGENT_CONFIG.names[agentKey] || data.agent} 分析完成，得分：${data.score}分`, 'success', false);
+                
+                // 渐进式渲染：立即更新对应卡片和雷达图
+                AgentViz.updateSingleAgentCard(agentKey, data.score, data);
+                AgentViz.updateRadarChartSinglePoint(agentKey, data.score);
             },
             onAgentError: (data) => {
                 updateAgentProgress(data.agent, 'failed', 0);
                 const agentKey = data.agent.toLowerCase().replace('agent', '');
                 addTerminalLine(`${AGENT_CONFIG.names[agentKey] || data.agent} 分析失败：${data.error || '未知错误'}`, 'error', false);
+                
+                // 标记失败的 Agent 卡片
+                const cardEl = document.querySelector(`[data-agent="${agentKey}"]`);
+                if (cardEl) {
+                    cardEl.classList.remove('skeleton');
+                    cardEl.classList.add('failed');
+                }
             },
             onSummary: (summary) => {
                 handleMultiAgentSummary(summary, company);
@@ -356,6 +373,7 @@ async function analyzeWithMultiAgent(company) {
                 // 降级到单 Agent 模式
                 hideAgentProgressPanel();
                 hideAllSkeletons();
+                window.agentVizInitialized = false;
                 analyzeWithSingleMode(company);
             },
             onDone: () => {
@@ -363,6 +381,7 @@ async function analyzeWithMultiAgent(company) {
                 setTimeout(() => {
                     hideAgentProgressPanel();
                     hideAllSkeletons();
+                    window.agentVizInitialized = false;
                 }, 2000);
             }
         });
@@ -371,6 +390,7 @@ async function analyzeWithMultiAgent(company) {
             // Multi-Agent 失败，降级
             hideAgentProgressPanel();
             hideAllSkeletons();
+            window.agentVizInitialized = false;
             await analyzeWithSingleMode(company);
         }
 
@@ -378,6 +398,7 @@ async function analyzeWithMultiAgent(company) {
         console.error('[Multi-Agent] Failed:', error);
         hideAgentProgressPanel();
         hideAllSkeletons();
+        window.agentVizInitialized = false;
         await analyzeWithSingleMode(company);
     }
 }
@@ -507,8 +528,8 @@ function handleMultiAgentSummary(summary, company) {
     // 更新情绪趋势图
     Chart.updateSentimentTrendChart(historyData);
 
-    // === 新增：更新 Multi-Agent 可视化面板和情绪证据链 ===
-    updateAgentVisualization(summary, company);
+    // === 渐进式渲染：只更新最终决策建议和证据链 ===
+    updateFinalDecisionFromSummary(summary, company);
 
     // 渲染情绪证据链
     const breakdown = summary.breakdown || {};
@@ -520,42 +541,27 @@ function handleMultiAgentSummary(summary, company) {
 
     // 显示 Agent 一致性结果
     showAgentConsensus(summary);
-    
+
     // 隐藏骨架屏
     hideAllSkeletons();
 }
 
-// 更新 Multi-Agent 可视化面板
-function updateAgentVisualization(summary, company) {
-    // 显示可视化面板
-    AgentViz.showAgentVisualization();
-
-    // 获取各 Agent 分数
-    const breakdown = summary.breakdown || {};
-    const scores = {
-        sentiment: breakdown.sentiment?.score || 50,
-        technical: breakdown.technical?.score || 50,
-        psychology: breakdown.psychology?.score || 50
-    };
-
-    // 初始化/更新雷达图
-    setTimeout(() => {
-        AgentViz.initAgentRadarChart(scores);
-    }, 100);
-
-    // 更新分数卡片
-    AgentViz.updateAgentScoreCards(scores);
-
-    // 更新最终决策建议
+// 更新最终决策建议（从 summary 数据）
+function updateFinalDecisionFromSummary(summary, company) {
     const consensus = summary.consensus || 'aligned';
     const recommendation = summary.recommendation || {};
 
     AgentViz.updateFinalDecision({
         icon: consensus === 'divergent' ? '⚠️' : '✓',
-        title: consensus === 'divergent' ? 'Agent 存在分歧，建议谨慎' : 'Agent 达成共识',
+        title: consensus === 'divergent' ? 'Agent 存在分歧' : 'Agent 达成共识',
         content: recommendation.message || summary.insights?.[0]?.content || '分析完成',
         consensus: consensus
     });
+}
+
+// 更新 Multi-Agent 可视化面板（保留用于兼容）
+function updateAgentVisualization(summary, company) {
+    updateFinalDecisionFromSummary(summary, company);
 }
 
 // 渲染 Multi-Agent 洞察

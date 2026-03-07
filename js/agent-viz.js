@@ -94,7 +94,83 @@ export function initAgentRadarChart(scores = { sentiment: 50, technical: 50, psy
 }
 
 /**
- * 更新雷达图数据
+ * 初始化骨架屏状态的雷达图（全 0 数据，带加载动画）
+ */
+export function initAgentRadarChartSkeleton() {
+    const ctx = document.getElementById('agentRadarChart');
+    if (!ctx) return;
+
+    // 销毁现有图表
+    if (agentRadarChartInstance) {
+        agentRadarChartInstance.destroy();
+    }
+
+    // 创建骨架屏图表
+    agentRadarChartInstance = new Chart(ctx, {
+        type: 'radar',
+        data: {
+            labels: ['情绪分析', '技术分析', '心理诊断'],
+            datasets: [{
+                label: 'Agent 评分',
+                data: [0, 0, 0], // 全 0 数据，等待更新
+                backgroundColor: 'rgba(148, 163, 184, 0.1)',
+                borderColor: 'rgba(148, 163, 184, 0.3)',
+                borderWidth: 2,
+                pointBackgroundColor: 'rgba(148, 163, 184, 0.5)',
+                pointBorderColor: '#fff',
+                pointBorderWidth: 1,
+                pointRadius: 4,
+                pointHoverRadius: 6,
+                tension: 0.3
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: {
+                duration: 800,
+                easing: 'easeOutQuart'
+            },
+            scales: {
+                r: {
+                    angleLines: {
+                        color: 'rgba(148, 163, 184, 0.15)'
+                    },
+                    grid: {
+                        color: 'rgba(148, 163, 184, 0.15)'
+                    },
+                    pointLabels: {
+                        color: '#94a3b8',
+                        font: {
+                            size: 12,
+                            family: "'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif"
+                        }
+                    },
+                    ticks: {
+                        display: false,
+                        max: 100,
+                        min: 0
+                    },
+                    suggestedMin: 0,
+                    suggestedMax: 100
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    enabled: false
+                }
+            }
+        }
+    });
+
+    return agentRadarChartInstance;
+}
+
+/**
+ * 更新雷达图数据（渐进式）
  * @param {Object} scores - 各 Agent 分数
  */
 export function updateAgentRadarChart(scores) {
@@ -250,6 +326,128 @@ export function hideAgentVisualization() {
     if (card) {
         card.style.display = 'none';
     }
+}
+
+/**
+ * 初始化骨架屏状态的可视化面板（渐进式渲染）
+ */
+export function initAgentVisualizationSkeleton() {
+    // 显示面板
+    showAgentVisualization();
+    
+    // 初始化骨架屏雷达图
+    initAgentRadarChartSkeleton();
+    
+    // 重置所有卡片为骨架屏状态
+    const agents = ['sentiment', 'technical', 'psychology'];
+    agents.forEach(agent => {
+        const valueEl = document.getElementById(`${agent}ScoreValue`);
+        const fillEl = document.getElementById(`${agent}ScoreFill`);
+        const cardEl = document.querySelector(`[data-agent="${agent}"]`);
+        
+        if (valueEl) {
+            valueEl.textContent = '--';
+            valueEl.className = 'agent-score-value';
+        }
+        if (fillEl) {
+            fillEl.style.width = '0%';
+            fillEl.className = 'agent-score-fill';
+        }
+        if (cardEl) {
+            cardEl.classList.add('skeleton');
+            cardEl.classList.remove('animated', 'completed');
+        }
+    });
+    
+    // 清空决策建议
+    const contentEl = document.getElementById('finalDecisionContent');
+    if (contentEl) {
+        contentEl.innerHTML = '<p style="color:var(--text-secondary);">等待 Agent 分析完成...</p>';
+    }
+}
+
+/**
+ * 渐进式更新单个 Agent 卡片（点亮动画）
+ * @param {string} agentKey - Agent 类型：sentiment, technical, psychology
+ * @param {number} score - 分数
+ * @param {object} data - 完整数据
+ */
+export function updateSingleAgentCard(agentKey, score, data = null) {
+    const valueEl = document.getElementById(`${agentKey}ScoreValue`);
+    const fillEl = document.getElementById(`${agentKey}ScoreFill`);
+    const cardEl = document.querySelector(`[data-agent="${agentKey}"]`);
+    
+    if (!valueEl || !fillEl || !cardEl) return;
+    
+    // 移除骨架屏状态
+    cardEl.classList.remove('skeleton');
+    
+    // 数字滚动动画
+    animateValue(valueEl, 0, score, 800);
+    
+    // 更新颜色类
+    const scoreClass = getScoreClass(score);
+    valueEl.className = `agent-score-value ${scoreClass}`;
+    
+    // 进度条动画
+    setTimeout(() => {
+        fillEl.style.width = `${score}%`;
+        fillEl.className = `agent-score-fill ${scoreClass}`;
+    }, 100);
+    
+    // 添加点亮/翻转动画
+    cardEl.classList.add('lighting-up');
+    setTimeout(() => {
+        cardEl.classList.remove('lighting-up');
+        cardEl.classList.add('completed');
+    }, 600);
+}
+
+/**
+ * 更新雷达图单个顶点数据
+ * @param {string} agentKey - Agent 类型
+ * @param {number} score - 分数
+ */
+export function updateRadarChartSinglePoint(agentKey, score) {
+    if (!agentRadarChartInstance) return;
+    
+    const index = {
+        sentiment: 0,
+        technical: 1,
+        psychology: 2
+    }[agentKey];
+    
+    if (index === undefined) return;
+    
+    // 更新对应顶点数据
+    agentRadarChartInstance.data.datasets[0].data[index] = score;
+    
+    // 根据完成的 Agent 数量更新颜色
+    const data = agentRadarChartInstance.data.datasets[0].data;
+    const completedCount = data.filter(s => s > 0).length;
+    
+    // 渐变颜色
+    if (completedCount >= 3) {
+        // 全部完成，使用最终颜色
+        const avgScore = (data[0] + data[1] + data[2]) / 3;
+        let color = '#3b82f6';
+        let bgColor = 'rgba(59, 130, 246, 0.2)';
+        
+        if (avgScore > 60) {
+            color = '#10b981';
+            bgColor = 'rgba(16, 185, 129, 0.2)';
+        } else if (avgScore < 40) {
+            color = '#ef4444';
+            bgColor = 'rgba(239, 68, 68, 0.2)';
+        }
+        
+        agentRadarChartInstance.data.datasets[0].borderColor = color;
+        agentRadarChartInstance.data.datasets[0].backgroundColor = bgColor;
+        agentRadarChartInstance.data.datasets[0].pointBackgroundColor = color;
+    }
+    
+    // 触发动画更新
+    agentRadarChartInstance.update('default');
 }
 
 /**
