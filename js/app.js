@@ -143,11 +143,6 @@ function setupEventListeners() {
         }
     });
 
-    // 输入模式切换
-    document.querySelectorAll('.mode-tab').forEach(tab => {
-        tab.addEventListener('click', () => switchInputMode(tab.dataset.mode));
-    });
-
     // 公司分析
     document.getElementById('analyzeBtn')?.addEventListener('click', analyzeCompany);
     document.getElementById('companyInput')?.addEventListener('keypress', e => {
@@ -156,34 +151,8 @@ function setupEventListeners() {
     document.querySelectorAll('.quick-tag').forEach(tag => {
         tag.addEventListener('click', () => {
             document.getElementById('companyInput').value = tag.dataset.company;
-            switchInputMode('company');
             analyzeCompany();
         });
-    });
-
-    // URL 分析
-    document.getElementById('analyzeUrlBtn')?.addEventListener('click', analyzeNewsUrl);
-    document.getElementById('newsUrlInput')?.addEventListener('keypress', e => {
-        if (e.key === 'Enter') analyzeNewsUrl();
-    });
-
-    // 文本分析
-    document.getElementById('analyzeTextBtn')?.addEventListener('click', analyzeText);
-    document.getElementById('textInput')?.addEventListener('input', () => {
-        const count = document.getElementById('textInput')?.value.length || 0;
-        const charCountEl = document.getElementById('charCount');
-        if (charCountEl) charCountEl.textContent = count;
-    });
-    document.getElementById('textInput')?.addEventListener('keypress', e => {
-        if (e.key === 'Enter' && e.ctrlKey) analyzeText(); // Ctrl+Enter 快捷分析
-    });
-
-    // 批量分析
-    document.getElementById('analyzeBatchBtn')?.addEventListener('click', analyzeBatch);
-    document.getElementById('batchInput')?.addEventListener('input', () => {
-        const lines = document.getElementById('batchInput')?.value.split('\n').filter(l => l.trim()) || [];
-        const batchCountEl = document.getElementById('batchCount');
-        if (batchCountEl) batchCountEl.textContent = Math.min(lines.length, 10);
     });
 
     // 交易决策按钮
@@ -275,27 +244,6 @@ function setupEventListeners() {
             document.getElementById('batchModalOverlay')?.classList.remove('active');
         }
     });
-}
-
-// 切换输入模式
-function switchInputMode(mode) {
-    // 更新标签页状态
-    document.querySelectorAll('.mode-tab').forEach(tab => {
-        tab.classList.toggle('active', tab.dataset.mode === mode);
-    });
-    
-    // 更新面板显示
-    document.querySelectorAll('.input-panel').forEach(panel => {
-        panel.classList.toggle('active', panel.id === mode + 'Panel');
-    });
-    
-    // 聚焦到对应输入框
-    setTimeout(() => {
-        if (mode === 'company') document.getElementById('companyInput')?.focus();
-        else if (mode === 'url') document.getElementById('newsUrlInput')?.focus();
-        else if (mode === 'text') document.getElementById('textInput')?.focus();
-        else if (mode === 'batch') document.getElementById('batchInput')?.focus();
-    }, 100);
 }
 
 // 核心分析流程

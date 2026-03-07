@@ -39,55 +39,19 @@
         </header>
 
         <section class="search-section">
-            <!-- 输入模式切换 -->
-            <div class="input-mode-tabs">
-                <button class="mode-tab active" data-mode="company">🏢 公司分析</button>
-                <button class="mode-tab" data-mode="url">🔗 新闻 URL</button>
-                <button class="mode-tab" data-mode="text">📝 文本分析</button>
-                <button class="mode-tab" data-mode="batch">📋 批量分析</button>
+            <!-- 简化搜索框 -->
+            <div class="search-box">
+                <input type="text" class="search-input" id="companyInput" placeholder="输入公司名称或股票代码 (如：茅台、AAPL、特斯拉)">
+                <button class="search-btn" id="analyzeBtn">开始分析</button>
             </div>
-
-            <!-- 公司分析模式 -->
-            <div class="input-panel active" id="companyPanel">
-                <div class="search-box">
-                    <input type="text" class="search-input" id="companyInput" placeholder="输入公司名称或股票代码 (如：茅台、AAPL、特斯拉)">
-                    <button class="search-btn" id="analyzeBtn">开始分析</button>
-                </div>
-                <div class="quick-tags">
-                    <span class="quick-tag" data-company="茅台">茅台</span>
-                    <span class="quick-tag" data-company="比亚迪">比亚迪</span>
-                    <span class="quick-tag" data-company="特斯拉">特斯拉</span>
-                    <span class="quick-tag" data-company="英伟达">英伟达</span>
-                    <span class="quick-tag" data-company="苹果">苹果</span>
-                    <span class="quick-tag" data-company="阿里巴巴">阿里巴巴</span>
-                </div>
-            </div>
-
-            <!-- 新闻 URL 模式 -->
-            <div class="input-panel" id="urlPanel">
-                <div class="search-box">
-                    <input type="url" class="search-input" id="newsUrlInput" placeholder="粘贴新闻链接 (如：https://xueqiu.com/...)">
-                    <button class="search-btn" id="analyzeUrlBtn">分析链接</button>
-                </div>
-                <p class="input-hint">💡 支持雪球、东方财富、新浪财经等主流财经媒体链接</p>
-            </div>
-
-            <!-- 文本分析模式 -->
-            <div class="input-panel" id="textPanel">
-                <textarea class="text-analyze-input" id="textInput" placeholder="粘贴您要分析的文本内容...&#10;&#10;例如：&#10;&quot;今天公司发布了财报，营收同比增长 30%，净利润大幅增长。&#10;管理层表示对未来前景充满信心，计划加大研发投入...&quot;"></textarea>
-                <div class="text-input-footer">
-                    <div class="char-count">字符数：<span id="charCount">0</span></div>
-                    <button class="search-btn" id="analyzeTextBtn">分析文本</button>
-                </div>
-            </div>
-
-            <!-- 批量分析模式 -->
-            <div class="input-panel" id="batchPanel">
-                <textarea class="batch-analyze-input" id="batchInput" placeholder="每行输入一个公司/股票代码，最多支持 10 个&#10;&#10;例如：&#10;茅台&#10;比亚迪&#10;特斯拉&#10;AAPL"></textarea>
-                <div class="batch-input-footer">
-                    <div class="batch-count">已输入 <span id="batchCount">0</span> 个</div>
-                    <button class="search-btn" id="analyzeBatchBtn">批量分析</button>
-                </div>
+            <!-- 快捷标签 -->
+            <div class="quick-tags">
+                <span class="quick-tag" data-company="茅台">茅台</span>
+                <span class="quick-tag" data-company="比亚迪">比亚迪</span>
+                <span class="quick-tag" data-company="特斯拉">特斯拉</span>
+                <span class="quick-tag" data-company="英伟达">英伟达</span>
+                <span class="quick-tag" data-company="苹果">苹果</span>
+                <span class="quick-tag" data-company="阿里巴巴">阿里巴巴</span>
             </div>
         </section>
 
@@ -480,63 +444,6 @@
             <div class="decision-actions">
                 <button class="decision-btn decision-btn-primary" id="recordDecisionBtn">📝 记录本次决策</button>
                 <button class="decision-btn decision-btn-secondary" id="continueAnalyzeBtn">🔄 继续分析其他</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- 模态框：批量分析结果 -->
-    <div class="batch-modal-overlay" id="batchModalOverlay" style="display: none;">
-        <div class="batch-modal-content">
-            <div class="batch-modal-header">
-                <h2>📊 批量分析结果</h2>
-                <button class="batch-modal-close" id="closeBatchModal">×</button>
-            </div>
-            <div class="batch-modal-body">
-                <!-- 统计摘要 -->
-                <div class="batch-summary-stats">
-                    <div class="batch-stat-card">
-                        <div class="batch-stat-icon">🏢</div>
-                        <div class="batch-stat-value" id="batchTotalCount">0</div>
-                        <div class="batch-stat-label">分析公司数</div>
-                    </div>
-                    <div class="batch-stat-card">
-                        <div class="batch-stat-icon">📈</div>
-                        <div class="batch-stat-value" id="batchAvgScore">0</div>
-                        <div class="batch-stat-label">平均情绪分</div>
-                    </div>
-                    <div class="batch-stat-card">
-                        <div class="batch-stat-icon">😊</div>
-                        <div class="batch-stat-value" id="batchPositiveCount">0</div>
-                        <div class="batch-stat-label">正面情绪</div>
-                    </div>
-                    <div class="batch-stat-card">
-                        <div class="batch-stat-icon">😟</div>
-                        <div class="batch-stat-value" id="batchNegativeCount">0</div>
-                        <div class="batch-stat-label">负面情绪</div>
-                    </div>
-                </div>
-
-                <!-- 结果表格 -->
-                <div class="batch-results-table-container">
-                    <table class="batch-results-table" id="batchResultsTable">
-                        <thead>
-                            <tr>
-                                <th>排名</th>
-                                <th>公司</th>
-                                <th>情绪分数</th>
-                                <th>情绪状态</th>
-                                <th>行业</th>
-                                <th>操作</th>
-                            </tr>
-                        </thead>
-                        <tbody id="batchResultsTableBody">
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-            <div class="batch-modal-footer">
-                <button class="batch-modal-btn batch-export-btn" id="exportBatchResults">📥 导出 CSV</button>
-                <button class="batch-modal-btn batch-close-btn" id="closeBatchModalBtn">关闭</button>
             </div>
         </div>
     </div>
