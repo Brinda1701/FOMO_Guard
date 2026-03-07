@@ -226,10 +226,6 @@
                             <div class="agent-score-detail" id="sentimentScoreDetail">
                                 <p class="detail-text">分析市场舆论情绪</p>
                             </div>
-                            <!-- 情绪证据链容器 -->
-                            <div class="sentiment-evidence-container" id="sentimentEvidenceContainer">
-                                <p class="evidence-placeholder">等待分析完成...</p>
-                            </div>
                         </div>
                         <div class="agent-score-card" data-agent="technical">
                             <div class="agent-score-header">
@@ -263,6 +259,16 @@
                                 <p class="detail-text">诊断认知偏误风险</p>
                             </div>
                         </div>
+                    </div>
+                </div>
+                <!-- 全局判定证据区域 -->
+                <div class="global-evidence-section" id="globalEvidenceSection" style="display:none;">
+                    <h3 class="global-evidence-title">
+                        <span class="global-evidence-icon">🔍</span>
+                        核心判定证据
+                    </h3>
+                    <div class="global-evidence-list" id="globalEvidenceList">
+                        <div class="global-evidence-empty">等待分析完成...</div>
                     </div>
                 </div>
                 <!-- 最终决策建议 -->

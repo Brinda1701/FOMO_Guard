@@ -4055,3 +4055,270 @@ html[data-theme="light"] .modal-content::before {
 .agent-score-card.animated {
     animation: scorePop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
+
+/* ==================== 全局判定证据区域（胶囊标签） ==================== */
+.global-evidence-section {
+    margin-top: 25px;
+    padding: 20px;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.05), rgba(139, 92, 246, 0.03));
+    border-radius: 16px;
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    animation: fadeInUp 0.5s ease forwards;
+    opacity: 0;
+}
+
+.global-evidence-section.visible {
+    opacity: 1;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(15px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.global-evidence-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 18px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.global-evidence-icon {
+    font-size: 1.3rem;
+    filter: drop-shadow(0 2px 4px rgba(59, 130, 246, 0.3));
+}
+
+.evidence-pills-wrapper {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+/* 证据胶囊标签 */
+.evidence-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    background: var(--bg-card);
+    border-radius: 25px;
+    border: 1px solid var(--border-color);
+    animation: pillSlideIn 0.4s ease forwards;
+    opacity: 0;
+    transform: translateY(10px) scale(0.95);
+    max-width: 100%;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.evidence-pill:hover {
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+}
+
+@keyframes pillSlideIn {
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.evidence-pill-sentiment {
+    font-size: 0.85rem;
+    flex-shrink: 0;
+}
+
+.evidence-pill-text {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    word-break: break-word;
+    flex: 1;
+    min-width: 150px;
+}
+
+.evidence-pill-impact {
+    font-size: 0.75rem;
+    flex-shrink: 0;
+    opacity: 0.8;
+}
+
+/* 证据胶囊 - 正面 */
+.evidence-pill.pill-positive {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.12), rgba(16, 185, 129, 0.05));
+    border-color: rgba(16, 185, 129, 0.3);
+}
+
+.evidence-pill.pill-positive .evidence-pill-sentiment {
+    color: #10b981;
+}
+
+.evidence-pill.pill-positive .evidence-pill-text {
+    color: var(--text-primary);
+}
+
+/* 证据胶囊 - 负面 */
+.evidence-pill.pill-negative {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.12), rgba(239, 68, 68, 0.05));
+    border-color: rgba(239, 68, 68, 0.3);
+}
+
+.evidence-pill.pill-negative .evidence-pill-sentiment {
+    color: #ef4444;
+}
+
+.evidence-pill.pill-negative .evidence-pill-text {
+    color: var(--text-primary);
+}
+
+/* 证据胶囊 - 情绪化 */
+.evidence-pill.pill-emotional {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.12), rgba(245, 158, 11, 0.05));
+    border-color: rgba(245, 158, 11, 0.3);
+}
+
+.evidence-pill.pill-emotional .evidence-pill-sentiment {
+    color: #f59e0b;
+}
+
+.evidence-pill.pill-emotional .evidence-pill-text {
+    color: var(--text-primary);
+}
+
+/* 证据胶囊 - 中性 */
+.evidence-pill.pill-neutral {
+    background: var(--bg-card);
+    border-color: var(--border-color);
+}
+
+.evidence-pill.pill-neutral .evidence-pill-sentiment {
+    color: var(--text-secondary);
+}
+
+/* 证据图例 */
+.evidence-pills-legend {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    flex-wrap: wrap;
+    padding-top: 15px;
+    border-top: 1px dashed rgba(148, 163, 184, 0.3);
+}
+
+.pill-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.pill-legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.pill-legend-dot.pill-legend-positive {
+    background: linear-gradient(135deg, #10b981, #059669);
+    box-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
+}
+
+.pill-legend-dot.pill-legend-negative {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    box-shadow: 0 0 8px rgba(239, 68, 68, 0.4);
+}
+
+.pill-legend-dot.pill-legend-emotional {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    box-shadow: 0 0 8px rgba(245, 158, 11, 0.4);
+}
+
+/* 空状态 */
+.global-evidence-empty {
+    text-align: center;
+    padding: 30px 20px;
+    color: var(--text-secondary);
+}
+
+.global-evidence-empty-icon {
+    font-size: 2.5rem;
+    display: block;
+    margin-bottom: 12px;
+    opacity: 0.6;
+    animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+}
+
+.global-evidence-empty p {
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+/* 证据区域色调 */
+.global-evidence-section.score-high {
+    border-color: rgba(16, 185, 129, 0.35);
+    box-shadow: 0 0 30px rgba(16, 185, 129, 0.1);
+}
+
+.global-evidence-section.score-high .global-evidence-title {
+    color: #10b981;
+}
+
+.global-evidence-section.score-low {
+    border-color: rgba(239, 68, 68, 0.35);
+    box-shadow: 0 0 30px rgba(239, 68, 68, 0.1);
+}
+
+.global-evidence-section.score-low .global-evidence-title {
+    color: #ef4444;
+}
+
+.global-evidence-section.score-neutral {
+    border-color: rgba(245, 158, 11, 0.35);
+    box-shadow: 0 0 30px rgba(245, 158, 11, 0.1);
+}
+
+.global-evidence-section.score-neutral .global-evidence-title {
+    color: #f59e0b;
+}
+
+/* 响应式适配 */
+@media (max-width: 768px) {
+    .global-evidence-section {
+        padding: 15px;
+    }
+
+    .evidence-pill {
+        padding: 8px 12px;
+        font-size: 0.8rem;
+    }
+
+    .evidence-pill-text {
+        font-size: 0.8rem;
+        min-width: 120px;
+    }
+
+    .evidence-pills-legend {
+        gap: 12px;
+    }
+
+    .pill-legend-item {
+        font-size: 0.75rem;
+    }
+}
