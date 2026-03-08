@@ -239,6 +239,8 @@ async function fetchFromFinnhub(symbol, apiKey) {
 
 /**
  * 从新浪财经获取数据（A 股专用，无需 API Key）
+ * 使用新版 API：获取真实历史 K 线数据
+ * http://money.finance.sina.com.cn/quotes_service/api/json_v2.php/CN_MarketData.getKLineData
  */
 async function fetchFromSina(symbol) {
   const sinaSymbol = convertToSinaSymbol(symbol);
@@ -247,11 +249,15 @@ async function fetchFromSina(symbol) {
     throw new Error('无法转换为新浪财经代码格式');
   }
 
-  const url = `http://hq.sinajs.cn/list=${sinaSymbol}`;
+  // 使用新版 API 获取历史 K 线数据
+  const url = `http://money.finance.sina.com.cn/quotes_service/api/json_v2.php/CN_MarketData.getKLineData?symbol=${sinaSymbol}&scale=240&ma=5&datalen=30`;
+  
+  console.log('[Sina API] 请求 URL:', url);
   
   const response = await fetch(url, { 
     headers: { 
       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+      'Accept': 'application/json, text/plain, */*',
       'Referer': 'http://finance.sina.com.cn/'
     },
     timeout: 10000
@@ -261,26 +267,29 @@ async function fetchFromSina(symbol) {
     throw new Error(`Sina API error: ${response.status}`);
   }
 
-  const text = await response.text();
-  const match = text.match(/="([^"]+)"/);
+  const data = await response.json();
+  console.log('[Sina API] 返回数据条数:', Array.isArray(data) ? data.length : 0);
   
-  if (!match || !match[1]) {
-    throw new Error('Sina data not available');
+  if (!Array.isArray(data) || data.length === 0) {
+    throw new Error('Sina data not available or empty');
   }
 
-  const elements = match[1].split(',');
-  
-  if (elements.length < 32) {
-    throw new Error('Invalid Sina data format');
+  // 解析返回数据，转换为统一格式
+  const klineData = data.slice(0, 14).map(item => ({
+    date: item.day,
+    open: parseFloat(item.open),
+    high: parseFloat(item.high),
+    low: parseFloat(item.low),
+    close: parseFloat(item.close),
+    volume: parseInt(item.volume) || 0
+  }));
+
+  if (klineData.length === 0) {
+    throw new Error('No valid K-line data');
   }
 
-  const currentPrice = parseFloat(elements[3]);
-  const openPrice = parseFloat(elements[1]);
-  const highPrice = parseFloat(elements[4]);
-  const lowPrice = parseFloat(elements[5]);
-  const volume = parseInt(elements[8]) || 0;
-  
-  return generateHistoryFromCurrentPrice(currentPrice, openPrice, highPrice, lowPrice, volume, 14);
+  console.log('[Sina API] 解析成功，最新数据:', klineData[klineData.length - 1]);
+  return klineData;
 }
 
 function parseTimeSeries(timeSeries, limit) {
