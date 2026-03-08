@@ -708,3 +708,7 @@ exports.fetchMarketData = fetchMarketData;
 exports.calculateTechnicalIndicators = calculateTechnicalIndicators;
 exports.generateRealisticMockData = generateRealisticMockData;
 exports.SYMBOL_MAP = SYMBOL_MAP;
+
+// Vercel Serverless 默认导出
+module.exports = exports;
+module.exports.handler = exports.handler;
