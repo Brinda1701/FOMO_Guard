@@ -230,7 +230,11 @@ async function callAIModel(prompt, apiKey, apiUrl, modelName, retryCount = 0) {
     ],
     temperature: 0.7,
     max_tokens: 800,
-    stream: false
+    stream: false,
+    // Qwen3.5 模型需要设置 enable_thinking: false（非流式请求）
+    parameters: {
+      enable_thinking: false
+    }
   };
   
   console.log('[callAIModel] 请求 URL:', `${apiUrl}chat/completions`);
