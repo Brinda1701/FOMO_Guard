@@ -235,6 +235,17 @@ function setupEventListeners() {
         });
     }
 
+    // 预测反馈弹窗交互
+    document.getElementById('predictionCancelBtn')?.addEventListener('click', hidePredictionModal);
+    document.getElementById('predictionConfirmBtn')?.addEventListener('click', confirmPredictionAction);
+
+    // 点击预测弹窗背景关闭
+    document.getElementById('predictionModal')?.addEventListener('click', (e) => {
+        if (e.target === document.getElementById('predictionModal')) {
+            hidePredictionModal();
+        }
+    });
+
     // 批量分析模态框交互
     document.getElementById('closeBatchModal')?.addEventListener('click', () => {
         document.getElementById('batchModalOverlay')?.classList.remove('active');
@@ -782,20 +793,96 @@ function handleImpulseCheck(action) {
     const result = Logic.evaluateImpulse(action, Logic.state.currentCompany, score);
     console.log('[handleImpulseCheck] 判断结果:', result);
 
-    const showDecisionOverlay = () => {
-        // 获取损失厌恶警告（基于个人历史数据）
-        const lossAversionWarning = Logic.getLossAversionWarning(Logic.state.currentScore);
+    // 显示预测反馈弹窗
+    showPredictionModal(result, action, Logic.state.currentCompany, score);
+}
 
-        UI.showDecisionResult(
-            result.diagnosis,
-            action,
-            Logic.state.currentCompany,
-            Logic.state.currentScore,
-            false,
-            lossAversionWarning // 传递损失厌恶警告
-        );
-    };
+// 显示预测反馈弹窗
+function showPredictionModal(result, action, company, score) {
+    const modal = document.getElementById('predictionModal');
+    if (!modal) return;
 
+    // 设置操作标签
+    const actionTag = document.getElementById('predictionActionTag');
+    const actionLabels = { buy: '买入', sell: '卖出', hold: '观望' };
+    const actionColors = { buy: 'var(--accent-green)', sell: 'var(--accent-red)', hold: 'var(--accent-blue)' };
+    if (actionTag) {
+        actionTag.textContent = actionLabels[action] || '未知';
+        actionTag.style.background = actionColors[action] || 'var(--text-secondary)';
+    }
+
+    // 设置公司和分数
+    const companyEl = document.getElementById('predictionCompany');
+    const scoreEl = document.getElementById('predictionScore');
+    if (companyEl) companyEl.textContent = company;
+    if (scoreEl) {
+        scoreEl.textContent = score;
+        scoreEl.style.color = score > 60 ? 'var(--accent-green)' : (score < 40 ? 'var(--accent-red)' : 'var(--accent-yellow)');
+    }
+
+    // 设置诊断信息
+    const diagnosis = result.diagnosis;
+    const iconEl = document.getElementById('diagnosisIcon');
+    const titleEl = document.getElementById('diagnosisTitle');
+    const messageEl = document.getElementById('diagnosisMessage');
+    if (iconEl) iconEl.textContent = diagnosis.icon;
+    if (titleEl) titleEl.textContent = diagnosis.title;
+    if (messageEl) messageEl.textContent = diagnosis.message;
+
+    // 设置统计数据
+    const stats = diagnosis.stats || {};
+    const profitProbEl = document.getElementById('statProfitProb');
+    const avgReturnEl = document.getElementById('statAvgReturn');
+    const riskLevelEl = document.getElementById('statRiskLevel');
+    if (profitProbEl) profitProbEl.textContent = stats.profitProb || '--';
+    if (avgReturnEl) {
+        avgReturnEl.textContent = stats.avgReturn || '--';
+        avgReturnEl.style.color = (stats.avgReturn && !stats.avgReturn.includes('-')) ? 'var(--accent-green)' : 'var(--accent-red)';
+    }
+    if (riskLevelEl) {
+        riskLevelEl.textContent = stats.riskLevel || '--';
+        const riskColors = { '极低': 'var(--accent-green)', '低': 'var(--accent-green)', '中等': 'var(--accent-yellow)', '高': '#f97316', '极高': 'var(--accent-red)' };
+        riskLevelEl.style.color = riskColors[stats.riskLevel] || 'var(--text-primary)';
+    }
+
+    // 设置名言
+    const quoteEl = document.getElementById('predictionQuote');
+    const quoteTextEl = quoteEl?.querySelector('.quote-text');
+    if (quoteTextEl) quoteTextEl.textContent = result.quote || '保持理性，谨慎决策';
+
+    // 显示弹窗
+    modal.style.display = 'flex';
+
+    // 保存当前操作类型供确认按钮使用
+    modal.dataset.pendingAction = action;
+}
+
+// 隐藏预测反馈弹窗
+function hidePredictionModal() {
+    const modal = document.getElementById('predictionModal');
+    if (modal) {
+        modal.style.display = 'none';
+        delete modal.dataset.pendingAction;
+    }
+}
+
+// 确认记录决策
+function confirmPredictionAction() {
+    const modal = document.getElementById('predictionModal');
+    if (!modal) return;
+
+    const action = modal.dataset.pendingAction;
+    if (!action) return;
+
+    // 隐藏预测弹窗
+    hidePredictionModal();
+
+    // 获取损失厌恶警告（基于个人历史数据）
+    const lossAversionWarning = Logic.getLossAversionWarning(Logic.state.currentScore);
+
+    const result = Logic.evaluateImpulse(action, Logic.state.currentCompany, Logic.state.currentScore);
+
+    // 检查是否需要冷静期
     if (result.shouldCooldown) {
         document.querySelector('.container').classList.add('impact-active');
         setTimeout(() => document.querySelector('.container').classList.remove('impact-active'), 500);
@@ -803,12 +890,29 @@ function handleImpulseCheck(action) {
         UI.showCooldown(
             `${result.diagnosis.message}\n\n请先完成冷静期，再查看本次决策复盘。`,
             true,
-            showDecisionOverlay
+            () => {
+                UI.showDecisionResult(
+                    result.diagnosis,
+                    action,
+                    Logic.state.currentCompany,
+                    Logic.state.currentScore,
+                    false,
+                    lossAversionWarning
+                );
+            }
         );
         return;
     }
 
-    showDecisionOverlay();
+    // 直接显示决策结果
+    UI.showDecisionResult(
+        result.diagnosis,
+        action,
+        Logic.state.currentCompany,
+        Logic.state.currentScore,
+        false,
+        lossAversionWarning
+    );
 }
 
 // 快速保存决策记录（无需填写表单）
@@ -849,6 +953,9 @@ function quickSaveDiary() {
 
 // 导出全局函数供决策结果界面调用
 window.quickSaveDiaryFromDecision = quickSaveDiary;
+window.showPredictionModal = showPredictionModal;
+window.hidePredictionModal = hidePredictionModal;
+window.confirmPredictionAction = confirmPredictionAction;
 
 // 保存日记流程（简化版，直接保存）
 function handleSaveDiary() {
