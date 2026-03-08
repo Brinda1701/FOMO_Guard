@@ -40,7 +40,8 @@ const SYMBOL_MAP = {
   '招商银行': '600036.SS'
 };
 
-module.exports = async function handler(req, res) {
+// Vercel Serverless Function handler
+exports.handler = async function handler(req, res) {
   setSecureCorsHeaders(res, { 'Content-Type': 'application/json' });
 
   if (req.method === 'OPTIONS') {
