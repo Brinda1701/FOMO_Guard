@@ -3,8 +3,9 @@
 /* 用户状态切换按钮 */
 .user-status-btn {
     position: absolute;
-    top: 20px;
-    right: 20px;
+    top: 15px;
+    left: 50%;
+    transform: translateX(-50%);
     padding: 10px 18px;
     background: rgba(59, 130, 246, 0.15);
     border: 1px solid rgba(59, 130, 246, 0.3);
@@ -23,7 +24,7 @@
 .user-status-btn:hover {
     background: rgba(59, 130, 246, 0.25);
     border-color: rgba(59, 130, 246, 0.5);
-    transform: translateY(-1px);
+    transform: translateX(-50%) translateY(-1px);
     box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
 }
 
@@ -35,14 +36,14 @@
 .user-status-btn.logged-in:hover {
     background: rgba(16, 185, 129, 0.25);
     border-color: rgba(16, 185, 129, 0.5);
+    transform: translateX(-50%) translateY(-1px);
     box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
 }
 
 /* 响应式适配 */
 @media (max-width: 768px) {
     .user-status-btn {
-        top: 15px;
-        right: 15px;
+        top: 12px;
         padding: 8px 14px;
         font-size: 0.85rem;
     }

@@ -3,7 +3,7 @@ import * as UI from './ui.js';
 import * as Chart from './chart.js';
 import * as AgentViz from './agent-viz.js';
 import { AI_CONFIG, AGENT_CONFIG } from './config.js';
-import { LoginUI, Guide } from './login-guide.js';
+import { LoginUI, Guide, User } from './login-guide.js';
 import { renderDataSourceCards, renderKlineChart } from './data-source.js';
 import * as AnalysisInteraction from './analysis-interaction.js';
 
@@ -130,7 +130,7 @@ async function init() {
 
 // 初始化用户状态
 function initUserStatus() {
-    LoginUI.User.init();
+    User.init();
     updateUserStatusButton();
 }
 
@@ -139,7 +139,7 @@ function updateUserStatusButton() {
     const userStatusBtn = document.getElementById('userStatusBtn');
     if (!userStatusBtn) return;
 
-    const user = LoginUI.User.currentUser;
+    const user = User.currentUser;
     if (user && user.username) {
         // 已登录状态
         if (user.isGuest) {
@@ -160,7 +160,7 @@ function updateUserStatusButton() {
 
 // 处理用户状态按钮点击
 function handleUserStatusClick() {
-    const user = LoginUI.User.currentUser;
+    const user = User.currentUser;
     
     if (user && user.username) {
         // 已登录，显示退出确认
@@ -170,7 +170,7 @@ function handleUserStatusClick() {
         );
         
         if (shouldLogout) {
-            LoginUI.User.switchAccount();
+            User.switchAccount();
             updateUserStatusButton();
             // 刷新页面以清除数据
             setTimeout(() => {

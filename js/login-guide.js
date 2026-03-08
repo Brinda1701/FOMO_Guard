@@ -284,18 +284,26 @@ export const LoginUI = {
     init() {
         // 检查登录状态
         User.init();
-        
+
         const loginOverlay = document.getElementById('loginOverlay');
-        
+
         // 如果未登录，显示登录界面
         if (!User.isLoggedIn() && loginOverlay) {
             loginOverlay.style.display = 'flex';
         }
-        
+
         // 绑定事件
         this.bindEvents();
     },
-    
+
+    // 显示登录模态框
+    showLoginModal() {
+        const loginOverlay = document.getElementById('loginOverlay');
+        if (loginOverlay) {
+            loginOverlay.style.display = 'flex';
+        }
+    },
+
     bindEvents() {
         // 切换登录/注册标签
         document.querySelectorAll('.login-tab').forEach(tab => {
