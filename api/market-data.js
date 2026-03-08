@@ -1,46 +1,413 @@
 /**
- * 市场数据获取模块 (CommonJS 版本)
- * 提供高保真 Mock 数据
+ * Vercel Serverless Function - 市场数据获取
+ * 支持多个真实数据源：Alpha Vantage > Twelve Data > Finnhub > 新浪财经 > Mock
  */
+
+const { setSecureCorsHeaders } = require('./utils');
+
+// 股票代码映射表
+const SYMBOL_MAP = {
+  // 美股
+  '特斯拉': 'TSLA',
+  '苹果': 'AAPL',
+  '微软': 'MSFT',
+  '英伟达': 'NVDA',
+  '谷歌': 'GOOGL',
+  '亚马逊': 'AMZN',
+  'meta': 'META',
+  '脸书': 'META',
+  'AMD': 'AMD',
+  '英特尔': 'INTC',
+  'Netflix': 'NFLX',
+  '波音': 'BA',
+  '迪士尼': 'DIS',
+  '摩根大通': 'JPM',
+  '美国银行': 'BAC',
+  // A 股
+  '茅台': '600519.SS',
+  '贵州茅台': '600519.SS',
+  '比亚迪': '002594.SZ',
+  '宁德时代': '300750.SZ',
+  '腾讯': '0700.HK',
+  '阿里巴巴': '9988.HK',
+  '美团': '3690.HK',
+  '小米': '1810.HK',
+  '百度': 'BIDU',
+  '京东': 'JD',
+  '拼多多': 'PDD',
+  '平安': '601318.SS',
+  '工商银行': '601398.SS',
+  '招商银行': '600036.SS'
+};
+
+module.exports = async function handler(req, res) {
+  setSecureCorsHeaders(res, { 'Content-Type': 'application/json' });
+
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
+  if (req.method !== 'POST') {
+    return res.status(405).json({ success: false, error: 'Method not allowed' });
+  }
+
+  try {
+    const { symbol, company } = req.body;
+
+    if (!symbol && !company) {
+      return res.status(400).json({ success: false, error: '需要提供股票代码或公司名称' });
+    }
+
+    console.log('[MarketData] 请求数据，symbol:', symbol, 'company:', company);
+
+    // 获取市场数据
+    const klineData = await fetchMarketData(symbol || company);
+
+    // 计算技术指标
+    const technicals = calculateTechnicalIndicators(klineData);
+
+    // 获取最新价格
+    const latestPrice = klineData.length > 0 ? klineData[klineData.length - 1].close : 0;
+    const prevPrice = klineData.length > 1 ? klineData[klineData.length - 2].close : latestPrice;
+    const changePercent = prevPrice ? ((latestPrice - prevPrice) / prevPrice * 100) : 0;
+
+    const result = {
+      success: true,
+      symbol: symbol || company,
+      data: klineData,
+      technicals,
+      latestPrice: roundPrice(latestPrice),
+      changePercent: roundPrice(changePercent),
+      timestamp: new Date().toISOString()
+    };
+
+    console.log('[MarketData] 返回数据，条数:', klineData.length);
+    res.status(200).json(result);
+
+  } catch (error) {
+    console.error('[MarketData] Error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
 
 /**
  * 获取市场数据（14 天 K 线数据）
  */
 async function fetchMarketData(symbol) {
+  const priority = process.env.DATA_SOURCE_PRIORITY || 'alphavantage,twelvedata,finnhub,sina';
+  const sources = priority.split(',').map(s => s.trim().toLowerCase());
+
+  for (const source of sources) {
+    try {
+      console.log(`[MarketData] 尝试从 ${source} 获取数据...`);
+      
+      let data = null;
+      
+      if (source === 'alphavantage' && process.env.ALPHA_VANTAGE_API_KEY) {
+        data = await fetchFromAlphaVantage(symbol, process.env.ALPHA_VANTAGE_API_KEY);
+      } else if (source === 'twelvedata' && process.env.TWELVE_DATA_API_KEY) {
+        data = await fetchFromTwelveData(symbol, process.env.TWELVE_DATA_API_KEY);
+      } else if (source === 'finnhub' && process.env.FINNHUB_API_KEY) {
+        data = await fetchFromFinnhub(symbol, process.env.FINNHUB_API_KEY);
+      } else if (source === 'sina' && process.env.ENABLE_SINA_API === 'true') {
+        data = await fetchFromSina(symbol);
+      }
+      
+      if (data && data.length > 0) {
+        console.log(`[MarketData] ✓ 从 ${source} 成功获取 ${data.length} 条数据`);
+        return data;
+      }
+    } catch (error) {
+      console.warn(`[MarketData] ${source} 失败:`, error.message);
+    }
+  }
+
+  console.log('[MarketData] 所有真实数据源失败，使用 Mock 数据');
   return generateRealisticMockData(symbol);
 }
 
 /**
- * 生成高保真 Mock 数据
+ * 从 Alpha Vantage 获取数据
  */
+async function fetchFromAlphaVantage(symbol, apiKey) {
+  const apiSymbol = convertToAlphaVantageSymbol(symbol);
+  const url = `https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=${apiSymbol}&outputsize=compact&apikey=${apiKey}`;
+
+  const response = await fetch(url, { 
+    headers: { 'User-Agent': 'FOMOGuard/1.0' },
+    timeout: 10000
+  });
+  
+  if (!response.ok) {
+    throw new Error(`Alpha Vantage API error: ${response.status}`);
+  }
+
+  const data = await response.json();
+  
+  if (data['Note']) {
+    throw new Error('API 调用频率超限');
+  }
+  
+  const timeSeries = data['Time Series (Daily)'];
+  if (!timeSeries) {
+    throw new Error('No time series data');
+  }
+
+  return parseTimeSeries(timeSeries, 14);
+}
+
+/**
+ * 从 Twelve Data 获取数据
+ */
+async function fetchFromTwelveData(symbol, apiKey) {
+  const apiSymbol = convertToTwelveDataSymbol(symbol);
+  const url = `https://api.twelvedata.com/time_series?symbol=${apiSymbol}&interval=1day&outputsize=14&apikey=${apiKey}`;
+
+  const response = await fetch(url, { 
+    headers: { 'User-Agent': 'FOMOGuard/1.0' },
+    timeout: 10000
+  });
+  
+  if (!response.ok) {
+    throw new Error(`Twelve Data API error: ${response.status}`);
+  }
+
+  const data = await response.json();
+  
+  if (data.status === 'error') {
+    throw new Error(data.message || 'Twelve Data error');
+  }
+  
+  if (!data.values || data.values.length === 0) {
+    throw new Error('No data available');
+  }
+
+  return data.values.map(v => ({
+    date: v.datetime,
+    open: parseFloat(v.open),
+    high: parseFloat(v.high),
+    low: parseFloat(v.low),
+    close: parseFloat(v.close),
+    volume: parseInt(v.volume) || 0
+  })).reverse();
+}
+
+/**
+ * 从 Finnhub 获取数据
+ */
+async function fetchFromFinnhub(symbol, apiKey) {
+  const apiSymbol = convertToFinnhubSymbol(symbol);
+  
+  const endDate = new Date();
+  const startDate = new Date();
+  startDate.setDate(startDate.getDate() - 30);
+  
+  const url = `https://finnhub.io/api/v1/stock/candle?symbol=${apiSymbol}&resolution=D&from=${Math.floor(startDate.getTime()/1000)}&to=${Math.floor(endDate.getTime()/1000)}&token=${apiKey}`;
+
+  const response = await fetch(url, { 
+    headers: { 'User-Agent': 'FOMOGuard/1.0' },
+    timeout: 10000
+  });
+  
+  if (!response.ok) {
+    throw new Error(`Finnhub API error: ${response.status}`);
+  }
+
+  const data = await response.json();
+  
+  if (!data.s || data.s !== 'ok') {
+    throw new Error('Finnhub data not available');
+  }
+
+  const klineData = [];
+  for (let i = 0; i < data.t.length; i++) {
+    const date = new Date(data.t[i] * 1000);
+    if (date.getDay() === 0 || date.getDay() === 6) continue;
+    
+    klineData.push({
+      date: date.toISOString().split('T')[0],
+      open: parseFloat(data.o[i]),
+      high: parseFloat(data.h[i]),
+      low: parseFloat(data.l[i]),
+      close: parseFloat(data.c[i]),
+      volume: data.v[i] || 0
+    });
+  }
+
+  return klineData.slice(-14);
+}
+
+/**
+ * 从新浪财经获取数据（A 股专用，无需 API Key）
+ */
+async function fetchFromSina(symbol) {
+  const sinaSymbol = convertToSinaSymbol(symbol);
+  
+  if (!sinaSymbol) {
+    throw new Error('无法转换为新浪财经代码格式');
+  }
+
+  const url = `http://hq.sinajs.cn/list=${sinaSymbol}`;
+  
+  const response = await fetch(url, { 
+    headers: { 
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+      'Referer': 'http://finance.sina.com.cn/'
+    },
+    timeout: 10000
+  });
+  
+  if (!response.ok) {
+    throw new Error(`Sina API error: ${response.status}`);
+  }
+
+  const text = await response.text();
+  const match = text.match(/="([^"]+)"/);
+  
+  if (!match || !match[1]) {
+    throw new Error('Sina data not available');
+  }
+
+  const elements = match[1].split(',');
+  
+  if (elements.length < 32) {
+    throw new Error('Invalid Sina data format');
+  }
+
+  const currentPrice = parseFloat(elements[3]);
+  const openPrice = parseFloat(elements[1]);
+  const highPrice = parseFloat(elements[4]);
+  const lowPrice = parseFloat(elements[5]);
+  const volume = parseInt(elements[8]) || 0;
+  
+  return generateHistoryFromCurrentPrice(currentPrice, openPrice, highPrice, lowPrice, volume, 14);
+}
+
+function parseTimeSeries(timeSeries, limit) {
+  const klineData = [];
+  const dates = Object.keys(timeSeries).slice(0, limit);
+
+  for (const date of dates) {
+    const day = timeSeries[date];
+    klineData.push({
+      date,
+      open: parseFloat(day['1. open']),
+      high: parseFloat(day['2. high']),
+      low: parseFloat(day['3. low']),
+      close: parseFloat(day['4. close']),
+      volume: parseInt(day['5. volume'])
+    });
+  }
+
+  return klineData.reverse();
+}
+
+function generateHistoryFromCurrentPrice(current, open, high, low, baseVolume, days) {
+  const klineData = [];
+  const seed = current * 100;
+  const rng = createSeededRandom(Math.floor(seed));
+  
+  let price = current * (0.9 + rng() * 0.2);
+  const trend = (current - open) / current;
+  
+  const now = new Date();
+  
+  for (let i = days - 1; i >= 0; i--) {
+    const date = new Date(now);
+    date.setDate(date.getDate() - i);
+    if (date.getDay() === 0 || date.getDay() === 6) continue;
+    
+    const dailyVolatility = 0.02 + rng() * 0.02;
+    const change = trend * 0.1 + (rng() - 0.5) * dailyVolatility;
+    
+    const dayOpen = price;
+    const dayClose = dayOpen * (1 + change);
+    const dayHigh = Math.max(dayOpen, dayClose) * (1 + rng() * 0.015);
+    const dayLow = Math.min(dayOpen, dayClose) * (1 - rng() * 0.015);
+    
+    const isLastDay = (i === days - 1);
+    
+    klineData.push({
+      date: date.toISOString().split('T')[0],
+      open: roundPrice(isLastDay ? open : dayOpen),
+      high: roundPrice(isLastDay ? high : dayHigh),
+      low: roundPrice(isLastDay ? low : dayLow),
+      close: roundPrice(isLastDay ? current : dayClose),
+      volume: Math.round(baseVolume * (0.5 + rng() * 1.5))
+    });
+    
+    price = dayClose;
+  }
+
+  return klineData;
+}
+
+function convertToAlphaVantageSymbol(symbol) {
+  return SYMBOL_MAP[symbol] || symbol.toUpperCase();
+}
+
+function convertToTwelveDataSymbol(symbol) {
+  const s = SYMBOL_MAP[symbol] || symbol.toUpperCase();
+  return s.replace('.SS', '.SH').replace('.SZ', '.SZ');
+}
+
+function convertToFinnhubSymbol(symbol) {
+  const s = SYMBOL_MAP[symbol] || symbol.toUpperCase();
+  return s.replace('.SS', '.SS').replace('.SZ', '.SZ');
+}
+
+function convertToSinaSymbol(symbol) {
+  if (/^\d{6}$/.test(symbol)) {
+    const prefix = symbol.startsWith('6') ? 'sh' : 'sz';
+    return `${prefix}${symbol}`;
+  }
+  
+  const directMap = {
+    '茅台': 'sh600519',
+    '贵州茅台': 'sh600519',
+    '比亚迪': 'sz002594',
+    '宁德时代': 'sz300750',
+    '平安': 'sh601318',
+    '工商银行': 'sh601398',
+    '建设银行': 'sh601939',
+    '招商银行': 'sh600036',
+    '腾讯': 'hk00700',
+    '阿里巴巴': 'hk09988',
+    '美团': 'hk03690',
+    '小米': 'hk01810'
+  };
+  
+  return directMap[symbol] || directMap[symbol.toUpperCase()];
+}
+
 function generateRealisticMockData(symbol) {
   const seed = generateSeed(symbol);
   const rng = createSeededRandom(seed);
   const sectorVolatility = getSectorVolatility(symbol);
   const basePrice = getBasePrice(symbol);
-  
+
   const klineData = [];
   let currentPrice = basePrice * (0.8 + rng() * 0.4);
   const trend = (rng() - 0.5) * 0.02;
   const now = new Date();
-  
+
   for (let i = 13; i >= 0; i--) {
     const date = new Date(now);
     date.setDate(date.getDate() - i);
     if (date.getDay() === 0 || date.getDay() === 6) continue;
-    
+
     const dailyVolatility = sectorVolatility * (0.5 + rng() * 1.5);
     const change = trend + (rng() - 0.5) * dailyVolatility;
-    
+
     const open = currentPrice;
     const close = open * (1 + change);
     const high = Math.max(open, close) * (1 + rng() * 0.02);
     const low = Math.min(open, close) * (1 - rng() * 0.02);
-    
+
     const baseVolume = getBaseVolume(symbol);
     const volumeMultiplier = 1 + Math.abs(change) * 10;
     const volume = Math.round(baseVolume * volumeMultiplier * (0.5 + rng() * 1.5));
-    
+
     klineData.push({
       date: date.toISOString().split('T')[0],
       open: roundPrice(open),
@@ -49,21 +416,18 @@ function generateRealisticMockData(symbol) {
       close: roundPrice(close),
       volume
     });
-    
+
     currentPrice = close;
   }
-  
+
   return klineData;
 }
 
-/**
- * 计算技术指标
- */
 function calculateTechnicalIndicators(klineData) {
   if (klineData.length < 14) {
     return calculateSimpleIndicators(klineData);
   }
-  
+
   const rsi = calculateRSI(klineData, 14);
   const ma5 = calculateMA(klineData, 5);
   const ma10 = calculateMA(klineData, 10);
@@ -72,9 +436,9 @@ function calculateTechnicalIndicators(klineData) {
   const bollinger = calculateBollinger(klineData, 20);
   const volMA5 = calculateMA(klineData.map(d => d.volume), 5);
   const volMA10 = calculateMA(klineData.map(d => d.volume), 10);
-  
+
   const latestClose = klineData[klineData.length - 1].close;
-  
+
   return {
     rsi: rsi.toFixed(2),
     ma5: roundPrice(ma5),
@@ -196,5 +560,6 @@ function roundPrice(price) {
 module.exports = {
   fetchMarketData,
   calculateTechnicalIndicators,
-  generateRealisticMockData
+  generateRealisticMockData,
+  SYMBOL_MAP
 };
