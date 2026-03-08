@@ -89,20 +89,20 @@ export function updateGauge(score, company) {
 export function updateHistory() {
     const historyChart = document.getElementById('historyChart');
     if (!historyChart) return;
-    
+
     const historyData = Array.from({ length: 7 }, () => Math.floor(Math.random() * 80) + 10);
     const days = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
 
-    // 只更新条形图部分，保留标题和图表说明
+    // 生成条形图 HTML
     const barsHTML = historyData.map((v, i) => {
         const barClass = v < 40 ? 'fear' : (v > 60 ? 'greed' : 'neutral');
-        return `<div class="history-bar ${barClass}" style="height: ${v}px; flex: 1; margin: 0 2px;" data-value="${days[i]}: ${v}"></div>`;
+        return `<div class="history-bar ${barClass}" style="height: ${v}px; flex: 1;" data-value="${days[i]}: ${v}分"></div>`;
     }).join('');
 
-    // 更新图表区域（保留标题）
-    const chartContent = historyChart.querySelector('div[style*="display: flex"]');
-    if (chartContent) {
-        chartContent.innerHTML = barsHTML;
+    // 更新图表容器
+    const chartContainer = historyChart.querySelector('.history-bars-container');
+    if (chartContainer) {
+        chartContainer.innerHTML = barsHTML;
     }
 }
 
