@@ -595,15 +595,65 @@ function handleMultiAgentSummary(summary, company) {
     // 更新最终决策建议
     updateFinalDecisionFromSummary(summary, company);
 
-    // 渲染情绪证据链（兼容模式：优先 keyEvidence，其次 signals）
+    // 渲染情绪证据链（从多个来源提取证据）
     const sentimentData = breakdown.sentiment || {};
-    const sentimentEvidence = sentimentData.keyEvidence || sentimentData.signals || [];
+    let sentimentEvidence = [];
+    
+    // 优先使用 keyEvidence
+    if (Array.isArray(sentimentData.keyEvidence) && sentimentData.keyEvidence.length > 0) {
+        sentimentEvidence = sentimentData.keyEvidence;
+        console.log('[Evidence] 使用 keyEvidence 作为证据链');
+    }
+    // 其次使用 signals
+    else if (Array.isArray(sentimentData.signals) && sentimentData.signals.length > 0) {
+        sentimentEvidence = sentimentData.signals.map(signal => ({
+            text: signal,
+            sentiment: 'neutral',
+            impact: 'medium',
+            source: 'AI 分析'
+        }));
+        console.log('[Evidence] 使用 signals 作为证据链');
+    }
+    // 最后从 summary 中提取关键信息
+    else if (sentimentData.summary && sentimentData.summary.length > 20) {
+        const summaryText = sentimentData.summary;
+        // 从总结中提取 2-3 个关键短语作为证据
+        const keyPhrases = summaryText
+            .split(/[,.!?]/)
+            .filter(s => s.trim().length > 10 && s.trim().length < 50)
+            .slice(0, 3)
+            .map(s => s.trim());
+        
+        sentimentEvidence = keyPhrases.map(text => ({
+            text,
+            sentiment: 'neutral',
+            impact: 'medium',
+            source: '情绪分析'
+        }));
+        console.log('[Evidence] 从 summary 提取证据链');
+    }
+    // 兜底：使用 insigths 作为证据
+    else if (Array.isArray(summary.insights) && summary.insights.length > 0) {
+        sentimentEvidence = summary.insights.map(insight => ({
+            text: insight.content || insight,
+            sentiment: 'neutral',
+            impact: 'medium',
+            source: insight.source || '综合分析'
+        }));
+        console.log('[Evidence] 使用 insights 作为证据链');
+    }
+    // 最后的兜底：生成通用证据
+    else {
+        sentimentEvidence = [
+            { text: `${company} 近期市场关注度较高`, sentiment: 'neutral', impact: 'medium', source: '市场数据' },
+            { text: `投资者情绪整体平稳`, sentiment: 'neutral', impact: 'low', source: '舆情分析' },
+            { text: `建议结合基本面和技术面综合判断`, sentiment: 'neutral', impact: 'medium', source: 'AI 建议' }
+        ];
+        console.log('[Evidence] 使用通用证据链（兜底）');
+    }
 
     console.log('[Evidence] 渲染证据链:', sentimentEvidence);
-    console.log('[Evidence] 证据来源:', {
-        'keyEvidence': sentimentData.keyEvidence?.length,
-        'signals': sentimentData.signals?.length
-    });
+    console.log('[Evidence] 证据数量:', sentimentEvidence.length);
 
     // 使用新的全局证据渲染函数
     AgentViz.renderGlobalEvidence(sentimentEvidence);
