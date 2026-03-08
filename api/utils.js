@@ -385,11 +385,13 @@ function parseAgentResult(agent, aiResult) {
  * 融合 Agent 结果（添加一致性验证）
  */
 function fuseAgentResults(company, action, results) {
+  console.log('[fuseAgentResults] 原始输入:', JSON.stringify(results, null, 2).substring(0, 300));
+
   const sentiment = results.sentiment || { score: 50 };
   const technical = results.technical || { score: 50 };
   const psychology = results.psychology || { score: 50 };
 
-  console.log('[fuseAgentResults] 输入数据:', {
+  console.log('[fuseAgentResults] 提取的分数:', {
     sentiment: sentiment.score,
     technical: technical.score,
     psychology: psychology.score
@@ -415,7 +417,12 @@ function fuseAgentResults(company, action, results) {
   console.log('[fuseAgentResults] 最终输出:', {
     finalScore,
     consensus,
-    scoreDiff
+    scoreDiff,
+    breakdown: {
+      sentiment: sentiment.score,
+      technical: technical.score,
+      psychology: psychology.score
+    }
   });
 
   return {

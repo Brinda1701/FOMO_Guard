@@ -103,7 +103,15 @@ async function runMultiAgentAnalysis(req, res, company, action, apiKey, apiUrl, 
     psychology: results.psychology?.score
   });
 
-  res.status(200).json(fuseAgentResults(company, action, results));
+  // 深拷贝 results，确保数据不被修改
+  const resultsCopy = JSON.parse(JSON.stringify(results));
+  console.log('[Orchestrator] 深拷贝后的结果:', {
+    sentiment: resultsCopy.sentiment?.score,
+    technical: resultsCopy.technical?.score,
+    psychology: resultsCopy.psychology?.score
+  });
+
+  res.status(200).json(fuseAgentResults(company, action, resultsCopy));
 }
 
 async function streamMultiAgentAnalysis(req, res, company, action, apiKey, apiUrl, modelName) {
