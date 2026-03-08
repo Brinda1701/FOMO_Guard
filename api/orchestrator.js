@@ -67,33 +67,47 @@ async function runMultiAgentAnalysis(req, res, company, action, apiKey, apiUrl, 
     console.log('[Orchestrator] 已获取市场数据:', company, klineData.length, '天');
   } catch (error) {
     console.warn('[Orchestrator] 获取市场数据失败:', error.message);
+    // 市场数据获取失败不影响继续执行
   }
 
-  // 串行执行三个 Agent，避免触发 API 限流
+  // 串行执行三个 Agent，每个 Agent 设置独立超时（15 秒），确保总时间<60 秒
   for (const agent of agents) {
     try {
       console.log(`[Orchestrator] 开始执行 ${agent} Agent...`);
       
       const prompt = buildAgentPrompt(agent, company, action, agent === 'technical' ? marketData : null);
-      const agentResult = await callAIModel(prompt, apiKey, apiUrl, modelName);
       
+      // 使用 Promise.race 实现超时控制
+      const agentResult = await Promise.race([
+        callAIModel(prompt, apiKey, apiUrl, modelName),
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Agent 分析超时（15 秒）')), 15000)
+        )
+      ]);
+
       console.log(`[Orchestrator] ${agent} - AI 返回的原始结果:`, JSON.stringify(agentResult).substring(0, 200));
-      
+
       results[agent] = parseAgentResult(agent, agentResult);
-      
+
       console.log(`[Orchestrator] ${agent} - 解析后的结果:`, {
         score: results[agent].score,
         summary: results[agent].summary?.substring(0, 50)
       });
       console.log(`[Orchestrator] ${agent} Agent 完成`);
-      
-      // 每个 Agent 之间延迟 500ms，避免请求过于频繁
+
+      // 每个 Agent 之间延迟 200ms，避免请求过于频繁
       if (agent !== 'psychology') {
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, 200));
       }
     } catch (error) {
-      console.error(`[Agent ${agent}] Error:`, error);
-      results[agent] = { score: 50, error: error.message };
+      console.error(`[Agent ${agent}] Error:`, error.message);
+      // 超时或其他错误时使用中性分数
+      results[agent] = { 
+        score: 50, 
+        confidence: 0,
+        summary: '分析超时或失败，使用中性分数',
+        isFallback: true
+      };
     }
   }
 
