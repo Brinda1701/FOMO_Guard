@@ -360,11 +360,11 @@ async function analyzeWithMultiAgent(company) {
     try {
         console.log('[Multi-Agent] 预先获取市场数据...');
         const symbol = Logic.getStockSymbol(company);
-        
+
         // 渲染数据来源和 K 线图表
         renderDataSourceCards(company, symbol);
-        renderKlineChart(company, 50); // 使用默认分数先显示
-        
+        await renderKlineChart(company, 50); // 使用默认分数先显示
+
         console.log('[Multi-Agent] K 线和数据来源已显示');
         
         // 隐藏相关骨架屏
@@ -418,8 +418,8 @@ async function analyzeWithMultiAgent(company) {
                     cardEl.classList.add('failed');
                 }
             },
-            onSummary: (summary) => {
-                handleMultiAgentSummary(summary, company);
+            onSummary: async (summary) => {
+                await handleMultiAgentSummary(summary, company);
             },
             onError: (error) => {
                 console.error('[Multi-Agent] Error:', error);
@@ -506,8 +506,8 @@ async function analyzeWithSingleMode(company) {
 
     // 渲染数据来源和 K 线图表（异步调用）
     const symbol = Logic.getStockSymbol(company);
-    renderDataSourceCards(company, symbol);
-    renderKlineChart(company, score);
+    await renderDataSourceCards(company, symbol);
+    await renderKlineChart(company, score);
 
     // 更新情绪趋势图
     Chart.updateSentimentTrendChart(historyData);
@@ -586,7 +586,7 @@ function showSingleAgentVisualization(score, company) {
 }
 
 // 处理 Multi-Agent 汇总结果
-function handleMultiAgentSummary(summary, company) {
+async function handleMultiAgentSummary(summary, company) {
     const score = summary.finalScore || summary.final_score || 50;
     Logic.state.currentScore = score;
 
@@ -604,8 +604,8 @@ function handleMultiAgentSummary(summary, company) {
     // 渲染数据来源和 K 线图表（异步调用）
     console.log('[Multi-Agent] 准备渲染数据来源和 K 线图表...');
     const symbol = Logic.getStockSymbol(company);
-    renderDataSourceCards(company, symbol);
-    renderKlineChart(company, score);
+    await renderDataSourceCards(company, symbol);
+    await renderKlineChart(company, score);
     console.log('[Multi-Agent] 数据来源和 K 线图表渲染完成');
 
     // 更新情绪趋势图

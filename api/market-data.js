@@ -702,9 +702,8 @@ function roundPrice(price) {
   return Math.round(price * 100) / 100;
 }
 
-module.exports = {
-  fetchMarketData,
-  calculateTechnicalIndicators,
-  generateRealisticMockData,
-  SYMBOL_MAP
-};
+// 导出工具函数（用于其他模块）
+exports.fetchMarketData = fetchMarketData;
+exports.calculateTechnicalIndicators = calculateTechnicalIndicators;
+exports.generateRealisticMockData = generateRealisticMockData;
+exports.SYMBOL_MAP = SYMBOL_MAP;
