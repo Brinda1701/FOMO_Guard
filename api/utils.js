@@ -189,23 +189,29 @@ ${marketData ? formatMarketDataForPrompt(marketData) : '暂无数据'}
  * 格式化市场数据为 Prompt 字符串
  */
 function formatMarketDataForPrompt(marketData) {
-  if (!marketData || !marketData.klineData || !marketData.indicators) {
+  if (!marketData || !marketData.klineData) {
     return '暂无数据';
   }
-  
+
   const { klineData, indicators } = marketData;
   const header = '日期       | 开盘    | 收盘    | 最高    | 最低    | 成交量 (万)';
   const separator = '─'.repeat(60);
-  const rows = klineData.map(day => 
+  const rows = klineData.map(day =>
     `${day.date} | ${day.open.toFixed(2).padStart(6)} | ${day.close.toFixed(2).padStart(6)} | ${day.high.toFixed(2).padStart(6)} | ${day.low.toFixed(2).padStart(6)} | ${(day.volume / 10000).toFixed(0).padStart(5)}`
   );
-  
-  let result = `${header}\n${separator}\n${rows.join('\n')}\n${separator}
+
+  let result = `${header}\n${separator}\n${rows.join('\n')}\n${separator}`;
+
+  if (indicators) {
+    result += `
 【技术指标】
 - RSI(14): ${indicators.rsi}
-- MA5: ${indicators.ma5} (当前价格 ${indicators.priceVsMA5})
+- MA5: ${indicators.ma5} (当前价格 ${indicators.priceVsMA5 || 'N/A'})
+- MA10: ${indicators.ma10} (${indicators.priceVsMA10 || 'N/A'})
+- MA20: ${indicators.ma20} (${indicators.priceVsMA20 || 'N/A'})
 - MACD: ${indicators.macd}, Signal: ${indicators.signal}`;
-  
+  }
+
   return result;
 }
 

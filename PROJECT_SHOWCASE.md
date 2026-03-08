@@ -324,8 +324,6 @@ function getSentimentClass(sentiment) {
 | `/api/analyze` | POST | AI 情绪分析（单公司） | 2-8s |
 | `/api/orchestrator` | POST | Multi-Agent 编排（支持 SSE 流式） | 5-15s |
 | `/api/scrape-url` | POST | URL 内容爬取 + 情绪分析 | 3-10s |
-| `/api/batch-analyze` | POST | 批量分析（最多 10 个公司） | 5-20s |
-| `/api/backtest` | POST | 回测数据统计（模拟/真实） | < 500ms |
 
 ### 4.4 关键技术实现
 

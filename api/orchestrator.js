@@ -142,6 +142,79 @@ function generateHistoryFromCurrentPrice(current, open, high, low, baseVolume, d
   return klineData;
 }
 
+/**
+ * 计算技术指标
+ */
+function calculateTechnicalIndicators(klineData) {
+  if (klineData.length < 14) {
+    return calculateSimpleIndicators(klineData);
+  }
+
+  const rsi = calculateRSI(klineData, 14);
+  const ma5 = calculateMA(klineData, 5);
+  const ma10 = calculateMA(klineData, 10);
+  const ma20 = calculateMA(klineData, 20);
+  const macd = calculateMACD(klineData);
+  const latestClose = klineData[klineData.length - 1].close;
+
+  return {
+    rsi: rsi.toFixed(2),
+    ma5: roundPrice(ma5),
+    ma10: roundPrice(ma10),
+    ma20: roundPrice(ma20),
+    macd: macd.toFixed(4),
+    signal: (macd * 0.8).toFixed(4),
+    histogram: (macd * 0.2).toFixed(4),
+    latestClose: roundPrice(latestClose),
+    priceVsMA5: ((latestClose - ma5) / ma5 * 100).toFixed(2) + '%',
+    priceVsMA10: ((latestClose - ma10) / ma10 * 100).toFixed(2) + '%',
+    priceVsMA20: ((latestClose - ma20) / ma20 * 100).toFixed(2) + '%'
+  };
+}
+
+function calculateRSI(data, period) {
+  let gains = 0, losses = 0;
+  for (let i = data.length - period; i < data.length; i++) {
+    const change = data[i].close - data[i - 1].close;
+    if (change > 0) gains += change; else losses -= change;
+  }
+  const avgGain = gains / period, avgLoss = losses / period;
+  if (avgLoss === 0) return 100;
+  return 100 - (100 / (1 + avgGain / avgLoss));
+}
+
+function calculateMA(data, period) {
+  const prices = data.slice(-period).map(d => d.close);
+  return prices.reduce((a, b) => a + b, 0) / period;
+}
+
+function calculateMACD(data) {
+  const ema12 = calculateEMA(data.map(d => d.close), 12);
+  const ema26 = calculateEMA(data.map(d => d.close), 26);
+  return ema12 - ema26;
+}
+
+function calculateEMA(prices, period) {
+  const multiplier = 2 / (period + 1);
+  let ema = prices.slice(0, period).reduce((a, b) => a + b, 0) / period;
+  for (let i = period; i < prices.length; i++) {
+    ema = (prices[i] - ema) * multiplier + ema;
+  }
+  return ema;
+}
+
+function calculateSimpleIndicators(data) {
+  if (data.length === 0) return { rsi: 50, ma5: 0, ma10: 0, latestClose: 0 };
+  const latestClose = data[data.length - 1].close;
+  const ma5 = data.length >= 5 ? calculateMA(data, 5) : latestClose;
+  const ma10 = data.length >= 10 ? calculateMA(data, 10) : latestClose;
+  return { rsi: '50.00', ma5: roundPrice(ma5), ma10: roundPrice(ma10), latestClose: roundPrice(latestClose), priceVsMA5: '0%', priceVsMA10: '0%', priceVsMA20: '0%', macd: '0.0000', signal: '0.0000', histogram: '0.0000' };
+}
+
+function roundPrice(price) {
+  return Math.round(price * 100) / 100;
+}
+
 module.exports = async function handler(req, res) {
   setSecureCorsHeaders(res);
 
@@ -196,8 +269,12 @@ async function runMultiAgentAnalysis(req, res, company, action, apiKey, apiUrl, 
   try {
     // 使用内联的腾讯 API 获取 K 线数据
     const klineData = await fetchKlineDataFromTencent(company);
-    marketData = { klineData };
-    console.log('[Orchestrator] 已获取市场数据:', company, klineData.length, '天，最新价格:', klineData[klineData.length - 1].close);
+    
+    // 计算技术指标
+    const indicators = calculateTechnicalIndicators(klineData);
+    
+    marketData = { klineData, indicators };
+    console.log('[Orchestrator] 已获取市场数据:', company, klineData.length, '天，最新价格:', klineData[klineData.length - 1].close, 'RSI:', indicators.rsi);
   } catch (error) {
     console.warn('[Orchestrator] 获取市场数据失败:', error.message);
     // 市场数据获取失败不影响继续执行
@@ -291,8 +368,12 @@ async function streamMultiAgentAnalysis(req, res, company, action, apiKey, apiUr
   try {
     // 使用内联的腾讯 API 获取 K 线数据
     const klineData = await fetchKlineDataFromTencent(company);
-    marketData = { klineData };
-    console.log('[Orchestrator] 已获取市场数据:', company, klineData.length, '天，最新价格:', klineData[klineData.length - 1].close);
+    
+    // 计算技术指标
+    const indicators = calculateTechnicalIndicators(klineData);
+    
+    marketData = { klineData, indicators };
+    console.log('[Orchestrator] 已获取市场数据:', company, klineData.length, '天，最新价格:', klineData[klineData.length - 1].close, 'RSI:', indicators.rsi);
   } catch (error) {
     console.warn('[Orchestrator] 获取市场数据失败:', error.message);
   }
