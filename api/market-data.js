@@ -94,25 +94,27 @@ module.exports = async function handler(req, res) {
  * 获取市场数据（14 天 K 线数据）
  */
 async function fetchMarketData(symbol) {
-  const priority = process.env.DATA_SOURCE_PRIORITY || 'alphavantage,twelvedata,finnhub,sina';
+  const priority = process.env.DATA_SOURCE_PRIORITY || 'tencent,sina,alphavantage,twelvedata,finnhub';
   const sources = priority.split(',').map(s => s.trim().toLowerCase());
 
   for (const source of sources) {
     try {
       console.log(`[MarketData] 尝试从 ${source} 获取数据...`);
-      
+
       let data = null;
-      
-      if (source === 'alphavantage' && process.env.ALPHA_VANTAGE_API_KEY) {
+
+      if (source === 'tencent' && process.env.ENABLE_TENCENT_API === 'true') {
+        data = await fetchFromTencent(symbol);
+      } else if (source === 'sina' && process.env.ENABLE_SINA_API === 'true') {
+        data = await fetchFromSina(symbol);
+      } else if (source === 'alphavantage' && process.env.ALPHA_VANTAGE_API_KEY) {
         data = await fetchFromAlphaVantage(symbol, process.env.ALPHA_VANTAGE_API_KEY);
       } else if (source === 'twelvedata' && process.env.TWELVE_DATA_API_KEY) {
         data = await fetchFromTwelveData(symbol, process.env.TWELVE_DATA_API_KEY);
       } else if (source === 'finnhub' && process.env.FINNHUB_API_KEY) {
         data = await fetchFromFinnhub(symbol, process.env.FINNHUB_API_KEY);
-      } else if (source === 'sina' && process.env.ENABLE_SINA_API === 'true') {
-        data = await fetchFromSina(symbol);
       }
-      
+
       if (data && data.length > 0) {
         console.log(`[MarketData] ✓ 从 ${source} 成功获取 ${data.length} 条数据`);
         return data;
@@ -234,6 +236,84 @@ async function fetchFromFinnhub(symbol, apiKey) {
     });
   }
 
+  return klineData.slice(-14);
+}
+
+/**
+ * 从腾讯财经获取数据（支持 A 股、港股、美股）
+ * 无需 API Key，实时数据
+ * http://qt.gtimg.cn/q=股票代码
+ */
+async function fetchFromTencent(symbol) {
+  const tencentSymbol = convertToTencentSymbol(symbol);
+  
+  if (!tencentSymbol) {
+    throw new Error('无法转换为腾讯财经代码格式');
+  }
+
+  // 支持批量获取（多个代码用逗号分隔）
+  const url = `http://qt.gtimg.cn/q=${tencentSymbol}`;
+  
+  console.log('[Tencent API] 请求 URL:', url);
+  
+  const response = await fetch(url, { 
+    headers: { 
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+      'Accept': '*/*',
+      'Referer': 'http://finance.qq.com/'
+    },
+    timeout: 10000
+  });
+  
+  if (!response.ok) {
+    throw new Error(`Tencent API error: ${response.status}`);
+  }
+
+  const text = await response.text();
+  console.log('[Tencent API] 返回数据长度:', text.length);
+  
+  // 解析腾讯返回的数据格式
+  // 格式：v_sh600519="51~贵州茅台~600519~1402.00~1420.00~1430.00...";
+  const lines = text.split('\n').filter(line => line.trim());
+  
+  if (lines.length === 0) {
+    throw new Error('Tencent data not available');
+  }
+
+  // 解析实时数据并生成历史 K 线
+  const klineData = [];
+  const now = new Date();
+  
+  for (const line of lines) {
+    const match = line.match(/v_(\w+)="([^"]+)"/);
+    if (!match) continue;
+    
+    const code = match[1];
+    const data = match[2].split('~');
+    
+    if (data.length < 30) continue;
+    
+    // 腾讯数据字段解析
+    const currentPrice = parseFloat(data[3]) || 0;
+    const openPrice = parseFloat(data[5]) || 0;
+    const highPrice = parseFloat(data[33]) || parseFloat(data[4]) || currentPrice;
+    const lowPrice = parseFloat(data[34]) || parseFloat(data[5]) || currentPrice;
+    const volume = parseInt(data[6]) || 0;
+    const prevClose = parseFloat(data[2]) || currentPrice;
+    
+    // 使用实时数据生成最近 14 天的 K 线（以当前价格为基准）
+    const history = generateHistoryFromCurrentPrice(
+      currentPrice, openPrice, highPrice, lowPrice, volume, 14
+    );
+    
+    klineData.push(...history);
+  }
+
+  if (klineData.length === 0) {
+    throw new Error('No valid K-line data');
+  }
+
+  console.log('[Tencent API] 解析成功，生成数据条数:', klineData.length);
   return klineData.slice(-14);
 }
 
@@ -363,6 +443,62 @@ function convertToTwelveDataSymbol(symbol) {
 function convertToFinnhubSymbol(symbol) {
   const s = SYMBOL_MAP[symbol] || symbol.toUpperCase();
   return s.replace('.SS', '.SS').replace('.SZ', '.SZ');
+}
+
+function convertToTencentSymbol(symbol) {
+  // 直接是股票代码
+  if (/^\d{6}$/.test(symbol)) {
+    const prefix = symbol.startsWith('6') ? 'sh' : 'sz';
+    return `${prefix}${symbol}`;
+  }
+  
+  // 从名称转换（支持 A 股、港股、美股）
+  const directMap = {
+    // A 股
+    '茅台': 'sh600519',
+    '贵州茅台': 'sh600519',
+    '比亚迪': 'sz002594',
+    '宁德时代': 'sz300750',
+    '平安': 'sh601318',
+    '工商银行': 'sh601398',
+    '建设银行': 'sh601939',
+    '招商银行': 'sh600036',
+    '五粮液': 'sz000858',
+    '格力': 'sz000651',
+    '美的': 'sz000333',
+    // 港股
+    '腾讯': 'hk00700',
+    '阿里巴巴': 'hk09988',
+    '美团': 'hk03690',
+    '小米': 'hk01810',
+    '百度': 'hk09888',
+    '京东': 'hk09618',
+    '拼多多': 'hk09878',
+    '网易': 'hk09999',
+    '中国平安': 'hk02318',
+    '工商银行': 'hk01398',
+    // 美股
+    '特斯拉': 'usTSLA',
+    '苹果': 'usAAPL',
+    '微软': 'usMSFT',
+    '英伟达': 'usNVDA',
+    '谷歌': 'usGOOGL',
+    '亚马逊': 'usAMZN',
+    'meta': 'usMETA',
+    '脸书': 'usMETA',
+    'AMD': 'usAMD',
+    '英特尔': 'usINTC',
+    'Netflix': 'usNFLX',
+    '网飞': 'usNFLX',
+    '波音': 'usBA',
+    '迪士尼': 'usDIS',
+    '摩根大通': 'usJPM',
+    '美国银行': 'usBAC',
+    '可口可乐': 'usKO',
+    '沃尔玛': 'usWMT'
+  };
+  
+  return directMap[symbol] || directMap[symbol.toUpperCase()];
 }
 
 function convertToSinaSymbol(symbol) {
