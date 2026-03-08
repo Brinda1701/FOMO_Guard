@@ -215,6 +215,105 @@ function roundPrice(price) {
   return Math.round(price * 100) / 100;
 }
 
+/**
+ * 根据技术指标计算盘面量价分数（0-100）
+ * 基于 RSI、均线、MACD、成交量等指标
+ */
+function calculateTechnicalScore(klineData, indicators) {
+  let score = 50; // 基础分 50 分
+  const reasons = [];
+
+  // 1. RSI 评分（权重 30%）
+  const rsi = parseFloat(indicators.rsi) || 50;
+  if (rsi > 70) {
+    score -= (rsi - 70) * 0.6; // 超买扣分
+    reasons.push(`RSI ${rsi.toFixed(1)} 超买`);
+  } else if (rsi < 30) {
+    score += (30 - rsi) * 0.6; // 超卖加分
+    reasons.push(`RSI ${rsi.toFixed(1)} 超卖`);
+  } else if (rsi > 55) {
+    score += (rsi - 55) * 0.3; // 偏强
+    reasons.push(`RSI ${rsi.toFixed(1)} 偏强`);
+  } else if (rsi < 45) {
+    score -= (45 - rsi) * 0.3; // 偏弱
+    reasons.push(`RSI ${rsi.toFixed(1)} 偏弱`);
+  }
+
+  // 2. 均线评分（权重 30%）
+  const latestClose = klineData[klineData.length - 1].close;
+  const ma5 = parseFloat(indicators.ma5) || latestClose;
+  const ma10 = parseFloat(indicators.ma10) || latestClose;
+  const ma20 = parseFloat(indicators.ma20) || latestClose;
+
+  if (latestClose > ma5 && ma5 > ma10 && ma10 > ma20) {
+    score += 15; // 多头排列
+    reasons.push('均线多头排列');
+  } else if (latestClose < ma5 && ma5 < ma10 && ma10 < ma20) {
+    score -= 15; // 空头排列
+    reasons.push('均线空头排列');
+  } else {
+    if (latestClose > ma5) score += 3;
+    if (latestClose > ma10) score += 3;
+    if (latestClose > ma20) score += 4;
+    if (latestClose < ma5) score -= 3;
+    if (latestClose < ma10) score -= 3;
+    if (latestClose < ma20) score -= 4;
+  }
+
+  // 3. MACD 评分（权重 25%）
+  const macd = parseFloat(indicators.macd) || 0;
+  const signal = parseFloat(indicators.signal) || 0;
+  const histogram = parseFloat(indicators.histogram) || 0;
+
+  if (macd > signal && macd > 0) {
+    score += 10; // 金叉且在零轴上
+    reasons.push('MACD 金叉');
+  } else if (macd < signal && macd < 0) {
+    score -= 10; // 死叉且在零轴下
+    reasons.push('MACD 死叉');
+  } else if (macd > signal) {
+    score += 5; // 金叉
+    reasons.push('MACD 金叉');
+  } else if (macd < signal) {
+    score -= 5; // 死叉
+    reasons.push('MACD 死叉');
+  }
+
+  if (histogram > 0 && histogram > parseFloat(indicators.histogram_prev || 0)) {
+    score += 5; // 红柱放大
+    reasons.push('MACD 红柱放大');
+  } else if (histogram < 0 && histogram < parseFloat(indicators.histogram_prev || 0)) {
+    score -= 5; // 绿柱放大
+    reasons.push('MACD 绿柱放大');
+  }
+
+  // 4. 趋势评分（权重 15%）
+  const firstClose = klineData[0].close;
+  const priceChange = ((latestClose - firstClose) / firstClose) * 100;
+  
+  if (priceChange > 10) {
+    score += 10;
+    reasons.push(`14 日涨幅 ${priceChange.toFixed(1)}%`);
+  } else if (priceChange < -10) {
+    score -= 10;
+    reasons.push(`14 日跌幅 ${priceChange.toFixed(1)}%`);
+  } else if (priceChange > 5) {
+    score += 5;
+    reasons.push(`14 日涨幅 ${priceChange.toFixed(1)}%`);
+  } else if (priceChange < -5) {
+    score -= 5;
+    reasons.push(`14 日跌幅 ${priceChange.toFixed(1)}%`);
+  } else {
+    reasons.push(`14 日震荡 ${priceChange.toFixed(1)}%`);
+  }
+
+  // 限制分数在 0-100 之间，保留一位小数
+  score = Math.max(0, Math.min(100, score));
+  score = Math.round(score * 10) / 10;
+
+  return { score, reasons };
+}
+
 module.exports = async function handler(req, res) {
   setSecureCorsHeaders(res);
 
@@ -266,15 +365,19 @@ async function runMultiAgentAnalysis(req, res, company, action, apiKey, apiUrl, 
   const results = {};
 
   let marketData = null;
+  let technicalScoreData = null;
   try {
     // 使用内联的腾讯 API 获取 K 线数据
     const klineData = await fetchKlineDataFromTencent(company);
-    
+
     // 计算技术指标
     const indicators = calculateTechnicalIndicators(klineData);
-    
+
+    // 计算盘面量价分数（基于真实技术指标）
+    technicalScoreData = calculateTechnicalScore(klineData, indicators);
+
     marketData = { klineData, indicators };
-    console.log('[Orchestrator] 已获取市场数据:', company, klineData.length, '天，最新价格:', klineData[klineData.length - 1].close, 'RSI:', indicators.rsi);
+    console.log('[Orchestrator] 已获取市场数据:', company, klineData.length, '天，最新价格:', klineData[klineData.length - 1].close, 'RSI:', indicators.rsi, '技术分数:', technicalScoreData.score);
   } catch (error) {
     console.warn('[Orchestrator] 获取市场数据失败:', error.message);
     // 市场数据获取失败不影响继续执行
@@ -298,6 +401,16 @@ async function runMultiAgentAnalysis(req, res, company, action, apiKey, apiUrl, 
       console.log(`[Orchestrator] ${agent} - AI 返回的原始结果:`, JSON.stringify(agentResult).substring(0, 200));
 
       results[agent] = parseAgentResult(agent, agentResult);
+
+      // 如果是 technical Agent，使用真实计算的分数替换 AI 返回的分数
+      if (agent === 'technical' && technicalScoreData) {
+        const aiSummary = results[agent].summary;
+        results[agent].score = technicalScoreData.score;
+        results[agent].summary = `【基于真实 K 线数据】${aiSummary} | 技术指标：${technicalScoreData.reasons.join(', ')}`;
+        results[agent].isRealData = true;
+        results[agent].technicalReasons = technicalScoreData.reasons;
+        console.log(`[Orchestrator] technical - 使用真实技术分数：${technicalScoreData.score}`);
+      }
 
       console.log(`[Orchestrator] ${agent} - 解析后的结果:`, {
         score: results[agent].score,
@@ -365,15 +478,19 @@ async function streamMultiAgentAnalysis(req, res, company, action, apiKey, apiUr
 
   // 获取市场数据（仅技术分析需要）
   let marketData = null;
+  let technicalScoreData = null;
   try {
     // 使用内联的腾讯 API 获取 K 线数据
     const klineData = await fetchKlineDataFromTencent(company);
-    
+
     // 计算技术指标
     const indicators = calculateTechnicalIndicators(klineData);
-    
+
+    // 计算盘面量价分数（基于真实技术指标）
+    technicalScoreData = calculateTechnicalScore(klineData, indicators);
+
     marketData = { klineData, indicators };
-    console.log('[Orchestrator] 已获取市场数据:', company, klineData.length, '天，最新价格:', klineData[klineData.length - 1].close, 'RSI:', indicators.rsi);
+    console.log('[Orchestrator] 已获取市场数据:', company, klineData.length, '天，最新价格:', klineData[klineData.length - 1].close, 'RSI:', indicators.rsi, '技术分数:', technicalScoreData.score);
   } catch (error) {
     console.warn('[Orchestrator] 获取市场数据失败:', error.message);
   }
@@ -419,6 +536,16 @@ async function streamMultiAgentAnalysis(req, res, company, action, apiKey, apiUr
       const parsedResult = parseAgentResult(agent, agentResult);
       results[agent] = parsedResult;
 
+      // 如果是 technical Agent，使用真实计算的分数替换 AI 返回的分数
+      if (agent === 'technical' && technicalScoreData) {
+        const aiSummary = parsedResult.summary;
+        results[agent].score = technicalScoreData.score;
+        results[agent].summary = `【基于真实 K 线数据】${aiSummary} | 技术指标：${technicalScoreData.reasons.join(', ')}`;
+        results[agent].isRealData = true;
+        results[agent].technicalReasons = technicalScoreData.reasons;
+        console.log(`[Orchestrator] technical - 使用真实技术分数：${technicalScoreData.score}`);
+      }
+
       // 推送进度事件
       sendSSEEvent(res, 'agent_progress', {
         agent,
@@ -431,8 +558,8 @@ async function streamMultiAgentAnalysis(req, res, company, action, apiKey, apiUr
       sendSSEEvent(res, 'agent_complete', {
         agent,
         status: 'completed',
-        score: parsedResult.score,
-        data: parsedResult,
+        score: results[agent].score,
+        data: results[agent],
         timestamp: Date.now()
       });
 
