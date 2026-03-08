@@ -171,10 +171,6 @@ function setupEventListeners() {
     // 决策结果界面交互
     document.getElementById('backToMain')?.addEventListener('click', UI.closeDecisionOverlay);
     document.getElementById('continueAnalyzeBtn')?.addEventListener('click', UI.closeDecisionOverlay);
-    document.getElementById('recordDecisionBtn')?.addEventListener('click', () => {
-        UI.closeDecisionOverlay();
-        UI.openDiaryModal(Logic.state.currentCompany, Logic.state.currentScore);
-    });
 
     // 心理测试
     document.getElementById('showQuizBtn')?.addEventListener('click', UI.showQuiz);
@@ -877,9 +873,6 @@ function confirmPredictionAction() {
     // 隐藏预测弹窗
     hidePredictionModal();
 
-    // 获取损失厌恶警告（基于个人历史数据）
-    const lossAversionWarning = Logic.getLossAversionWarning(Logic.state.currentScore);
-
     const result = Logic.evaluateImpulse(action, Logic.state.currentCompany, Logic.state.currentScore);
 
     // 检查是否需要冷静期
@@ -888,31 +881,15 @@ function confirmPredictionAction() {
         setTimeout(() => document.querySelector('.container').classList.remove('impact-active'), 500);
 
         UI.showCooldown(
-            `${result.diagnosis.message}\n\n请先完成冷静期，再查看本次决策复盘。`,
+            `${result.diagnosis.message}\n\n请先完成冷静期，再保存本次决策记录。`,
             true,
-            () => {
-                UI.showDecisionResult(
-                    result.diagnosis,
-                    action,
-                    Logic.state.currentCompany,
-                    Logic.state.currentScore,
-                    false,
-                    lossAversionWarning
-                );
-            }
+            () => quickSaveDiary() // 冷静期结束后自动保存
         );
         return;
     }
 
-    // 直接显示决策结果
-    UI.showDecisionResult(
-        result.diagnosis,
-        action,
-        Logic.state.currentCompany,
-        Logic.state.currentScore,
-        false,
-        lossAversionWarning
-    );
+    // 直接保存决策记录
+    quickSaveDiary();
 }
 
 // 快速保存决策记录（无需填写表单）
@@ -952,7 +929,6 @@ function quickSaveDiary() {
 }
 
 // 导出全局函数供决策结果界面调用
-window.quickSaveDiaryFromDecision = quickSaveDiary;
 window.showPredictionModal = showPredictionModal;
 window.hidePredictionModal = hidePredictionModal;
 window.confirmPredictionAction = confirmPredictionAction;
