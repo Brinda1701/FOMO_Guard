@@ -257,137 +257,192 @@ function calculateCredibilityScore(sources) {
 }
 
 /**
- * 渲染 K 线图表（模拟数据）
+ * 渲染 K 线图表（使用真实数据）
  */
-export function renderKlineChart(company, score) {
+export async function renderKlineChart(company, score) {
     const klineContainer = document.getElementById('klineChartContainer');
     const klineStats = document.getElementById('klineStats');
     const klineChartCanvas = document.getElementById('klineChart');
 
     console.log('[DataSource] renderKlineChart 被调用，公司:', company, '分数:', score);
-    console.log('[DataSource] klineContainer:', klineContainer);
-    console.log('[DataSource] klineStats:', klineStats);
-    console.log('[DataSource] klineChartCanvas:', klineChartCanvas);
 
-    if (!klineContainer) {
-        console.error('[DataSource] 错误：找不到 klineChartContainer 元素');
+    if (!klineContainer || !klineStats || !klineChartCanvas) {
+        console.error('[DataSource] 错误：找不到 K 线图表元素');
         return;
     }
-    if (!klineStats) {
-        console.error('[DataSource] 错误：找不到 klineStats 元素');
-        return;
+
+    // 尝试获取真实 K 线数据
+    let klineData;
+    try {
+        console.log('[DataSource] 开始获取真实 K 线数据...');
+        klineData = await fetchKlineData(company);
+        console.log('[DataSource] 真实数据获取成功:', klineData);
+    } catch (error) {
+        console.warn('[DataSource] 真实数据获取失败，使用模拟数据:', error.message);
+        klineData = generateKlineData(score);
     }
-    if (!klineChartCanvas) {
-        console.error('[DataSource] 错误：找不到 klineChart 元素');
-        return;
-    }
-    
-    // 生成模拟 K 线数据
-    const klineData = generateKlineData(score);
-    
+
     // 更新统计数据
-    klineStats.innerHTML = `
-        <div class="kline-stat">
-            <div class="kline-stat-label">当前价</div>
-            <div class="kline-stat-value ${klineData.change >= 0 ? 'up' : 'down'}">${klineData.currentPrice.toFixed(2)}</div>
-        </div>
-        <div class="kline-stat">
-            <div class="kline-stat-label">涨跌幅</div>
-            <div class="kline-stat-value ${klineData.change >= 0 ? 'up' : 'down'}">${klineData.change >= 0 ? '+' : ''}${klineData.change.toFixed(2)}%</div>
-        </div>
-        <div class="kline-stat">
-            <div class="kline-stat-label">成交量</div>
-            <div class="kline-stat-value">${klineData.volume}</div>
-        </div>
-        <div class="kline-stat">
-            <div class="kline-stat-label">成交额</div>
-            <div class="kline-stat-value">${klineData.amount}</div>
-        </div>
-    `;
+    if (klineData.data && klineData.data.length > 0) {
+        // 使用真实数据
+        const latest = klineData.data[klineData.data.length - 1];
+        const first = klineData.data[0];
+        const changePercent = ((latest.close - first.close) / first.close * 100);
+        
+        klineStats.innerHTML = `
+            <div class="kline-stat">
+                <div class="kline-stat-label">当前价</div>
+                <div class="kline-stat-value ${latest.close >= first.close ? 'up' : 'down'}">${latest.close.toFixed(2)}</div>
+            </div>
+            <div class="kline-stat">
+                <div class="kline-stat-label">涨跌幅</div>
+                <div class="kline-stat-value ${changePercent >= 0 ? 'up' : 'down'}">${changePercent >= 0 ? '+' : ''}${changePercent.toFixed(2)}%</div>
+            </div>
+            <div class="kline-stat">
+                <div class="kline-stat-label">成交量</div>
+                <div class="kline-stat-value">${formatVolume(latest.volume)}</div>
+            </div>
+            <div class="kline-stat">
+                <div class="kline-stat-label">成交额</div>
+                <div class="kline-stat-value">${formatAmount(latest.close * latest.volume)}</div>
+            </div>
+        `;
+    } else {
+        // 使用模拟数据
+        klineStats.innerHTML = `
+            <div class="kline-stat">
+                <div class="kline-stat-label">当前价</div>
+                <div class="kline-stat-value">${klineData.currentPrice.toFixed(2)}</div>
+            </div>
+            <div class="kline-stat">
+                <div class="kline-stat-label">涨跌幅</div>
+                <div class="kline-stat-value ${klineData.change >= 0 ? 'up' : 'down'}">${klineData.change >= 0 ? '+' : ''}${klineData.change.toFixed(2)}%</div>
+            </div>
+            <div class="kline-stat">
+                <div class="kline-stat-label">成交量</div>
+                <div class="kline-stat-value">${klineData.volume}</div>
+            </div>
+            <div class="kline-stat">
+                <div class="kline-stat-label">成交额</div>
+                <div class="kline-stat-value">${klineData.amount}</div>
+            </div>
+        `;
+    }
 
     // 使用 Chart.js 绘制 K 线图
-    const ctx = document.getElementById('klineChart').getContext('2d');
-    
-    console.log('[DataSource] klineChart canvas context:', ctx);
-    console.log('[DataSource] Chart 对象是否存在:', typeof Chart !== 'undefined');
+    const ctx = klineChartCanvas.getContext('2d');
 
     // 销毁旧图表
     if (window.klineChartInstance) {
         window.klineChartInstance.destroy();
     }
-    
+
     // 检查 Chart.js 是否加载
     if (typeof Chart === 'undefined') {
-        console.error('[DataSource] 错误：Chart.js 未加载，无法创建图表');
+        console.error('[DataSource] 错误：Chart.js 未加载');
         klineContainer.style.display = 'block';
         return;
     }
 
+    // 准备图表数据
+    const labels = klineData.data ? klineData.data.map(d => d.date.substring(5)) : klineData.labels;
+    const closePrices = klineData.data ? klineData.data.map(d => d.close) : klineData.close;
+    
+    const isUp = closePrices[closePrices.length - 1] >= closePrices[0];
+    const mainColor = isUp ? '#10b981' : '#ef4444';
+    const bgColor = isUp ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)';
+
     window.klineChartInstance = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: klineData.labels,
-                datasets: [{
-                    label: '收盘价',
-                    data: klineData.close,
-                    borderColor: klineData.colors[0],
-                    backgroundColor: klineData.colors[1],
-                    borderWidth: 2,
-                    fill: true,
-                    tension: 0.4,
-                    pointRadius: 3,
-                    pointHoverRadius: 5
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: false
-                    },
-                    tooltip: {
-                        mode: 'index',
-                        intersect: false,
-                        callbacks: {
-                            label: function(context) {
-                                return `收盘价：¥${context.parsed.y.toFixed(2)}`;
-                            }
-                        }
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: '收盘价',
+                data: closePrices,
+                borderColor: mainColor,
+                backgroundColor: bgColor,
+                borderWidth: 2,
+                fill: true,
+                tension: 0.4,
+                pointRadius: 3,
+                pointHoverRadius: 5
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: (ctx) => `收盘价：¥${ctx.parsed.y.toFixed(2)}`
                     }
+                }
+            },
+            scales: {
+                x: {
+                    grid: { color: 'rgba(148, 163, 184, 0.1)' },
+                    ticks: { color: '#94a3b8', maxTicksLimit: 8 }
                 },
-                scales: {
-                    x: {
-                        grid: {
-                            color: 'rgba(148, 163, 184, 0.1)',
-                            drawBorder: false
-                        },
-                        ticks: {
-                            color: '#94a3b8',
-                            maxTicksLimit: 8,
-                            maxRotation: 0
-                        }
-                    },
-                    y: {
-                        grid: {
-                            color: 'rgba(148, 163, 184, 0.1)',
-                            drawBorder: false
-                        },
-                        ticks: {
-                            color: '#94a3b8',
-                            callback: function(value) {
-                                return '¥' + value.toFixed(2);
-                            }
-                        }
+                y: {
+                    grid: { color: 'rgba(148, 163, 184, 0.1)' },
+                    ticks: {
+                        color: '#94a3b8',
+                        callback: (v) => '¥' + v.toFixed(2)
                     }
                 }
             }
-        });
+        }
+    });
 
     klineContainer.style.display = 'block';
-    
-    console.log('[DataSource] klineContainer display 已设置为:', klineContainer.style.display);
     console.log('[DataSource] K 线图表渲染完成');
+}
+
+/**
+ * 从后端获取 K 线数据
+ */
+async function fetchKlineData(company) {
+    const response = await fetch('/api/market-data', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ company })
+    });
+
+    if (!response.ok) {
+        throw new Error(`HTTP error: ${response.status}`);
+    }
+
+    const result = await response.json();
+    if (!result.success) {
+        throw new Error(result.error || '获取 K 线数据失败');
+    }
+
+    return {
+        data: result.data,
+        latestPrice: result.latestPrice,
+        changePercent: result.changePercent
+    };
+}
+
+/**
+ * 格式化成交量
+ */
+function formatVolume(volume) {
+    if (!volume) return 'N/A';
+    if (volume >= 100000000) return (volume / 100000000).toFixed(2) + '亿';
+    if (volume >= 10000) return (volume / 10000).toFixed(2) + '万';
+    return volume.toString();
+}
+
+/**
+ * 格式化成交额
+ */
+function formatAmount(amount) {
+    if (!amount) return 'N/A';
+    if (amount >= 100000000) return (amount / 100000000).toFixed(2) + '亿';
+    if (amount >= 10000) return (amount / 10000).toFixed(2) + '万';
+    return amount.toString();
 }
 
 /**
