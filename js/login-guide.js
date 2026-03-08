@@ -48,7 +48,31 @@ export const User = {
         const guestName = '游客_' + Math.random().toString(36).substr(2, 6);
         this.currentUser = { username: guestName, isGuest: true, loginTime: Date.now() };
         localStorage.setItem('fomoguard_user', JSON.stringify(this.currentUser));
+        
+        // 清除游客之前的缓存数据
+        this.clearGuestData();
+        
         return { success: true, username: guestName };
+    },
+
+    // 清除游客数据（交易日记、情绪历史等）
+    clearGuestData() {
+        // 清除交易日记
+        localStorage.removeItem('tradeDiary');
+        // 清除情绪历史
+        localStorage.removeItem('sentimentHistory');
+        // 清除其他可能的缓存数据
+        localStorage.removeItem('fomoguard_analysis_cache');
+        console.log('[User] 游客数据已清除');
+    },
+
+    // 切换账号（清除当前用户数据）
+    switchAccount() {
+        this.currentUser = null;
+        localStorage.removeItem('fomoguard_user');
+        // 清除所有缓存数据
+        this.clearGuestData();
+        console.log('[User] 账号已切换，数据已清除');
     },
     
     // 获取所有用户
@@ -300,6 +324,10 @@ export const LoginUI = {
                 const result = User.login(username, password);
                 if (result.success) {
                     document.getElementById('loginOverlay').style.display = 'none';
+                    // 更新用户状态按钮
+                    if (window.updateUserStatusButton) {
+                        window.updateUserStatusButton();
+                    }
                     Guide.init();
                 } else {
                     alert(result.message);
@@ -338,6 +366,10 @@ export const LoginUI = {
                 const result = User.register(username, password);
                 if (result.success) {
                     document.getElementById('loginOverlay').style.display = 'none';
+                    // 更新用户状态按钮
+                    if (window.updateUserStatusButton) {
+                        window.updateUserStatusButton();
+                    }
                     Guide.init();
                 } else {
                     alert(result.message);
@@ -351,7 +383,14 @@ export const LoginUI = {
             guestBtn.addEventListener('click', () => {
                 User.guestAccess();
                 document.getElementById('loginOverlay').style.display = 'none';
-                Guide.init();
+                // 更新用户状态按钮
+                if (window.updateUserStatusButton) {
+                    window.updateUserStatusButton();
+                }
+                // 刷新页面以清除数据
+                setTimeout(() => {
+                    window.location.reload();
+                }, 300);
             });
         }
         

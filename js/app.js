@@ -122,7 +122,65 @@ async function init() {
         UI.hideSimulatedModeWarning();
     }
 
+    // 初始化用户状态
+    initUserStatus();
+
     setupEventListeners();
+}
+
+// 初始化用户状态
+function initUserStatus() {
+    LoginUI.User.init();
+    updateUserStatusButton();
+}
+
+// 更新用户状态按钮显示
+function updateUserStatusButton() {
+    const userStatusBtn = document.getElementById('userStatusBtn');
+    if (!userStatusBtn) return;
+
+    const user = LoginUI.User.currentUser;
+    if (user && user.username) {
+        // 已登录状态
+        if (user.isGuest) {
+            userStatusBtn.textContent = `👤 ${user.username}`;
+            userStatusBtn.title = '点击切换账号（游客模式）';
+        } else {
+            userStatusBtn.textContent = `✅ ${user.username}`;
+            userStatusBtn.title = '点击退出登录';
+        }
+        userStatusBtn.classList.add('logged-in');
+    } else {
+        // 游客状态
+        userStatusBtn.textContent = '👤 登录';
+        userStatusBtn.title = '点击登录/注册';
+        userStatusBtn.classList.remove('logged-in');
+    }
+}
+
+// 处理用户状态按钮点击
+function handleUserStatusClick() {
+    const user = LoginUI.User.currentUser;
+    
+    if (user && user.username) {
+        // 已登录，显示退出确认
+        const shouldLogout = confirm(user.isGuest ? 
+            '当前为游客模式，数据会在切换账号后清除。\n\n确定要切换账号吗？' : 
+            `确定要退出账号 "${user.username}" 吗？\n\n退出后数据将被清除。`
+        );
+        
+        if (shouldLogout) {
+            LoginUI.User.switchAccount();
+            updateUserStatusButton();
+            // 刷新页面以清除数据
+            setTimeout(() => {
+                window.location.reload();
+            }, 300);
+        }
+    } else {
+        // 未登录，打开登录模态框
+        LoginUI.showLoginModal();
+    }
 }
 
 function initTheme() {
@@ -148,6 +206,9 @@ function setupEventListeners() {
             localStorage.setItem('theme', 'light');
         }
     });
+
+    // 用户状态切换按钮
+    document.getElementById('userStatusBtn')?.addEventListener('click', handleUserStatusClick);
 
     // 公司分析
     document.getElementById('analyzeBtn')?.addEventListener('click', analyzeCompany);
@@ -929,6 +990,8 @@ function quickSaveDiary() {
 }
 
 // 导出全局函数供决策结果界面调用
+window.updateUserStatusButton = updateUserStatusButton;
+window.handleUserStatusClick = handleUserStatusClick;
 window.showPredictionModal = showPredictionModal;
 window.hidePredictionModal = hidePredictionModal;
 window.confirmPredictionAction = confirmPredictionAction;
