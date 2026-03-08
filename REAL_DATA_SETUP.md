@@ -197,11 +197,37 @@ curl -X POST http://localhost:3000/api/market-data \
 - 配置：`DATA_SOURCE_PRIORITY=sina,alphavantage`
 
 ### Q4: 如何在 Vercel 部署时配置？
-在 Vercel 项目设置中添加环境变量：
-1. Settings → Environment Variables
-2. 添加 `ALPHA_VANTAGE_API_KEY`
-3. 添加 `DATA_SOURCE_PRIORITY=alphavantage`
-4. 重新部署
+
+**重要：不要在 GitHub 上传 .env.local 文件！API Key 会泄露！**
+
+正确做法是在 Vercel 后台配置环境变量：
+
+#### 方法 A：Vercel 网页配置（推荐）
+1. 访问 https://vercel.com/dashboard
+2. 找到你的项目 → **Settings** → **Environment Variables**
+3. 添加以下变量：
+   - `ALPHA_VANTAGE_API_KEY` = `你的 API Key`
+   - `DATA_SOURCE_PRIORITY` = `alphavantage,twelvedata,finnhub,sina`
+   - `ENABLE_SINA_API` = `true`
+4. 点击 **Save**
+5. 重新部署项目（点击 **Deploy** 按钮）
+
+#### 方法 B：使用 Vercel CLI
+```bash
+# 安装 Vercel CLI
+npm i -g vercel
+
+# 登录
+vercel login
+
+# 配置环境变量
+vercel env add ALPHA_VANTAGE_API_KEY
+vercel env add DATA_SOURCE_PRIORITY
+vercel env add ENABLE_SINA_API
+
+# 重新部署
+vercel --prod
+```
 
 ---
 

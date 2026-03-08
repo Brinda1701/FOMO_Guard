@@ -1,0 +1,7 @@
+{
+  "env": {
+    "ALPHA_VANTAGE_API_KEY": "AJICSLV87PVH5NFB",
+    "DATA_SOURCE_PRIORITY": "alphavantage,twelvedata,finnhub,sina",
+    "ENABLE_SINA_API": "true"
+  }
+}
