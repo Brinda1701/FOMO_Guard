@@ -95,7 +95,7 @@ exports.handler = async function handler(req, res) {
  * 获取市场数据（14 天 K 线数据）
  */
 async function fetchMarketData(symbol) {
-  const priority = process.env.DATA_SOURCE_PRIORITY || 'tencent,sina,alphavantage,twelvedata,finnhub';
+  const priority = process.env.DATA_SOURCE_PRIORITY || 'sina,tencent,alphavantage,twelvedata,finnhub';
   const sources = priority.split(',').map(s => s.trim().toLowerCase());
 
   for (const source of sources) {
@@ -104,10 +104,10 @@ async function fetchMarketData(symbol) {
 
       let data = null;
 
-      if (source === 'tencent' && process.env.ENABLE_TENCENT_API === 'true') {
-        data = await fetchFromTencent(symbol);
-      } else if (source === 'sina' && process.env.ENABLE_SINA_API === 'true') {
+      if (source === 'sina' && process.env.ENABLE_SINA_API === 'true') {
         data = await fetchFromSina(symbol);
+      } else if (source === 'tencent' && process.env.ENABLE_TENCENT_API === 'true') {
+        data = await fetchFromTencent(symbol);
       } else if (source === 'alphavantage' && process.env.ALPHA_VANTAGE_API_KEY) {
         data = await fetchFromAlphaVantage(symbol, process.env.ALPHA_VANTAGE_API_KEY);
       } else if (source === 'twelvedata' && process.env.TWELVE_DATA_API_KEY) {
@@ -241,9 +241,63 @@ async function fetchFromFinnhub(symbol, apiKey) {
 }
 
 /**
- * 从腾讯财经获取数据（支持 A 股、港股、美股）
- * 无需 API Key，实时数据
- * http://qt.gtimg.cn/q=股票代码
+ * 从新浪财经获取真实历史 K 线数据（推荐）
+ * http://money.finance.sina.com.cn/quotes_service/api/json_v2.php/CN_MarketData.getKLineData
+ * 参数：symbol=sh600519, scale=240(日线), datalen=数据条数
+ */
+async function fetchFromSina(symbol) {
+  const sinaSymbol = convertToSinaSymbol(symbol);
+  
+  if (!sinaSymbol) {
+    throw new Error('无法转换为新浪财经代码格式');
+  }
+
+  // 使用新浪 API 获取真实历史 K 线数据
+  const url = `http://money.finance.sina.com.cn/quotes_service/api/json_v2.php/CN_MarketData.getKLineData?symbol=${sinaSymbol}&scale=240&ma=5&datalen=30`;
+  
+  console.log('[Sina API] 请求 URL:', url);
+  
+  const response = await fetch(url, { 
+    headers: { 
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+      'Accept': 'application/json, text/plain, */*',
+      'Referer': 'http://finance.sina.com.cn/'
+    },
+    timeout: 10000
+  });
+  
+  if (!response.ok) {
+    throw new Error(`Sina API error: ${response.status}`);
+  }
+
+  const data = await response.json();
+  console.log('[Sina API] 返回数据条数:', Array.isArray(data) ? data.length : 0);
+  
+  if (!Array.isArray(data) || data.length === 0) {
+    throw new Error('Sina data not available or empty');
+  }
+
+  // 解析返回数据，转换为统一格式（取最近 14 天）
+  const klineData = data.slice(0, 14).map(item => ({
+    date: item.day,
+    open: parseFloat(item.open),
+    high: parseFloat(item.high),
+    low: parseFloat(item.low),
+    close: parseFloat(item.close),
+    volume: parseInt(item.volume) || 0
+  }));
+
+  if (klineData.length === 0) {
+    throw new Error('No valid K-line data');
+  }
+
+  console.log('[Sina API] 解析成功，最新数据:', klineData[klineData.length - 1]);
+  return klineData;
+}
+
+/**
+ * 从腾讯财经获取实时数据（备用）
+ * 用于获取当前价格，然后生成历史 K 线
  */
 async function fetchFromTencent(symbol) {
   const tencentSymbol = convertToTencentSymbol(symbol);

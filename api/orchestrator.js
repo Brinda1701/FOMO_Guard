@@ -34,65 +34,57 @@ const TENCENT_SYMBOL_MAP = {
 };
 
 /**
- * 从腾讯财经获取 K 线数据（内联版本，避免导出问题）
+ * 从新浪财经获取真实历史 K 线数据（推荐）
  */
-async function fetchKlineDataFromTencent(symbol) {
-  const tencentSymbol = convertToTencentSymbol(symbol);
+async function fetchKlineDataFromSina(symbol) {
+  const sinaSymbol = convertToSinaSymbol(symbol);
   
-  if (!tencentSymbol) {
-    throw new Error('无法转换为腾讯财经代码格式');
+  if (!sinaSymbol) {
+    throw new Error('无法转换为新浪财经代码格式');
   }
 
-  const url = `http://qt.gtimg.cn/q=${tencentSymbol}`;
+  const url = `http://money.finance.sina.com.cn/quotes_service/api/json_v2.php/CN_MarketData.getKLineData?symbol=${sinaSymbol}&scale=240&ma=5&datalen=30`;
   
   const response = await fetch(url, {
     headers: {
       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
-      'Accept': '*/*',
-      'Referer': 'http://finance.qq.com/'
+      'Accept': 'application/json, text/plain, */*',
+      'Referer': 'http://finance.sina.com.cn/'
     },
     timeout: 10000
   });
   
   if (!response.ok) {
-    throw new Error(`Tencent API error: ${response.status}`);
+    throw new Error(`Sina API error: ${response.status}`);
   }
 
-  const text = await response.text();
-  const match = text.match(/v_(\w+)="([^"]+)"/);
+  const data = await response.json();
   
-  if (!match) {
-    throw new Error('Tencent data not available');
+  if (!Array.isArray(data) || data.length === 0) {
+    throw new Error('Sina data not available');
   }
 
-  const data = match[2].split('~');
-  
-  if (data.length < 30) {
-    throw new Error('Invalid Tencent data format');
-  }
-
-  // 腾讯数据字段解析
-  const currentPrice = parseFloat(data[3]) || 0;
-  const openPrice = parseFloat(data[5]) || 0;
-  const highPrice = parseFloat(data[33]) || parseFloat(data[4]) || currentPrice;
-  const lowPrice = parseFloat(data[34]) || parseFloat(data[5]) || currentPrice;
-  const volume = parseInt(data[6]) || 0;
-  const prevClose = parseFloat(data[2]) || currentPrice;
-  
-  // 使用实时数据生成最近 14 天的 K 线（以当前价格为基准）
-  const klineData = generateHistoryFromCurrentPrice(
-    currentPrice, openPrice, highPrice, lowPrice, volume, 14
-  );
-  
-  return klineData;
+  return data.slice(0, 14).map(item => ({
+    date: item.day,
+    open: parseFloat(item.open),
+    high: parseFloat(item.high),
+    low: parseFloat(item.low),
+    close: parseFloat(item.close),
+    volume: parseInt(item.volume) || 0
+  }));
 }
 
-function convertToTencentSymbol(symbol) {
+function convertToSinaSymbol(symbol) {
   if (/^\d{6}$/.test(symbol)) {
     const prefix = symbol.startsWith('6') ? 'sh' : 'sz';
     return `${prefix}${symbol}`;
   }
-  return TENCENT_SYMBOL_MAP[symbol] || TENCENT_SYMBOL_MAP[symbol.toUpperCase()];
+  const directMap = {
+    '茅台': 'sh600519', '贵州茅台': 'sh600519',
+    '比亚迪': 'sz002594', '宁德时代': 'sz300750',
+    '腾讯': 'hk00700', '阿里巴巴': 'hk09988', '美团': 'hk03690', '小米': 'hk01810'
+  };
+  return directMap[symbol] || directMap[symbol.toUpperCase()];
 }
 
 function generateHistoryFromCurrentPrice(current, open, high, low, baseVolume, days) {
@@ -367,8 +359,8 @@ async function runMultiAgentAnalysis(req, res, company, action, apiKey, apiUrl, 
   let marketData = null;
   let technicalScoreData = null;
   try {
-    // 使用内联的腾讯 API 获取 K 线数据
-    const klineData = await fetchKlineDataFromTencent(company);
+    // 使用新浪 API 获取真实历史 K 线数据
+    const klineData = await fetchKlineDataFromSina(company);
 
     // 计算技术指标
     const indicators = calculateTechnicalIndicators(klineData);
@@ -480,8 +472,8 @@ async function streamMultiAgentAnalysis(req, res, company, action, apiKey, apiUr
   let marketData = null;
   let technicalScoreData = null;
   try {
-    // 使用内联的腾讯 API 获取 K 线数据
-    const klineData = await fetchKlineDataFromTencent(company);
+    // 使用新浪 API 获取真实历史 K 线数据
+    const klineData = await fetchKlineDataFromSina(company);
 
     // 计算技术指标
     const indicators = calculateTechnicalIndicators(klineData);
